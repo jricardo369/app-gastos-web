@@ -1,0 +1,53 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+/* @import '@ionic/angular/css/palettes/dark.system.css'; */
+
+:root{
+  --ion-color-primary:#0f3a5d;
+  --ion-color-primary-rgb:15,58,93;
+  --ion-background-color:#eef2f7;
+  --ion-toolbar-background:#ffffff;
+}
+ion-tab-bar{--background:#ffffff;border-top:1px solid #e6eaf0;--color:#6b7a90;--color-selected:#0f3a5d}
+ion-content{--background:#eef2f7}
+*{font-family:'Nunito', system-ui, -apple-system, Segoe UI, Roboto, sans-serif}
+h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wrap span{font-family:'Comfortaa', cursive}
+.amount,.price,.row b,.tbl span,.tbl2 span,.ing-list span,.deuda-row,.totals b,.saldo-card b,.q-body b,.chip{font-family:'Nunito', sans-serif}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
+.tc-70{--width:70%;--height:70%;--border-radius:16px}
+@media(max-width:600px){.tc-70{--width:92%;--height:70%}}
