@@ -54,11 +54,11 @@ const GASTOS_Q1: Omit<Gasto, 'id' | 'quincena'>[] = [
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Richi', previsto: 200, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 100, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 0, pagado: false, tipo: 'fijo' },
 ];
 
 const GASTOS_Q2: Omit<Gasto, 'id' | 'quincena'>[] = [
@@ -83,10 +83,10 @@ const GASTOS_Q2: Omit<Gasto, 'id' | 'quincena'>[] = [
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 100, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Richi', previsto: 200, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 2100, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 200, pagado: false, tipo: 'fijo' },
 ];
 
 /** Arma la lista final con id estable por quincena. */
