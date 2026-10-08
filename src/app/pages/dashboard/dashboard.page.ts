@@ -114,21 +114,7 @@ export class IngresoModalComponent {
         </div>
       </div>
 
-      <!-- 5. Deudas y deudores: resumenes de una linea, van juntos -->
-      <div class="grid2">
-        <a class="card sum" (click)="go('/tabs/deudas')">
-          <span class="lbl">Cuentas por pagar</span>
-          <b class="money">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="sum-sub">al mes · {{ pagosPendientesCount }} pagos de tarjeta</span>
-        </a>
-        <a class="card sum" (click)="go('/tabs/deudores')">
-          <span class="lbl">Me deben</span>
-          <b class="money">{{ deudoresTotal | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="sum-sub">{{ deudoresLista.length }} personas</span>
-        </a>
-      </div>
-
-      <!-- 6. Detalle por quincena -->
+      <!-- 5. Detalle por quincena -->
       <div class="section-title">Detalle</div>
       <div class="grid2">
         @for (q of filteredQs; track q) {
@@ -189,6 +175,23 @@ export class IngresoModalComponent {
           }
         </div>
         }
+      </div>
+
+      <!-- 6. Deudas y deudores: van despues del detalle porque son otra cosa.
+           El detalle es el dinero de la quincena; esto es lo que se debe
+           fuera del ciclo, asi que no compite con el veredicto de arriba. -->
+      <div class="section-title">Cuentas pendientes</div>
+      <div class="grid2">
+        <a class="card sum" (click)="go('/tabs/deudas')">
+          <span class="lbl">Cuentas por pagar</span>
+          <b class="money">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0' }}</b>
+          <span class="sum-sub">al mes · {{ pagosPendientesCount }} pagos de tarjeta</span>
+        </a>
+        <a class="card sum" (click)="go('/tabs/deudores')">
+          <span class="lbl">Me deben</span>
+          <b class="money">{{ deudoresTotal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          <span class="sum-sub">{{ deudoresLista.length }} personas</span>
+        </a>
       </div>
 
       <!-- 7. Gastos por categoria -->

@@ -104,8 +104,15 @@ Ahora cada registro es una fila flexible con el monto a la derecha, que se
 acomoda a cualquier ancho sin cortar contenido.
 
 **Orden de lectura en cada pantalla:** total o veredicto → detalle → acciones.
-En Deudores el total por cobrar sube al principio porque es lo que la pantalla
-viene a responder.
+
+En el dashboard el orden es: selector de periodo, veredicto, saldo previsto,
+uso del presupuesto, **detalle por quincena**, **cuentas pendientes**
+(cuentas por pagar y me deben), gastos por categoría e ingresos.
+
+Las cuentas pendientes van después del detalle a propósito: el detalle es el
+dinero de la quincena en curso, mientras que cuentas por pagar y me deben son
+obligaciones que viven fuera del ciclo quincenal. Si estuvieran arriba
+compitían con el veredicto, que es lo que responde "¿cómo voy?".
 
 Pestañas: `Inicio`, `Gastos`, `Deudas`, `Me deben`, `Movs`. Las etiquetas
 cortas entran en pantallas angostas; "Cuentas por Pagar" no entraba.
