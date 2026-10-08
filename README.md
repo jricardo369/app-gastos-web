@@ -154,6 +154,34 @@ Build local equivalente al de producción:
 npm run build -- --configuration production --base-href /app-gastos/
 ```
 
+## Acceso directo en la pantalla de inicio (PWA)
+
+La app se puede instalar como acceso directo desde el cel, sin nada nativo.
+
+- `src/manifest.webmanifest`: nombre, colores, `display: standalone` e iconos.
+- `src/assets/icon/`: 9 PNG generados con la paleta de `global.scss`
+  (`#0f3a5d`):
+  - `icon-192.png`, `icon-512.png`: manifest / Android
+  - `icon-maskable-192.png`, `icon-maskable-512.png`: Android recorta hasta un
+    20% por lado, el contenido va en la zona segura
+  - `apple-touch-icon.png` (180), `-167`, `-152`: iOS, sin transparencia ni
+    esquinas redondeadas porque el sistema las aplica
+  - `favicon-32.png`, `favicon-16.png`: navegador
+- `angular.json`: copia el manifest a la raíz del build (el scope tiene que
+  cubrir la app entera, no `assets/`).
+
+`start_url` y `scope` son relativos (`.`) porque el proxy recorta `/app-gastos/`:
+resuelven a la raíz del contenedor, no a un subdirectorio inexistente.
+
+Cómo instalarlo:
+
+- **Android / Chrome**: menú ⋮ → "Agregar a la pantalla de inicio".
+- **iOS / Safari**: botón compartir → "Agregar a pantalla de inicio".
+
+`display: standalone` quita la barra del navegador, así que la app se ve como
+una app nativa. No se agregó service worker, así que la app sigue necesitando
+conexión al cargar y no funciona offline.
+
 ## Build móvil (Capacitor)
 
 ```bash
