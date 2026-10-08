@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonItem, IonButtons, ModalController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonItem, IonButtons, ModalController, AlertController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, logOutOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, logOutOutline, refreshOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-ingreso-modal',
@@ -36,6 +36,11 @@ export class IngresoModalComponent {
   template: `
   <ion-header class="hdr">
     <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-button fill="clear" (click)="confirmReset()" aria-label="Restablecer los datos">
+          <ion-icon name="refresh-outline"></ion-icon>
+        </ion-button>
+      </ion-buttons>
       <ion-title>
         <div class="title-wrap">
           <span>Dashboard</span><small>{{today}}</small>
@@ -450,8 +455,8 @@ export class DashboardPage {
   private manualToggle = new Set<string>();
   private manualIngToggle = new Set<string>();
 
-  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronDownOutline, chevronUpOutline, logOutOutline });
+  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController, private alertCtrl: AlertController) {
+    addIcons({ chevronDownOutline, chevronUpOutline, logOutOutline, refreshOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.applyAutoCollapse();
@@ -603,4 +608,34 @@ export class DashboardPage {
   saveIngresoConcepto(q: any, ing: any) { this.budget.updateIngreso(q, ing.id, { concepto: ing.concepto }); this.refresh(); }
   removeIngreso(q: any, id: string) { this.budget.removeIngreso(q, id); this.refresh(); }
   logout() { this.auth.logout(); this.router.navigateByUrl('/login'); }
+
+  /**
+   * Restablece los datos a los de ejemplo. Es destructivo: borra TODO lo
+   * cargado a mano, sin vuelta atras. Por eso pide confirmacion y explica
+   * exactamente que se pierde antes de hacerlo.
+   *
+   * Hace falta porque los seeds solo se leen cuando no hay nada guardado:
+   * sin esto, cambiar GASTOS_Q1 / GASTOS_Q2 en el codigo no aplicaria nunca
+   * en un dispositivo que ya uso la app.
+   */
+  async confirmReset() {
+    const alert = await this.alertCtrl.create({
+      header: '¿Restablecer los datos?',
+      message: 'Se borra todo lo que cargaste a mano y vuelve la data de ejemplo (gastos por quincena, presupuesto, deudas, movimientos). No se puede deshacer.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Restablecer',
+          role: 'destructive',
+          handler: () => {
+            this.budget.resetTodo();
+            // resetTodo recarga la pagina, asi que el toast no llega a verse.
+            // Se avisa igual para que quede constancia de que se hizo.
+            console.warn('Datos restablecidos a los valores de ejemplo.');
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
 }
