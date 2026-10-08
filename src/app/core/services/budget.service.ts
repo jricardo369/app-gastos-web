@@ -36,62 +36,57 @@ const DEFAULT_PRESUPUESTO: Presupuesto = {
  */
 const GASTOS_Q1: Omit<Gasto, 'id' | 'quincena'>[] = [
   { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 90, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 300, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Papel baño', previsto: 70, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 800, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Pasta y jabon', previsto: 50, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1200, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1233, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1233, pagado: false, tipo: 'fijo' },
   { categoriaId: 'carro', descripcion: 'Seguro carro', previsto: 0, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 120, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Richi', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 100, pagado: false, tipo: 'fijo' },
   { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
   { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Adicionales', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 100, pagado: false, tipo: 'fijo' },
 ];
 
 const GASTOS_Q2: Omit<Gasto, 'id' | 'quincena'>[] = [
   { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Comida P2', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 90, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 600, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Papel baño', previsto: 70, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 800, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Pasta y jabon', previsto: 50, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
   { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1200, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1200, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'carro', descripcion: 'Seguro carro', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 120, pagado: false, tipo: 'fijo' },
   { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Richi', previsto: 200, pagado: false, tipo: 'fijo' },
   { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
   { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
-  { categoriaId: 'adic', descripcion: 'Adicionales', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Alianza', previsto: 100, pagado: false, tipo: 'fijo' },
 ];
 
 /** Arma la lista final con id estable por quincena. */
@@ -123,6 +118,15 @@ const DEFAULT_MOVIMIENTOS: Movimiento[] = [
   { id: 'm6', fecha: '2026-03-10', descripcion: 'Xbox live', compras: 219, abonos: 0 },
 ];
 
+/**
+ * Todas las claves que el servicio escribe en StorageService.
+ * Se usan en resetTodo() para borrar todo lo guardado y que el constructor
+ * vuelva a leer los defaults. Si se agrega una clave nueva, sumarla aqui.
+ */
+const KEYS_PERSISTIDAS = [
+  'presupuesto', 'gastos', 'imprevistos', 'pagosTC',
+  'deudas', 'deudores', 'deudoresLista', 'movimientos', 'movConfig', 'quincenaActual',
+] as const;
 
 function migratePresupuesto(raw: any): Presupuesto {
   if (raw?.q1?.dinero && raw?.q1?.ingresos) return raw as Presupuesto;
@@ -281,6 +285,33 @@ export class BudgetService {
   removeMovimiento(id:string){ const next=this._movimientos$.value.filter(x=>x.id!==id); this._movimientos$.next(next); this.storage.set('movimientos', next); }
   getMovConfig(){ return this._movConfig$.value; }
   setMovConfig(c:{fechaCorte:number, fechaPago:number, ppngi:number}){ this._movConfig$.next(c); this.storage.set('movConfig', c); }
+
+  /**
+   * Borra todo lo guardado y vuelve a cargar los datos de ejemplo.
+   * NO HAY FORMA DE DESHACER: se pierde todo lo capturado a mano.
+   *
+   * Hace falta porque los seeds (GASTOS_Q1, GASTOS_Q2, DEFAULT_*) solo se leen
+   * cuando no hay nada en localStorage. Editar el codigo no cambia lo que ya
+   * esta guardado, asi que sin esto no hay manera de aplicar los cambios.
+   *
+   * @param only Gastos si es true, solo restablece los gastos y las quincenas,
+   *                    dejando deudas, deudores y movimientos como estan.
+   */
+  resetTodo(only?: Gasto[]) {
+    if (only) {
+      const gastos = only;
+      this._gastos$.next(gastos);
+      this.persistGastos(gastos);
+      return;
+    }
+    for (const key of KEYS_PERSISTIDAS) this.storage.remove(key);
+    // Recarga la pagina para que el constructor del servicio vuelva a leer
+    // todo desde los defaults, en vez de intentar reconstruirlo a mano.
+    if (typeof window !== 'undefined') window.location.reload();
+  }
+
+  /** Los defaults de gastos, ya con id. Para restablecer solo los gastos. */
+  gastosPorDefecto(): Gasto[] { return seedGastos(); }
 
   resumenQuincena(q: Quincena) {
     const gastos = this.getGastos(q);
