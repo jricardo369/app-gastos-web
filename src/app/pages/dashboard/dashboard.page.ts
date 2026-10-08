@@ -151,11 +151,6 @@ export class IngresoModalComponent {
             <div class="progress"><div [style.width.%]="pct(q)"></div></div>
             <span class="usage-rest">{{ pct(q) }}% del previsto</span>
 
-            <hr class="sep" />
-            <div class="row total-row">
-              <span>Disponible</span>
-              <b [class.pos]="sobrante(q) >= 0" [class.neg]="sobrante(q) < 0">{{ sobrante(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
-            </div>
             @if (pendiente(q) > 0) {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
@@ -380,10 +375,7 @@ export class IngresoModalComponent {
   .head-right{font-size:16px}
   .q-body{padding:0 var(--sp-4) var(--sp-4)}
 
-  .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
-  .total-row{font-size:16px;font-weight:700}
-  .total-row b.pos{color:var(--ok)}
-  .total-row b.neg{color:var(--bad)}
+.sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
 
   /* Indicador de cierre de la quincena. Es el aviso que faltaba:
      avisa cuando lo gastado no calza con el dinero disponible. */
@@ -498,8 +490,6 @@ export class DashboardPage {
     }).filter(r => r.q1 || r.q2);
     this.totalQ1 = this.rows.reduce((s, r) => s + r.q1, 0);
     this.totalQ2 = this.rows.reduce((s, r) => s + r.q2, 0);
-    // El 'sobrante' previsto por quincena ya lo calcula saldoGlobal() en el
-    // veredicto, asi que no hace falta guardarlo en un campo.
     this.pagosTC = this.budget.getPagosTC();
     this.deudas = this.budget.getDeudas();
     this.deudoresLista = this.budget.getDeudoresLista();
@@ -524,7 +514,6 @@ export class DashboardPage {
   nomina(q: string) { return this.budget.getDinero(q as any).nomina; }
   previstos(q: any) { return this.budget.resumenQuincena(q).previstos; }
   reales(q: any) { return this.budget.resumenQuincena(q).reales; }
-  sobrante(q: any) { return this.budget.resumenQuincena(q).sobrante; }
   saldoTotal(q: any) { return this.budget.getIngresoTotal(q) - this.budget.resumenQuincena(q).reales; }
   todoBien(q: any) { return this.saldoTotal(q) - this.ingreso(q); }
   pendiente(q: any) { return this.budget.resumenQuincena(q).pendiente; }
