@@ -169,10 +169,16 @@ abrir el modal y guardarlo sin tocar nada no marca cambios.
 Antes solo se podía agregar y borrar: `updateGasto` existía en el servicio pero
 nadie lo llamaba.
 
-Ojo con los seeds: los gastos de ejemplo (Gas, Detergentes, Papel baño…) viven
-en `seedGastos()` en `budget.service.ts`, pero en cuanto se carga la app se
-copian a `localStorage`. Editar el seed **no** cambia lo que ya está guardado;
-para eso está la edición en pantalla.
+Ojo con los seeds: los gastos de ejemplo viven en `GASTOS_Q1` y `GASTOS_Q2` en
+`budget.service.ts`, dos listas independientes, una por quincena. Se editan
+cambiando el número dentro del bloque que corresponda. Pero en cuanto se carga
+la app se copian a `localStorage`, así que **cambiar el seed no cambia lo que ya
+está guardado**; para eso está la edición en pantalla.
+
+Antes había una sola lista que el loop copiaba a las dos quincenas, con lo que
+todo gasto era parte de Q1 y de Q2. Además tenía duplicados exactos (Gasolina,
+Aseo, Com. fin sem. y Terapeuta aparecían dos veces), que el loop multiplicaba:
+cada uno se contabilizaba doble.
 
 ## Estructura
 
