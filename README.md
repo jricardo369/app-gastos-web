@@ -65,6 +65,17 @@ Aparece en dos lugares: el veredicto del periodo activo (arriba, con las tres
 cifras que lo sostienen a la vista) y el indicador por quincena dentro de cada
 tarjeta de detalle. Ambas usan `todoBien(q)`, así que no pueden discrepar.
 
+**Dos "sobras" distintas, no confundirlas.** El dashboard muestra las dos
+porque contestan preguntas diferentes:
+
+| | Fórmula | Pregunta que responde |
+|---|---|---|
+| Veredicto (`todoBienGlobal`) | `(ingresos − gastadoReal) − dineroTotal` | ¿el gasto **real** ya pasó lo que tengo? |
+| Saldo previsto (`sobranteGlobal`) | `dineroTotal − previstos` | si gasto lo **planeado**, ¿me sobra? |
+
+Son el bloque "Sobra / Falta dinero" y la tarjeta "Saldo previsto". Uno mira
+lo ya gastado, el otro lo que se planeó gastar.
+
 **Cuatro niveles de texto.** `--text-strong` (títulos y cifras que importan),
 `--text-body` (texto normal), `--text-muted` (etiquetas secundarias),
 `--text-faint` (hints). La jerarquía sale del tamaño y el peso, no de las

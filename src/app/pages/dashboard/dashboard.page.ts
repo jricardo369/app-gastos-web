@@ -86,7 +86,32 @@ export class IngresoModalComponent {
         </div>
       </div>
 
-      <!-- 3. Uso del presupuesto: la unica barra de progreso de la app -->
+      <!-- 3. Cuanto sobra si gastas lo planeado.
+           Es un numero DISTINTO al veredicto de arriba:
+             veredicto (todoBien)  = lo gastado REAL contra lo que tenes
+             saldo     (sobrante)  = lo PREVISTO contra lo que tenes
+           Se muestran los dos porque contestan preguntas distintas. -->
+      <div class="card saldo" [class.saldo-neg]="sobranteGlobal < 0">
+        <div class="saldo-head">
+          <span class="lbl">Saldo previsto</span>
+          <b class="money saldo-monto">{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+        </div>
+        <p class="saldo-txt">
+          @if (sobranteGlobal > 0) {
+            Te sobra <b>{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> si gastas lo planeado
+          } @else if (sobranteGlobal < 0) {
+            Te falta <b>{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> para cubrir lo planeado
+          } @else {
+            Lo planeado calza con lo que tienes
+          }
+        </p>
+        <div class="saldo-split">
+          <div><span class="lbl">Tienes</span><b class="num">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div><span class="lbl">Gastos planeados</span><b class="num">{{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+        </div>
+      </div>
+
+      <!-- 4. Uso del presupuesto: la unica barra de progreso de la app -->
       <div class="card usage">
         <div class="usage-head">
           <span class="lbl">Uso del presupuesto</span>
@@ -101,7 +126,7 @@ export class IngresoModalComponent {
         </div>
       </div>
 
-      <!-- 4. Deudas y deudores: resumenes de una linea, van juntos -->
+      <!-- 5. Deudas y deudores: resumenes de una linea, van juntos -->
       <div class="grid2">
         <a class="card sum" (click)="go('/tabs/deudas')">
           <span class="lbl">Cuentas por pagar</span>
@@ -115,7 +140,7 @@ export class IngresoModalComponent {
         </a>
       </div>
 
-      <!-- 5. Detalle por quincena -->
+      <!-- 6. Detalle por quincena -->
       <div class="section-title">Detalle</div>
       <div class="grid2">
         @for (q of filteredQs; track q) {
@@ -178,7 +203,7 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 6. Gastos por categoria -->
+      <!-- 7. Gastos por categoria -->
       <div class="card table-card" [class.collapsed]="gastosCollapsed">
         <button class="card-title clickable" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
           <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos por categoría</span>
@@ -219,7 +244,7 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 7. Ingresos: edicion en linea -->
+      <!-- 8. Ingresos: edicion en linea -->
       <div class="section-title">Ingresos</div>
       <div class="grid2">
         @for (q of filteredQs; track q) {
@@ -292,8 +317,22 @@ export class IngresoModalComponent {
   .verdict-split > div{display:flex;flex-direction:column;gap:2px}
   .verdict-split b{font-size:15px}
 
-  /* Uso del presupuesto */
-  .usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
+/* Saldo previsto. Sin fondo de color: es un dato, no un estado.
+   El borde lo marca solo cuando da negativo, que si no es una alerta real. */
+.saldo{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
+    box-shadow:var(--shadow);border:1px solid var(--border)}
+.saldo.saldo-neg{border-color:#f3b0b0}
+.saldo-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
+.saldo-monto{font-size:22px;letter-spacing:-.02em}
+.saldo-neg .saldo-monto{color:var(--bad)}
+.saldo-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
+.saldo-txt b{color:var(--text-strong)}
+.saldo-split{display:flex;gap:var(--sp-5);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
+.saldo-split > div{display:flex;flex-direction:column;gap:2px}
+.saldo-split b{font-size:15px}
+
+/* Uso del presupuesto */
+.usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
   .usage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-2)}
   .usage-head b{font-size:15px;color:var(--text-strong)}
   .usage-foot{display:flex;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-2);font-size:12px;color:var(--text-muted);flex-wrap:wrap}
@@ -503,6 +542,15 @@ export class DashboardPage {
   /** Efectivo + vales + nomina: el dinero que hay sobre la mesa. */
   get dineroTotalGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.ingreso(q), 0);
+  }
+  /**
+   * "Cuanto sobra si gasto lo planeado": dinero que tenes menos lo previsto.
+   * Es el numero que vivia en la tarjeta saldo-card del diseño anterior.
+   * OJO: no es lo mismo que todoBienGlobal. Este mira lo PREVISTO
+   * (ingreso - previstos), el otro mira lo REAL (ingresos - gastadoReal).
+   */
+  get sobranteGlobal(): number {
+    return this.dineroTotalGlobal - this.previstoGlobal;
   }
   /**
    * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
