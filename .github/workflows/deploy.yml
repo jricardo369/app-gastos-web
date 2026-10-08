@@ -63,6 +63,41 @@ jobs:
           fi
           echo "Clave OK: $(printf '%s' "$KEY" | grep -c .) lineas | usuario=$SSH_USER | host=$SSH_HOST"
 
+      - name: Diagnostico del handshake SSH
+        env:
+          KEY: ${{ secrets.EC2_SSH_KEY }}
+          SSH_USER: ${{ secrets.EC2_USER }}
+          SSH_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+          # Cabecera y pie PEM completos (solo structural, no imprime la clave)
+          if ! grep -q -- '-----END .*PRIVATE KEY-----' ~/.ssh/id_deploy; then
+            echo "::error::La clave no tiene el pie PEM '-----END ... PRIVATE KEY-----'. Esta truncada."
+            exit 1
+          fi
+
+          # Fingerprint que el servidor vera (publica, no es secreto)
+          echo "== Fingerprint de la clave que se ofrece =="
+          ssh-keygen -lf ~/.ssh/id_deploy || { echo "::error::No se pudo derivar la clave publica (formato invalido)"; exit 1; }
+
+          echo "== Handshake (solo lineas de autenticacion) =="
+          set +e
+          ssh -vvv -o StrictHostKeyChecking=accept-new -o BatchMode=yes \
+              -o IdentitiesOnly=yes -o PreferredAuthentications=publickey \
+              -o ConnectTimeout=15 -i ~/.ssh/id_deploy \
+              "$SSH_USER@$SSH_HOST" 'echo CONECTADO_OK' 2>&1 \
+            | grep -Ei 'remote software|Authentications that can continue|Offering public key|Server accepts key|send_pubkey_test|denied|Permission denied|CONECTADO_OK|Authenticating to|Connection established|identity file' \
+            | sed -E 's/(SHA256:)[A-Za-z0-9+\/=]+/\1<oculto>/g'
+          echo "== exit code: ${PIPESTATUS[0]} =="
+
+          echo "== Como comparar contra authorized_keys del EC2 =="
+          echo "   ssh $SSH_USER@$SSH_HOST 'tail -1 ~/.ssh/authorized_keys'"
+          echo "   Ese fingerprint debe coincidir con el de arriba."
+
       - name: Deploy por SSH al EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -70,7 +105,6 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
-          fingerprint: ${{ secrets.EC2_SSH_FINGERPRINT }}
           port: 22
           script: |
             set -e
