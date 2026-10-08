@@ -76,6 +76,19 @@ porque contestan preguntas diferentes:
 Son el bloque "Sobra / Falta dinero" y la tarjeta "Saldo previsto". Uno mira
 lo ya gastado, el otro lo que se planeó gastar.
 
+La tarjeta "Saldo previsto" es solo el monto, sin desglose, y sigue al
+selector de periodo: en "Todo el mes" muestra la suma de Q1+Q2, en una
+quincena muestra solo esa. El color marca el estado:
+
+| Estado | Cuándo | Color |
+|---|---|---|
+| Normal | sobra más del 5% de lo que tenés a mano | sin tinte |
+| Cerca de cero | sobra menos del 5%, o es exactamente 0 | amarillo |
+| Negativo | no alcanza para lo planeado | rojo |
+
+El umbral es relativo al dinero en mano y no un monto fijo, porque $200 de
+holgura es mucho si tenés $2,000 y nada si tenés $50,000.
+
 **Cuatro niveles de texto.** `--text-strong` (títulos y cifras que importan),
 `--text-body` (texto normal), `--text-muted` (etiquetas secundarias),
 `--text-faint` (hints). La jerarquía sale del tamaño y el peso, no de las

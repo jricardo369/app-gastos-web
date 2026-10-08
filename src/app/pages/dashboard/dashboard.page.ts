@@ -86,28 +86,16 @@ export class IngresoModalComponent {
         </div>
       </div>
 
-      <!-- 3. Cuanto sobra si gastas lo planeado.
-           Es un numero DISTINTO al veredicto de arriba:
-             veredicto (todoBien)  = lo gastado REAL contra lo que tenes
-             saldo     (sobrante)  = lo PREVISTO contra lo que tenes
-           Se muestran los dos porque contestan preguntas distintas. -->
-      <div class="card saldo" [class.saldo-neg]="sobranteGlobal < 0">
+      <!-- 3. Cuanto sobra si se gasta lo planeado.
+           El monto cambia con el selector de arriba: si esta en "Todo el mes"
+           es la suma de Q1+Q2, si esta en una quincena es solo esa.
+           Color: rojo si es negativo, amarillo si esta cerca de cero. -->
+      <div class="card saldo"
+           [class.saldo-cero]="saldoCercaDeCero"
+           [class.saldo-neg]="sobranteGlobal < 0">
         <div class="saldo-head">
-          <span class="lbl">Saldo previsto</span>
+          <span class="lbl">{{ etiquetaPeriodoPrevisto }}</span>
           <b class="money saldo-monto">{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
-        </div>
-        <p class="saldo-txt">
-          @if (sobranteGlobal > 0) {
-            Te sobra <b>{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> si gastas lo planeado
-          } @else if (sobranteGlobal < 0) {
-            Te falta <b>{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> para cubrir lo planeado
-          } @else {
-            Lo planeado calza con lo que tienes
-          }
-        </p>
-        <div class="saldo-split">
-          <div><span class="lbl">Tienes</span><b class="num">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div><span class="lbl">Gastos planeados</span><b class="num">{{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
 
@@ -148,7 +136,7 @@ export class IngresoModalComponent {
           <button class="q-head" (click)="toggleCollapse(q)" [attr.aria-expanded]="!isCollapsed(q)">
             <span class="head-left">
               <ion-icon [name]="isCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
-              <span class="lbl">{{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }}</span>
+              <span class="lbl">{{ etiquetaQuincena(q) }}</span>
             </span>
             <span class="head-right money">{{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
           </button>
@@ -250,7 +238,7 @@ export class IngresoModalComponent {
         @for (q of filteredQs; track q) {
           <div class="card ingreso-table-card" [class.collapsed]="isIngCollapsed(q)">
             <button class="ing-head clickable" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
-              <span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }}</span>
+              <span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{ etiquetaQuincena(q) }}</span>
               <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
             </button>
             @if(!isIngCollapsed(q)){
@@ -317,19 +305,17 @@ export class IngresoModalComponent {
   .verdict-split > div{display:flex;flex-direction:column;gap:2px}
   .verdict-split b{font-size:15px}
 
-/* Saldo previsto. Sin fondo de color: es un dato, no un estado.
-   El borde lo marca solo cuando da negativo, que si no es una alerta real. */
+/* Saldo previsto: solo el monto. El color marca el estado:
+   rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
+   normal = sobra con holgura. */
 .saldo{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
     box-shadow:var(--shadow);border:1px solid var(--border)}
-.saldo.saldo-neg{border-color:#f3b0b0}
 .saldo-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
 .saldo-monto{font-size:22px;letter-spacing:-.02em}
+.saldo-cero{background:var(--warn-bg);border-color:#ffd88a}
+.saldo-cero .saldo-monto{color:var(--warn)}
+.saldo-neg{background:var(--bad-bg);border-color:#f3b0b0}
 .saldo-neg .saldo-monto{color:var(--bad)}
-.saldo-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
-.saldo-txt b{color:var(--text-strong)}
-.saldo-split{display:flex;gap:var(--sp-5);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
-.saldo-split > div{display:flex;flex-direction:column;gap:2px}
-.saldo-split b{font-size:15px}
 
 /* Uso del presupuesto */
 .usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
@@ -518,8 +504,11 @@ export class DashboardPage {
 
   /** Etiqueta del periodo activo, usada en el veredicto. */
   get etiquetaPeriodo(): string {
-    return this.quincenaActual === 'TODO' ? 'Todo el mes'
-      : this.quincenaActual === 'Q1' ? 'Quincena 1' : 'Quincena 2';
+    return this.quincenaActual === 'TODO' ? 'Todo el mes' : this.etiquetaQuincena(this.quincenaActual);
+  }
+  /** "Q1" -> "Quincena 1". Evita repetir el ternario en cada template. */
+  etiquetaQuincena(q: string): string {
+    return q === 'Q1' ? 'Quincena 1' : 'Quincena 2';
   }
 
   /**
@@ -551,6 +540,20 @@ export class DashboardPage {
    */
   get sobranteGlobal(): number {
     return this.dineroTotalGlobal - this.previstoGlobal;
+  }
+  /** "Saldo previsto · Todo el mes" / "· Quincena 1" */
+  get etiquetaPeriodoPrevisto(): string {
+    return this.quincenaActual === 'TODO' ? 'Te sobra el mes' : `Te sobra la ${this.etiquetaQuincena(this.quincenaActual)}`;
+  }
+  /**
+   * Cerca de cero: el saldo es menor al 5% de lo que tenes a mano, o es
+   * exactamente cero. Por debajo de ese umbral el saldo es real pero no
+   * alcanza para nada, asi que conviene avisarlo antes de que se haga
+   * negativo. Solo aplica cuando no es negativo; si ya es negativo va rojo.
+   */
+  get saldoCercaDeCero(): boolean {
+    if (this.sobranteGlobal < 0) return false;
+    return this.sobranteGlobal < this.dineroTotalGlobal * 0.05;
   }
   /**
    * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
