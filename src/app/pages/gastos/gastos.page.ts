@@ -10,19 +10,61 @@ import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 @Component({
   selector: 'app-gasto-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonSelect, IonSelectOption, IonText, IonButton, IonButtons, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonSelect, IonSelectOption, IonText, IonButton, IonButtons, FormsModule, CurrencyPipe],
   template: `
   <ion-header><ion-toolbar><ion-title>{{ isEdit ? 'Editar gasto' : 'Nuevo gasto' }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="categoriaId"><ion-select-option value="hogar">Hogar</ion-select-option><ion-select-option value="escuelas">Escuelas</ion-select-option><ion-select-option value="carro">Carro</ion-select-option><ion-select-option value="ejercicio">Ejercicio</ion-select-option><ion-select-option value="credito">Trj crédito</ion-select-option><ion-select-option value="lamarina">La Marina</ion-select-option><ion-select-option value="adic">Adic.</ion-select-option><ion-select-option value="impv">Impv.</ion-select-option><ion-select-option value="ahorro">Ahorro</ion-select-option><ion-select-option value="ropa">Ropa</ion-select-option></ion-select></ion-item>
-    <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Gasolina"></ion-input></ion-item>
-    <ion-item><ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input></ion-item>
+    <div class="field">
+      <ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="categoriaId">
+        <ion-select-option value="hogar">Hogar</ion-select-option><ion-select-option value="escuelas">Escuelas</ion-select-option><ion-select-option value="carro">Carro</ion-select-option><ion-select-option value="ejercicio">Ejercicio</ion-select-option><ion-select-option value="credito">Trj crédito</ion-select-option><ion-select-option value="lamarina">La Marina</ion-select-option><ion-select-option value="adic">Adic.</ion-select-option><ion-select-option value="impv">Impv.</ion-select-option><ion-select-option value="ahorro">Ahorro</ion-select-option><ion-select-option value="ropa">Ropa</ion-select-option>
+      </ion-select>
+      @if (isEdit && cambioCategoria) {
+        <span class="antes">Antes: {{ nombreCategoria(originalCategoriaId) }}</span>
+      }
+    </div>
+
+    <div class="field">
+      <ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Gasolina"></ion-input>
+      @if (isEdit && cambioDescripcion) {
+        <span class="antes">Antes: {{ originalDescripcion }}</span>
+      }
+    </div>
+
+    <div class="field">
+      <ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input>
+      @if (isEdit && cambioPrevisto) {
+        <span class="antes">Antes: {{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</span>
+      }
+    </div>
+
+    <!-- Resumen de todo lo que va a cambiar, para verlo antes de guardar -->
+    @if (isEdit && hayCambios) {
+      <div class="diff">
+        <span class="lbl">Vas a cambiar</span>
+        @if (cambioDescripcion) { <div><span>Descripción</span><s>{{ originalDescripcion }}</s> <b>{{ descripcion }}</b></div> }
+        @if (cambioPrevisto) { <div><span>Monto</span><s>{{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</s> <b>{{ previsto | currency:'MXN':'symbol':'1.0-0' }}</b></div> }
+        @if (cambioCategoria) { <div><span>Categoría</span><s>{{ nombreCategoria(originalCategoriaId) }}</s> <b>{{ nombreCategoria(categoriaId) }}</b></div> }
+      </div>
+    }
+
     @if(error){ <ion-text color="danger" class="err">{{error}}</ion-text> }
-    <ion-button expand="block" style="margin-top:20px" (click)="save()">{{ isEdit ? 'Guardar cambios' : 'Agregar' }}</ion-button>
+    <ion-button expand="block" style="margin-top:20px" (click)="save()" [disabled]="isEdit && !hayCambios">
+      {{ isEdit ? (hayCambios ? 'Guardar cambios' : 'Sin cambios') : 'Agregar' }}
+    </ion-button>
   </ion-content>
   `,
   styles: [`
   .err{display:block;margin:10px 0 0;font-size:13px}
+  .field{margin-bottom:6px}
+  .antes{display:block;font-size:11px;color:var(--text-faint);padding:2px 16px 0;text-decoration:line-through}
+  /* Resumen de cambios: tachado el valor viejo, en negrita el nuevo */
+  .diff{background:var(--surface-sunken);border:1px solid var(--border);border-radius:12px;
+    padding:12px;margin-top:8px}
+  .diff .lbl{display:block;margin-bottom:6px}
+  .diff > div{display:flex;align-items:baseline;gap:6px;font-size:13px;padding:3px 0;flex-wrap:wrap}
+  .diff > div > span{color:var(--text-muted);min-width:82px}
+  .diff s{color:var(--text-faint)}
+  .diff b{color:var(--text-strong)}
   `],
 })
 export class GastoModalComponent {
@@ -31,12 +73,31 @@ export class GastoModalComponent {
   @Input() previsto: any = null;
   /** En modo edicion devuelve update:true para que la pagina no duplique el gasto. */
   @Input() isEdit: boolean = false;
+  /** Valores con los que abrio el modal, para poder mostrar el "antes". */
+  @Input() originalCategoriaId: string = '';
+  @Input() originalDescripcion: string = '';
+  @Input() originalPrevisto: any = null;
   error = '';
+
+  private readonly CAT_NOMBRES: Record<string, string> = {
+    hogar: 'Hogar', escuelas: 'Escuelas', carro: 'Carro', ejercicio: 'Ejercicio',
+    credito: 'Trj crédito', lamarina: 'La Marina', adic: 'Adic.', impv: 'Impv.',
+    ahorro: 'Ahorro', ropa: 'Ropa',
+  };
+
+  get cambioDescripcion(): boolean { return this.descripcion.trim() !== this.originalDescripcion; }
+  get cambioPrevisto(): boolean { return Number(this.previsto) !== Number(this.originalPrevisto); }
+  get cambioCategoria(): boolean { return this.categoriaId !== this.originalCategoriaId; }
+  get hayCambios(): boolean { return this.cambioDescripcion || this.cambioPrevisto || this.cambioCategoria; }
+
+  nombreCategoria(id: string): string { return this.CAT_NOMBRES[id] || id || '-'; }
+
   constructor(private modalCtrl: ModalController) {}
   cancel(){ this.modalCtrl.dismiss(null); }
   save(){
     if (!this.descripcion?.trim()) { this.error = 'Poné una descripción'; return; }
     if (this.previsto === null || this.previsto === '' || Number(this.previsto) < 0) { this.error = 'Poné un monto válido'; return; }
+    if (this.isEdit && !this.hayCambios) { this.error = 'No cambiaste nada'; return; }
     this.modalCtrl.dismiss({
       update: this.isEdit,
       categoriaId: this.categoriaId,
@@ -274,7 +335,17 @@ export class GastosPage {
   async openEditGastoModal(g: Gasto) {
     const modal = await this.modalCtrl.create({
       component: GastoModalComponent,
-      componentProps: { isEdit: true, categoriaId: g.categoriaId, descripcion: g.descripcion, previsto: g.previsto },
+      componentProps: {
+        isEdit: true,
+        categoriaId: g.categoriaId,
+        descripcion: g.descripcion,
+        previsto: g.previsto,
+        // Se pasa el estado original aparte para que el modal pueda mostrar
+        // el "antes" de cada campo y el resumen de lo que va a cambiar.
+        originalCategoriaId: g.categoriaId,
+        originalDescripcion: g.descripcion,
+        originalPrevisto: g.previsto,
+      },
       breakpoints: [0, 0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70',
     });
     await modal.present();

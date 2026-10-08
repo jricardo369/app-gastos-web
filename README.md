@@ -156,6 +156,16 @@ edición, según un `isEdit`, y devuelve `update: true` para que la página llam
 `updateGasto` en vez de `addGasto`. El check de pagado y el botón de borrar
 detienen la propagación para que no disparen el modal.
 
+En modo edición el modal recibe aparte los valores originales
+(`originalDescripcion`, `originalPrevisto`, `originalCategoriaId`) y muestra:
+
+- bajo cada campo, el valor anterior tachado, solo si ese campo cambió;
+- un bloque "Vas a cambiar" con el antes tachado y el después en negrita;
+- el botón deshabilitado y con texto "Sin cambios" si no se editó nada.
+
+La comparación ignora espacios sobrantes y no distingue `"80"` de `80`, así que
+abrir el modal y guardarlo sin tocar nada no marca cambios.
+
 Antes solo se podía agregar y borrar: `updateGasto` existía en el servicio pero
 nadie lo llamaba.
 
