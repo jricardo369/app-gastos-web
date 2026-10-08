@@ -117,6 +117,13 @@ compitían con el veredicto, que es lo que responde "¿cómo voy?".
 Pestañas: `Inicio`, `Gastos`, `Deudas`, `Me deben`, `Movs`. Las etiquetas
 cortas entran en pantallas angostas; "Cuentas por Pagar" no entraba.
 
+**Secciones que se abren con un clic.** Ingresos arranca oculta. Es la única
+sección que es solo de edición: no aporta nada a la lectura del estado
+financiero y se usa de vez en cuando, así que no tiene por qué competir por
+espacio con las cifras. El encabezado dice "tocar para cargar o editar" para
+que se entienda que hay algo adentro. Cuando está abierta, cada quincena
+conserva su propio colapso.
+
 ## Estructura
 
 ```

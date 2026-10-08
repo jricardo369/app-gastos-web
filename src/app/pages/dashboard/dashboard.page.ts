@@ -235,10 +235,17 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 8. Ingresos: edicion en linea -->
-      <div class="section-title">Ingresos</div>
-      <div class="grid2">
-        @for (q of filteredQs; track q) {
+      <!-- 8. Ingresos: oculta por defecto. Solo se entra a tocar cuando hay que
+           cargar o corregir algo, asi que arranca cerrada y se abre con un
+           clic en el encabezado. -->
+      <div class="ing-section">
+        <button class="section-title clickable" (click)="toggleIngresos()"
+                [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
+          <span><ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Ingresos</span>
+          <span class="ing-hint">@if (ingresosHidden) { tocar para cargar o editar }</span>
+        </button>
+        <div class="grid2" id="ingresosPanel" [hidden]="ingresosHidden">
+          @for (q of filteredQs; track q) {
           <div class="card ingreso-table-card" [class.collapsed]="isIngCollapsed(q)">
             <button class="ing-head clickable" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
               <span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{ etiquetaQuincena(q) }}</span>
@@ -264,6 +271,7 @@ export class IngresoModalComponent {
           </div>
           }
         </div>
+      </div>
     </div>
   </ion-content>
   `,
@@ -338,6 +346,19 @@ export class IngresoModalComponent {
   .sum:active{background:var(--surface-sunken)}
 
   .section-title{font-family:'Comfortaa',cursive;font-size:13px;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
+  /* Igual que .section-title pero como boton, para las secciones que se abren */
+  .section-title.clickable{
+    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px var(--sp-3);cursor:pointer;font-family:inherit;text-align:left;
+    color:var(--text-strong);font-size:13px;font-weight:700;
+  }
+  .section-title.clickable > span{display:flex;align-items:center;gap:6px}
+  .section-title.clickable:hover{background:var(--surface-sunken)}
+  .section-title.clickable:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* Pista de que hay algo adentro: la seccion esta cerrada pero no vacia */
+  .ing-hint{font-family:'Nunito',sans-serif;font-size:11px;font-weight:400;color:var(--text-faint)}
+  .ing-section{display:flex;flex-direction:column;gap:var(--sp-3)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
   @media(max-width:700px){.grid2{grid-template-columns:1fr}}
 
@@ -439,6 +460,9 @@ export class DashboardPage {
   quincenaActual: 'Q1'|'Q2'|'TODO' = 'TODO';
   collapsed: Record<string, boolean> = { Q1: false, Q2: false };
   collapsedIng: Record<string, boolean> = { Q1: false, Q2: false };
+  /** La seccion de ingresos arranca oculta: solo se entra a cargar o corregir. */
+  ingresosHidden = true;
+  toggleIngresos() { this.ingresosHidden = !this.ingresosHidden; }
   gastosCollapsed = true;
   get filteredQs(): string[] { return this.quincenaActual==='TODO' ? ['Q1','Q2'] : [this.quincenaActual]; }
   editing: Record<string, boolean> = { Q1: false, Q2: false };
