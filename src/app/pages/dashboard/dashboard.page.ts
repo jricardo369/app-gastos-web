@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, createOutline, logOutOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, logOutOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-ingreso-modal',
@@ -32,7 +32,7 @@ export class IngresoModalComponent {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, FormsModule, CurrencyPipe],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonInput, FormsModule, CurrencyPipe],
   template: `
   <ion-header class="hdr">
     <ion-toolbar>
@@ -41,34 +41,91 @@ export class IngresoModalComponent {
           <span>Dashboard</span><small>{{today}}</small>
         </div>
       </ion-title>
-      <ion-button slot="end" fill="clear" (click)="logout()"><ion-icon name="log-out-outline"></ion-icon></ion-button>
+      <ion-buttons slot="end">
+        <ion-button fill="clear" (click)="logout()"><ion-icon name="log-out-outline"></ion-icon></ion-button>
+      </ion-buttons>
     </ion-toolbar>
   </ion-header>
 
   <ion-content class="bg">
     <div class="container">
 
-      <div class="q-switch">
-        <span>Quincena actual:</span>
-        <label class="chk" [class.active]="quincenaActual==='TODO'"><input type="checkbox" [checked]="quincenaActual==='TODO'" (change)="setActual('TODO')"> TODO</label>
-        <label class="chk" [class.active]="quincenaActual==='Q1'"><input type="checkbox" [checked]="quincenaActual==='Q1'" (change)="setActual('Q1')"> Q1</label>
-        <label class="chk" [class.active]="quincenaActual==='Q2'"><input type="checkbox" [checked]="quincenaActual==='Q2'" (change)="setActual('Q2')"> Q2</label>
+      <!-- 1. Selector de quincena: decide que muestra todo lo de abajo -->
+      <div class="seg" role="group" aria-label="Periodo">
+        <button class="seg-btn" [class.on]="quincenaActual==='TODO'" (click)="setActual('TODO')">Todo el mes</button>
+        <button class="seg-btn" [class.on]="quincenaActual==='Q1'" (click)="setActual('Q1')">Quincena 1</button>
+        <button class="seg-btn" [class.on]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
+      <!-- 2. Veredicto: la respuesta a "¿como voy?" sin scrollear -->
+      <div class="verdict" [class.estado-sobra]="saldoGlobal > 0" [class.estado-falta]="saldoGlobal < 0" [class.estado-ok]="saldoGlobal === 0">
+        <div class="verdict-head">
+          <span class="lbl">{{etiquetaPeriodo}}</span>
+          <span class="verdict-monto money">{{ saldoGlobal | currency:'MXN':'symbol':'1.0-0' }}</span>
+        </div>
+        <p class="verdict-txt">
+          @if (saldoGlobal > 0) {
+            Te sobra <b>{{ saldoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> este periodo
+          } @else if (saldoGlobal < 0) {
+            Te falta <b>{{ (saldoGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> este periodo
+          } @else {
+            Justo, ni sobra ni falta
+          }
+        </p>
+        <div class="verdict-split">
+          <div><span class="lbl">Ingresos</span><b class="num">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div><span class="lbl">Gastado</span><b class="num">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+        </div>
+      </div>
+
+      <!-- 3. Uso del presupuesto: la unica barra de progreso de la app -->
+      <div class="card usage">
+        <div class="usage-head">
+          <span class="lbl">Uso del presupuesto</span>
+          <b class="num">{{ pctGlobal }}%</b>
+        </div>
+        <div class="progress"><div [style.width.%]="pctGlobal"></div></div>
+        <div class="usage-foot">
+          <span>{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }} previstos</span>
+          @if (pendienteGlobal > 0) {
+            <span class="usage-rest">faltan {{ pendienteGlobal | currency:'MXN':'symbol':'1.0-0' }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- 4. Deudas y deudores: resumenes de una linea, van juntos -->
+      <div class="grid2">
+        <a class="card sum" (click)="go('/tabs/deudas')">
+          <span class="lbl">Cuentas por pagar</span>
+          <b class="money">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0' }}</b>
+          <span class="sum-sub">al mes · {{ pagosPendientesCount }} pagos de tarjeta</span>
+        </a>
+        <a class="card sum" (click)="go('/tabs/deudores')">
+          <span class="lbl">Me deben</span>
+          <b class="money">{{ deudoresTotal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          <span class="sum-sub">{{ deudoresLista.length }} personas</span>
+        </a>
+      </div>
+
+      <!-- 5. Detalle por quincena -->
+      <div class="section-title">Detalle</div>
       <div class="grid2">
         @for (q of filteredQs; track q) {
-        <div class="card q-card" [class.collapsed]="isCollapsed(q)" [class.q2]="q==='Q2'">
-          <div class="q-head" [style.background]="q==='Q1' ? '#0fb27a' : '#0e9b6b'" (click)="toggleCollapse(q)">
-            <span class="head-left"><ion-icon [name]="isCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{'DINERO TOTAL ' + q}}</span>
-            <span class="head-right">{{ ingreso(q) | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="create-outline" class="edit-icon" (click)="toggleEdit(q); $event.stopPropagation()"></ion-icon></span>
-          </div>
+        <div class="card q-card" [class.collapsed]="isCollapsed(q)">
+          <button class="q-head" (click)="toggleCollapse(q)" [attr.aria-expanded]="!isCollapsed(q)">
+            <span class="head-left">
+              <ion-icon [name]="isCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
+              <span class="lbl">{{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }}</span>
+            </span>
+            <span class="head-right money">{{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+          </button>
           @if(!isCollapsed(q)){
           <div class="q-body">
             @if(!editing[q]){
               <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
               <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="row muted"><span>Nomina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="edit-link"><a (click)="toggleEdit(q)">✎ Editar efectivo / vales / nómina</a></div>
+              <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+              <button class="link" (click)="toggleEdit(q)">Editar montos</button>
             } @else {
               <div class="edit-grid">
                 <label>Efectivo<ion-input type="number" [(ngModel)]="editVals[q].efectivo" class="edit-inp"></ion-input></label>
@@ -80,123 +137,91 @@ export class IngresoModalComponent {
                 <ion-button size="small" (click)="saveEdit(q)">Guardar</ion-button>
               </div>
             }
-            <div class="divider"></div>
-            <div class="row warn"><span style="font-size:16px">Gastos previstos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="row ok"><span style="font-size:16px">Gastos reales</span><b>{{ reales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="divider"></div>
-            <div class="row sob"><span>Sobrante</span><b>{{ sobrante(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="row saldo"><span>Saldo total</span><b>{{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="divider"></div>
-            <div class="row gasto-pend"><span>Gasto pendiente</span><b class="pend">{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            @if (todoBien(q) > 0) {
-              <div class="row sobra todo-row"><span>SOBRA DINERO</span><b>{{ todoBien(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            } @else if (todoBien(q) < 0) {
-              <div class="row falta todo-row"><span>FALTA DINERO</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            } @else {
-              <div class="row todo-row"><span>TODO EN ORDEN</span><span class="badge-ok">✓</span></div>
-            }
+
+            <hr class="sep" />
+            <div class="row"><span>Previsto en gastos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+            <div class="row"><span>Gastado real</span><b>{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="progress"><div [style.width.%]="pct(q)"></div></div>
-            <small>Falta {{ pendiente(q) | currency:'MXN':'symbol':'1.0-0'}} para completar</small>
+            <span class="usage-rest">{{ pct(q) }}% del previsto</span>
+
+            <hr class="sep" />
+            <div class="row total-row">
+              <span>Disponible</span>
+              <b [class.pos]="sobrante(q) >= 0" [class.neg]="sobrante(q) < 0">{{ sobrante(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+            </div>
+            @if (pendiente(q) > 0) {
+              <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+            }
           </div>
           }
         </div>
         }
       </div>
 
-      <div class="saldo-card">
-        @if(quincenaActual==='TODO'){
-          <span>SALDO MENSUAL PREVISTO</span><b>{{saldoPrevisto | currency:'MXN':'symbol':'1.0-0'}}</b>
-        } @else if(quincenaActual==='Q1'){
-          <span>SALDO Q1</span><b>{{ sobrante('Q1') | currency:'MXN':'symbol':'1.0-0'}}</b>
-        } @else {
-          <span>SALDO Q2</span><b>{{ sobrante('Q2') | currency:'MXN':'symbol':'1.0-0'}}</b>
-        }
-      </div>
-
-      <div class="grid2">
-        <div class="card q-card" [class.collapsed]="deudasCollapsed">
-          <div class="q-head" style="background:#ffa500" (click)="deudasCollapsed=!deudasCollapsed">
-            <span class="head-left"><ion-icon [name]="deudasCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> CUENTAS POR PAGAR</span>
-            <span class="head-right">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0'}}</span>
-          </div>
-          @if(!deudasCollapsed){
-          <div class="q-body">
-            <div class="deuda-row"><span>Pagos Tarjeta {{pagosPendientesCount}} - {{pagosPendientesMonto | currency:'MXN':'symbol':'1.0-0'}}</span><span></span></div>
-            <div class="deuda-row"><span>Deudas General - {{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</span><span></span></div>
-          </div>
-          }
-        </div>
-        <div class="card q-card" [class.collapsed]="deudoresCollapsed">
-          <div class="q-head" style="background:#45818e" (click)="deudoresCollapsed=!deudoresCollapsed">
-            <span class="head-left"><ion-icon [name]="deudoresCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> DEUDORES</span>
-            <span class="head-right">{{ deudoresTotal | currency:'MXN':'symbol':'1.0-0'}}</span>
-          </div>
-          @if(!deudoresCollapsed){
-          <div class="q-body">
-            <div class="deuda-row"><span>Total Deudores - {{deudoresTotal | currency:'MXN':'symbol':'1.0-0'}}</span><span></span></div>
-          </div>
-          }
-        </div>
-      </div>
-
-      @if(quincenaActual==='TODO' || true){
+      <!-- 6. Gastos por categoria -->
       <div class="card table-card" [class.collapsed]="gastosCollapsed">
-        <div class="card-title clickable" (click)="gastosCollapsed=!gastosCollapsed">
-          <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos mensuales</span>
-        </div>
+        <button class="card-title clickable" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
+          <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos por categoría</span>
+        </button>
         @if(!gastosCollapsed){
           @if(quincenaActual==='TODO'){
-            <div class="tbl head"><span>Categoría</span><span>Q1</span><span>Q2</span><span>Total</span></div>
+            <div class="tbl head"><span>Categoría</span><span class="num">Q1</span><span class="num">Q2</span><span class="num">Total</span></div>
             @for (r of rows; track r.cat.id) {
               <div class="tbl">
                 <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
-                <span>{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
-                <span>{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
-                <span class="bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num">{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num">{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
               </div>
             }
-            <div class="tbl total"><span>Total</span><span>{{totalQ1 | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+            <div class="tbl total"><span>Total</span><span class="num">{{totalQ1 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
           } @else if(quincenaActual==='Q1'){
-            <div class="tbl head th-3"><span>Categoría</span><span>Q1</span><span>Total</span></div>
+            <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Total mes</span></div>
             @for (r of rows; track r.cat.id) { @if(r.q1>0){
               <div class="tbl th-3">
                 <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
-                <span>{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
-                <span class="bold">{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num">{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
               </div>
             } }
-            <div class="tbl total th-3"><span>Total</span><span>{{totalQ1 | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{totalQ1 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+            <div class="tbl total th-3"><span>Total</span><span class="num">{{totalQ1 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
           } @else {
-            <div class="tbl head th-3"><span>Categoría</span><span>Q2</span><span>Total</span></div>
+            <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Total mes</span></div>
             @for (r of rows; track r.cat.id) { @if(r.q2>0){
               <div class="tbl th-3">
                 <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
-                <span>{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
-                <span class="bold">{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num">{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
               </div>
             } }
-            <div class="tbl total th-3"><span>Total</span><span>{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+            <div class="tbl total th-3"><span>Total</span><span class="num">{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
           }
         }
       </div>
-      }
 
-      <div class="grid2 ingresos-sep">
+      <!-- 7. Ingresos: edicion en linea -->
+      <div class="section-title">Ingresos</div>
+      <div class="grid2">
         @for (q of filteredQs; track q) {
           <div class="card ingreso-table-card" [class.collapsed]="isIngCollapsed(q)">
-            <div class="ing-head clickable" (click)="toggleIngCollapse(q)"><span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Ingresos {{q}}</span><b>{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+            <button class="ing-head clickable" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
+              <span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }}</span>
+              <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+            </button>
             @if(!isIngCollapsed(q)){
             <div class="ing-col">
-              <div class="ing-list head"><span>Concepto</span><span>Monto</span><span></span></div>
               @for (ing of getIngresos(q); track ing.id) {
                 <div class="ing-list">
-                  <span><input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto"></span>
-                  <span><input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)"></span>
-                  <span><button class="del" (click)="removeIngreso(q, ing.id)">×</button></span>
+                  <span><input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso"></span>
+                  <span><input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso"></span>
+                  <span><button class="del" (click)="removeIngreso(q, ing.id)" aria-label="Eliminar ingreso">&times;</button></span>
                 </div>
               }
-              <div class="add-ing" style="justify-content:flex-end">
-                <ion-button size="small" (click)="openAddIngresoModal(q)">+ Agregar ingreso</ion-button>
+              @if (getIngresos(q).length === 0) {
+                <div class="empty">Sin ingresos cargados</div>
+              }
+              <div class="add-ing">
+                <ion-button size="small" fill="outline" (click)="openAddIngresoModal(q)">Agregar ingreso</ion-button>
               </div>
             </div>
             }
@@ -209,95 +234,126 @@ export class IngresoModalComponent {
   styles: [`
   .hdr ion-toolbar{--background:#fff}
   .title-wrap{display:flex;flex-direction:column;line-height:1}
-  .title-wrap small{font-size:11px;color:#6b7a90;font-weight:400}
+  .title-wrap small{font-size:11px;color:var(--text-muted);font-weight:400}
   .bg{--background:#eef2f7}
-  .container{padding:14px;max-width:900px;margin:0 auto}
-  .greeting{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px}
-  .greeting h2{margin:0;font-size:18px;font-weight:800;color:#0f3a5d}
-  .greeting p{margin:2px 0 0;color:#6b7a90;font-size:12px}
-  .pill{background:#0f3a5d;color:#fff;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700}
-  .q-switch{display:flex;gap:10px;align-items:center;background:#fff;border-radius:999px;padding:8px 14px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,.05);flex-wrap:wrap}
-  .q-switch span{font-size:12px;font-weight:700;color:#0f3a5d}
-  .chk{font-size:12px;font-weight:700;color:#6b7a90;display:flex;gap:6px;align-items:center;border:1px solid #e6eaf0;border-radius:999px;padding:4px 10px;cursor:pointer}
-  .chk.active{background:#0f3a5d;color:#fff;border-color:#0f3a5d}
-  .chk input{accent-color:#0f3a5d}
-  .hint{font-size:10px;color:#9aa8c0;margin-left:auto}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+
+  /* Segmento de periodo: botones reales, no labels con checkbox.
+     El checkbox escondido obligaba a adivinar si estaba activo. */
+  .seg{display:flex;gap:2px;background:var(--surface-sunken);padding:3px;border-radius:var(--radius-pill)}
+  .seg-btn{
+    flex:1;border:none;background:transparent;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:700;
+    color:var(--text-muted);padding:8px 10px;border-radius:var(--radius-pill);
+    transition:background .15s ease,color .15s ease;
+  }
+  .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
+  .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* Veredicto: lo primero que se ve, y lo unico con color de fondo fuerte.
+     Verde = sobra, rojo = falta, neutro = justo. El color aqui SI significa algo. */
+  .verdict{
+    background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
+    box-shadow:var(--shadow);border:1px solid var(--border);
+    border-left:4px solid var(--text-muted);
+  }
+  .verdict.estado-sobra{border-left-color:var(--ok);background:linear-gradient(0deg,var(--ok-bg) 0 100%)}
+  .verdict.estado-falta{border-left-color:var(--bad);background:linear-gradient(0deg,var(--bad-bg) 0 100%)}
+  .verdict.estado-ok{border-left-color:var(--info)}
+  .verdict-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
+  .verdict-monto{font-size:26px;line-height:1.1;letter-spacing:-.02em}
+  .estado-sobra .verdict-monto{color:var(--ok)}
+  .estado-falta .verdict-monto{color:var(--bad)}
+  .verdict-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
+  .verdict-txt b{color:var(--text-strong)}
+  .verdict-split{display:flex;gap:var(--sp-5);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
+  .verdict-split > div{display:flex;flex-direction:column;gap:2px}
+  .verdict-split b{font-size:15px}
+
+  /* Uso del presupuesto */
+  .usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
+  .usage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-2)}
+  .usage-head b{font-size:15px;color:var(--text-strong)}
+  .usage-foot{display:flex;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-2);font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+  .usage-rest{color:var(--text-muted);font-size:12px}
+
+  /* Resumenes de una linea (deudas / deudores). Clickeable = navegable. */
+  .sum{
+    display:flex;flex-direction:column;gap:2px;padding:var(--sp-4);cursor:pointer;
+    background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+    border:1px solid var(--border);text-decoration:none;
+  }
+  .sum b{font-size:20px;letter-spacing:-.01em}
+  .sum-sub{font-size:12px;color:var(--text-muted)}
+  .sum:active{background:var(--surface-sunken)}
+
+  .section-title{font-family:'Comfortaa',cursive;font-size:13px;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
   @media(max-width:700px){.grid2{grid-template-columns:1fr}}
-  .card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden}
-  .card.collapsed{opacity:.95}
-  .q-card.collapsed{padding-bottom:6px}
-  .q-head{color:#fff;font-weight:800;padding:10px 14px;display:flex;justify-content:space-between;font-size:16px;cursor:pointer;align-items:center}
-  .head-left{display:flex;gap:6px;align-items:center}
-  .head-right{display:flex;gap:8px;align-items:center}
-  .edit-icon{font-size:16px;background:rgba(255,255,255,.2);border-radius:6px;padding:4px}
-  .q-body{padding:12px 14px}
-  .row{display:flex;justify-content:space-between;font-size:16px;padding:3px 0}
-  .row.muted{color:#9aa8c0}
-  .row.warn{color:#b77900;background:#fff8e1;border-radius:6px;padding:4px 6px;font-size:16px !important}
-  .row.warn span{font-size:16px !important}
-  .row.ok{color:#0b7a4a;background:#e6f7ed;border-radius:6px;padding:4px 6px;margin-top:4px}
-  .row.sob{color:#7a3fa0;background:#f3e8ff;border-radius:6px;padding:4px 6px;margin-top:6px;font-weight:700}
-  .row.saldo{color:#0f3a5d;background:#e8f0fe;border-radius:6px;padding:4px 6px;margin-top:6px;font-weight:700}
-  .row.gasto-pend{padding:4px 6px;margin-top:6px;font-weight:700}
-  .row.sobra{color:#b77900;background:#fff3e0;border-radius:6px;padding:4px 6px;font-weight:800;border:1px solid #ffcc80;margin-top:8px}
-  .row.falta{color:#c62828;background:#ffebee;border-radius:6px;padding:4px 6px;font-weight:800;border:1px solid #ef9a9a;margin-top:8px}
-  .row.todo-row{margin-top:8px}
-  .divider{height:1px;background:#eef2f7;margin:6px 0}
-  .badge-ok{color:#0fb27a;font-weight:800}
-  .pend{color:#0f3a5d}
-  .progress{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden;margin-top:6px}
-  .progress div{height:100%;background:#0fb27a}
-  .q-card small{font-size:10px;color:#6b7a90}
-  .edit-link{margin:6px 0}
-  .edit-link a{font-size:11px;color:#0f3a5d;font-weight:700;cursor:pointer;text-decoration:underline}
-  .edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
+
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+
+  /* Encabezados de tarjeta: sin fondo de color, sin mayusculas.
+     El peso y el tamano dan la jerarquia; el color se reserva para el estado. */
+  .q-head{
+    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+    padding:var(--sp-3) var(--sp-4);cursor:pointer;border:none;
+    background:var(--surface);font-family:inherit;
+  }
+  .q-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .head-left{display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:11px}
+  .head-right{font-size:16px}
+  .q-body{padding:0 var(--sp-4) var(--sp-4)}
+
+  .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
+  .total-row{font-size:16px;font-weight:700}
+  .total-row b.pos{color:var(--ok)}
+  .total-row b.neg{color:var(--bad)}
+
+  .link{background:none;border:none;padding:0;margin-top:var(--sp-2);cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:700;color:var(--accent);text-decoration:underline}
+  .edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin:var(--sp-3) 0}
   @media(max-width:500px){.edit-grid{grid-template-columns:1fr}}
-  .edit-grid label{font-size:11px;color:#6b7a90;font-weight:700;display:flex;flex-direction:column;gap:4px}
-  .edit-inp{--background:#f4f6f9;border-radius:8px;--padding-start:8px}
-  .edit-actions{display:flex;gap:8px;justify-content:flex-end}
-  .table-card{padding:14px;margin-top:12px}
-  .table-card.collapsed{padding-bottom:6px}
-  .card-title{font-weight:800;color:#0f3a5d;margin-bottom:8px;font-size:16px;text-transform:uppercase}
-  .card-title.clickable{cursor:pointer;display:flex;justify-content:space-between;align-items:center}
-  .collapse-hint{font-size:11px;color:#9aa8c0;font-weight:400}
-  .card-title.sm{font-size:13px;display:flex;justify-content:space-between}
-  .price{background:#ff9a3d;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px}
-  .price.teal{background:#0f7a7a}
-  .tbl{display:grid;grid-template-columns:1.2fr .7fr .7fr .8fr;gap:6px;padding:6px 0;border-bottom:1px solid #f0f2f7;font-size:12px;align-items:center}
-  .tbl.th-3{grid-template-columns:1.2fr .8fr .8fr}
-  .tbl.head{font-weight:700;color:#6b7a90;background:#f8fafc;border-radius:8px;padding:8px 6px}
-  .tbl.total{font-weight:800;background:#f8fafc;border-radius:8px;margin-top:6px}
-  .cat{display:flex;align-items:center;gap:6px}
-  .cat i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .edit-grid label{font-size:11px;color:var(--text-muted);font-weight:700;display:flex;flex-direction:column;gap:4px}
+  .edit-inp{--background:var(--surface-input);border-radius:var(--radius-sm);--padding-start:8px}
+  .edit-actions{display:flex;gap:var(--sp-2);justify-content:flex-end}
+
+  /* Tablas: cifras alineadas a la derecha con tabular-nums */
+  .table-card{padding:var(--sp-4)}
+  .card-title{
+    width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
+    font-size:14px;font-weight:700;color:var(--text-strong);margin-bottom:var(--sp-3);
+    display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+  }
+  .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:var(--sp-2);padding:8px 0;
+    border-bottom:1px solid var(--border-subtle);font-size:13px;align-items:center}
+  .tbl .num{text-align:right}
+  .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
+  .tbl.head{font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-sunken);
+    border-radius:var(--radius-sm);padding:8px;border-bottom:none}
+  .tbl.total{font-weight:700;background:var(--surface-sunken);border-radius:var(--radius-sm);
+    border-bottom:none;margin-top:var(--sp-2)}
+  .cat{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .cat i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
   .bold{font-weight:700}
-  .saldo-card{margin:12px 0;background:#ffe8d6;color:#e88c00;border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;font-weight:800}
-  .saldo-card b{font-size:18px}
-  .chip{border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;color:#0f3a5d}
-  .chip.ropa{background:#ffe18f}
-  .chip.purple{background:#a8a4ff;color:#fff}
-  .pad-card{padding:14px}
-  .pad-card .card-title{margin:0 0 10px 0}
-  .inner{padding:4px 2px}
-  .deuda-row{display:flex;justify-content:space-between;font-size:12px;padding:8px 10px;border-bottom:1px solid #f0f2f7;background:#fafbfc;border-radius:8px;margin-bottom:6px}
-  .deuda-row:last-child{margin-bottom:0}
-  .falta{font-size:11px;color:#c0392b;display:flex;gap:4px;align-items:center;margin:6px 2px 0 2px}
-  .ingreso-table-card{padding:14px;margin-top:0;overflow:hidden}
-  .ingresos-sep{margin-top:28px}
-  .ingreso-table-card.collapsed{padding-bottom:6px;opacity:.95}
-  .ing-head.clickable{cursor:pointer}
-  .ing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media(max-width:700px){.ing-grid{grid-template-columns:1fr}}
-  .ing-col{background:#fafbfc;border-radius:12px;padding:10px}
-  .ing-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:#0f3a5d;margin-bottom:8px;font-size:16px;text-transform:uppercase}
-  .ing-head b{color:#0fb27a}
-  .ing-list{display:grid;grid-template-columns:1fr 90px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #eef2f7;font-size:12px}
-  .ing-list.head{font-weight:700;color:#6b7a90;background:#fff;border-radius:8px;padding:6px}
-  .cell-inp{width:100%;border:1px solid #e6eaf0;border-radius:6px;padding:6px 8px;font-size:12px;background:#fff}
-  .cell-inp.num{text-align:right}
-  .add-ing{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
-  .add-ing .inp{--background:#fff;border-radius:8px;--padding-start:8px;min-width:90px}
-  .del{border:none;background:transparent;color:#c0392b;font-size:18px;cursor:pointer}
+
+  .ingreso-table-card{padding:var(--sp-4)}
+  .ing-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+    width:100%;text-align:left;background:none;border:none;padding:0 0 var(--sp-3);
+    cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:var(--text-strong)}
+  .ing-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .ing-head > span{display:flex;align-items:center;gap:6px}
+  .ing-col{background:var(--surface-sunken);border-radius:var(--radius);padding:var(--sp-2)}
+  .ing-list{display:grid;grid-template-columns:1fr 96px 32px;gap:var(--sp-2);
+    align-items:center;padding:4px 0}
+  .cell-inp{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
+    padding:8px;font-size:13px;background:var(--surface);font-family:inherit;color:var(--text-body)}
+  .cell-inp.num{text-align:right;font-variant-numeric:tabular-nums}
+  .add-ing{display:flex;justify-content:flex-end;margin-top:var(--sp-2)}
+  .del{border:none;background:transparent;color:var(--text-faint);font-size:20px;
+    cursor:pointer;line-height:1;width:32px;height:32px;border-radius:var(--radius-sm)}
+  .del:hover{background:var(--bad-bg);color:var(--bad)}
   `]
 })
 export class DashboardPage {
@@ -315,7 +371,6 @@ export class DashboardPage {
   pagosPendientesCount = 0;
   pagosPendientesMonto = 0;
   pagosPendientesTotal = 0;
-  saldoPrevisto = 0;
   rows: any[] = [];
   totalQ1 = 0; totalQ2 = 0;
   quincenaActual: 'Q1'|'Q2'|'TODO' = 'TODO';
@@ -323,8 +378,6 @@ export class DashboardPage {
   collapsedIng: Record<string, boolean> = { Q1: false, Q2: false };
   gastosCollapsed = true;
   get filteredQs(): string[] { return this.quincenaActual==='TODO' ? ['Q1','Q2'] : [this.quincenaActual]; }
-  deudasCollapsed = true;
-  deudoresCollapsed = true;
   editing: Record<string, boolean> = { Q1: false, Q2: false };
   editVals: Record<string, any> = { Q1: { efectivo: 0, vales: 0, nomina: 0 }, Q2: { efectivo: 0, vales: 0, nomina: 0 } };
   newIngConcepto: Record<string, string> = { Q1: '', Q2: '' };
@@ -333,7 +386,7 @@ export class DashboardPage {
   private manualIngToggle = new Set<string>();
 
   constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronDownOutline, chevronUpOutline, createOutline, logOutOutline });
+    addIcons({ chevronDownOutline, chevronUpOutline, logOutOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.applyAutoCollapse();
@@ -354,7 +407,8 @@ export class DashboardPage {
     }).filter(r => r.q1 || r.q2);
     this.totalQ1 = this.rows.reduce((s, r) => s + r.q1, 0);
     this.totalQ2 = this.rows.reduce((s, r) => s + r.q2, 0);
-    this.saldoPrevisto = this.budget.resumenQuincena('Q1').sobrante + this.budget.resumenQuincena('Q2').sobrante;
+    // El 'sobrante' previsto por quincena ya lo calcula saldoGlobal() en el
+    // veredicto, asi que no hace falta guardarlo en un campo.
     this.pagosTC = this.budget.getPagosTC();
     this.deudas = this.budget.getDeudas();
     this.deudoresLista = this.budget.getDeudoresLista();
@@ -365,7 +419,11 @@ export class DashboardPage {
     this.pagosPendientesMonto = this.pagosTC.filter((p:any)=>!p.pagado).reduce((s:any,p:any)=>s+(Number(p.monto)||0),0);
     this.pagosPendientesTotal = this.pagosTC.filter((p:any)=>!p.pagado).reduce((s:any,p:any)=>s+(Number(p.montoTotal)||0),0);
     this.deudores = this.budget.getDeudores();
-    this.deudoresTotal = this.deudores.reduce((s, d) => s + d.monto, 0);
+    // 'Me deben' se calcula sobre la lista de deudores (los que me deben a mi),
+    // no sobre deudores[], que son las deudas que yo debo. Antes se mezclaban.
+    this.deudoresTotal = this.deudoresLista
+      .filter((d: any) => !(d.pagados > 0 && d.pagados >= d.pagos))
+      .reduce((s: any, d: any) => s + (Number(d.saldo) || 0), 0);
   }
   getIngresos(q: string) { return this.budget.getIngresos(q as any); }
   getIngresoTotal(q: string) { return this.budget.getIngresoTotal(q as any); }
@@ -382,6 +440,37 @@ export class DashboardPage {
   pct(q: any) { const r = this.budget.resumenQuincena(q); return r.previstos ? Math.round((r.reales / r.previstos) * 100) : 0; }
   isCollapsed(q: string) { return !!this.collapsed[q]; }
   isIngCollapsed(q: string) { return !!this.collapsedIng[q]; }
+  go(url: string) { this.router.navigateByUrl(url); }
+
+  /** Etiqueta del periodo activo, usada en el veredicto. */
+  get etiquetaPeriodo(): string {
+    return this.quincenaActual === 'TODO' ? 'Todo el mes'
+      : this.quincenaActual === 'Q1' ? 'Quincena 1' : 'Quincena 2';
+  }
+
+  /**
+   * Agregados del periodo activo. El veredicto de arriba tiene que sumar
+   * lo mismo que muestran las tarjetas de abajo, si no el usuario ve dos
+   * numeros distintos para la misma pregunta.
+   */
+  get ingresoTotalGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.getIngresoTotal(q), 0);
+  }
+  get gastoRealGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.reales(q), 0);
+  }
+  get previstoGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.previstos(q), 0);
+  }
+  get pendienteGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.pendiente(q), 0);
+  }
+  get saldoGlobal(): number {
+    return this.ingresoTotalGlobal - this.gastoRealGlobal;
+  }
+  get pctGlobal(): number {
+    return this.previstoGlobal ? Math.round((this.gastoRealGlobal / this.previstoGlobal) * 100) : 0;
+  }
   toggleCollapse(q: string) { this.collapsed[q] = !this.collapsed[q]; if (this.collapsed[q]) this.manualToggle.add(q); else this.manualToggle.delete(q); }
   toggleIngCollapse(q: string) { this.collapsedIng[q] = !this.collapsedIng[q]; if (this.collapsedIng[q]) this.manualIngToggle.add(q); else this.manualIngToggle.delete(q); }
   setActual(q: 'Q1'|'Q2'|'TODO') { this.budget.setQuincenaActual(q as any); this.manualToggle.clear(); this.manualIngToggle.clear(); this.applyAutoCollapse(); }

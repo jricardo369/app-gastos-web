@@ -4,7 +4,7 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonIt
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
-import { cashOutline, checkmarkCircle, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { cashOutline, checkmarkCircle } from 'ionicons/icons';
 
 @Component({
   selector: 'app-deudor-simple-modal',
@@ -41,37 +41,52 @@ export class DeudorSimpleModal {
   standalone: true,
   imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonIcon, FormsModule, CurrencyPipe],
   template: `
-  <ion-header><ion-toolbar><ion-title>Deudores</ion-title></ion-toolbar></ion-header>
+  <ion-header><ion-toolbar><ion-title>Me deben</ion-title></ion-toolbar></ion-header>
   <ion-content class="bg">
     <div class="container">
+
+      <!-- Total primero: es la pregunta de esta pantalla -->
+      <div class="card head-card">
+        <span class="lbl">Total por cobrar</span>
+        <b class="money big">{{ total | currency:'MXN':'symbol':'1.0-0' }}</b>
+        <span class="lbl">{{ activos.length }} {{ activos.length === 1 ? 'persona' : 'personas' }}</span>
+      </div>
+
       <div class="card">
-        <div class="head" style="background:#7b1fa2">DEUDORES <span>{{total | currency:'MXN':'symbol':'1.0-0'}}</span></div>
-        <div class="add" style="justify-content:flex-end">
-          <ion-button size="small" (click)="openAdd()">+ Agregar deudor</ion-button>
+        <div class="head">
+          <span class="lbl">Pendientes</span>
+          <ion-button size="small" fill="outline" (click)="openAdd()">Agregar</ion-button>
         </div>
-        <div class="tbl2 head" style="grid-template-columns:90px 90px 1fr 90px"><span>FECHA ALTA</span><span>FECHA VENC</span><span>DESC</span><span>MONTO</span></div>
-        @for (d of activos; track d.id){
-          <div class="tbl2 row-click" (click)="edit(d)" style="grid-template-columns:90px 90px 1fr 90px">
-            <span>{{d.fechaInicio}}</span><span>{{d.fechaFin || '-'}}</span><span>{{d.nombre}}</span><span style="display:flex;align-items:center;gap:6px">{{d.saldo | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="cash-outline" (click)="toHistorial(d); $event.stopPropagation()" style="cursor:pointer;color:#0f3a5d;font-size:16px"></ion-icon></span>
-          </div>
-        }
-        @if(activos.length===0){<div class="empty">Sin deudores</div>}
-        <div class="totals">
-          <div>Total <b>{{total | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+        <div class="list">
+          @for (d of activos; track d.id){
+            <div class="li row-click" (click)="edit(d)">
+              <div class="li-body">
+                <span class="li-title">{{ d.nombre }}</span>
+                <span class="li-sub">Alta {{ d.fechaInicio }} @if (d.fechaFin) { · vence {{ d.fechaFin }} }</span>
+              </div>
+              <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
+              <button class="icon-btn" (click)="toHistorial(d); $event.stopPropagation()" [attr.aria-label]="'Ver historial de pagos de ' + d.nombre">
+                <ion-icon name="cash-outline"></ion-icon>
+              </button>
+            </div>
+          }
+          @if(activos.length===0){<div class="empty">Nadie te debe nada. Agregá un deudor cuando prestes.</div>}
         </div>
-        <div style="text-align:center">
-          <ion-button fill="clear" (click)="historialVisible=!historialVisible" style="--background:transparent;--box-shadow:none;color:#0fb27a;font-size:12px">
-            <ion-icon [name]="historialVisible?'eye-off-outline':'eye-outline'" slot="start"></ion-icon>
+        <div class="card-foot">
+          <ion-button size="small" fill="clear" (click)="historialVisible=!historialVisible">
             {{historialVisible?'Ocultar historial':'Ver historial de pagos'}}
           </ion-button>
         </div>
         @if(historialVisible){
-        <div class="card" style="margin:0 8px 8px 8px">
-          <div class="head" style="background:#4a148c">HISTORIAL DE PAGOS</div>
-          <div class="tbl2 head" style="grid-template-columns:90px 90px 1fr 90px"><span>FECHA ALTA</span><span>FECHA VENC</span><span>DESC</span><span>MONTO</span></div>
+        <div class="sublist">
           @for (d of historial; track d.id){
-            <div class="tbl2" style="grid-template-columns:90px 90px 1fr 90px">
-              <span>{{d.fechaInicio}}</span><span>{{d.fechaFin || '-'}}</span><span>{{d.nombre}}</span><span style="display:flex;align-items:center;gap:4px">{{d.saldo | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="checkmark-circle" style="color:#0fb27a;font-size:14px"></ion-icon></span>
+            <div class="li sm">
+              <div class="li-body">
+                <span class="li-title">{{ d.nombre }}</span>
+                <span class="li-sub">{{ d.fechaInicio }}</span>
+              </div>
+              <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
+              <ion-icon name="checkmark-circle" class="ok"></ion-icon>
             </div>
           }
           @if(historial.length===0){<div class="empty">Sin historial</div>}
@@ -83,17 +98,34 @@ export class DeudorSimpleModal {
   `,
   styles: [`
   .bg{--background:#eef2f7}
-  .container{padding:10px;max-width:1000px;margin:0 auto}
-  .card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;margin-bottom:12px;padding-bottom:8px}
-  .head{padding:10px 14px;font-weight:800;color:#fff;display:flex;justify-content:space-between}
-  .add{display:flex;gap:6px;padding:8px;flex-wrap:wrap;align-items:center}
-  .tbl2{display:grid;gap:6px;padding:8px;font-size:11px;border-bottom:1px solid #f0f2f7;align-items:center}
-  .tbl2.head{font-weight:700;color:#0f3a5d;background:#f3e0ff}
+  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+
+  /* El total no es un encabezado de color: es la cifra de la pantalla */
+  .head-card{display:flex;flex-direction:column;gap:2px;padding:var(--sp-4)}
+  .money.big{font-size:28px;letter-spacing:-.02em}
+
+  .head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)}
+  .list{display:flex;flex-direction:column}
+  .sublist{background:var(--surface-sunken);border-top:1px solid var(--border-subtle)}
+
+  .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+    border-bottom:1px solid var(--border-subtle);text-align:left;width:100%;
+    background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
+  .li:last-child{border-bottom:none}
+  .li.sm{padding:10px var(--sp-4)}
+  .li-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .li-title{font-size:14px;color:var(--text-body);overflow-wrap:anywhere}
+  .li-sub{font-size:11px;color:var(--text-faint)}
+  .li-amount{font-size:14px;font-weight:700;color:var(--text-strong);white-space:nowrap}
   .row-click{cursor:pointer}
-  .row-click:hover{background:#f8fafc}
-  .empty{text-align:center;color:#9aa8c0;padding:20px}
-  .totals{display:flex;gap:16px;justify-content:flex-end;padding:10px;font-size:12px;flex-wrap:wrap}
-  .totals b{color:#0f3a5d}
+  .row-click:hover{background:var(--surface-sunken)}
+  .icon-btn{border:none;background:transparent;color:var(--text-muted);cursor:pointer;
+    width:36px;height:36px;border-radius:var(--radius-sm);font-size:18px;flex:none}
+  .icon-btn:hover{background:var(--surface-input)}
+  .ok{color:var(--positive);font-size:16px;flex:none}
+  .card-foot{display:flex;justify-content:center;padding:0 var(--sp-2) var(--sp-1)}
   `]
 })
 export class DeudoresPage {
@@ -103,7 +135,7 @@ export class DeudoresPage {
   total = 0;
   historialVisible = false;
   constructor(private budget: BudgetService, private modalCtrl: ModalController, private alertCtrl: AlertController, private toastCtrl: ToastController){
-    addIcons({ cashOutline, checkmarkCircle, eyeOutline, eyeOffOutline });
+    addIcons({ cashOutline, checkmarkCircle });
     this.refresh();
     this.budget.deudoresLista$.subscribe(()=>this.refresh());
   }

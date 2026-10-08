@@ -1,1 +1,30 @@
+/* Las 5 pestañas comparten el ancho disponible. Con etiquetas largas
+   ("Cuentas por Pagar") el texto se recortaba en pantallas angostas.
+   Acortar los labels en el HTML alcanza, pero el ancho igual se reparte
+   con flex para que ninguna domine. */
+ion-tab-bar {
+  --background: var(--surface);
+  --border: 1px solid var(--border);
+  padding: 2px 0;
+}
 
+ion-tab-bar ion-tab-button {
+  --color: var(--text-muted);
+  --color-selected: var(--text-strong);
+  --padding-start: 2px;
+  --padding-end: 2px;
+  min-width: 0;
+}
+
+ion-tab-bar ion-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+ion-tab-bar ion-label {
+  font-size: 10px;
+  font-weight: 700;
+  /* Nunca truncar a la mitad de una palabra */
+  white-space: nowrap;
+  overflow: visible;
+}

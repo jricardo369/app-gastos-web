@@ -4,7 +4,7 @@ import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonIt
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, eyeOutline, eyeOffOutline, cashOutline } from 'ionicons/icons';
+import { checkmarkCircle, cashOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tc-modal',
@@ -52,103 +52,149 @@ export class TcModalComponent {
   <ion-header><ion-toolbar><ion-title>Cuentas por Pagar</ion-title></ion-toolbar></ion-header>
   <ion-content class="bg">
     <div class="container">
+
+      <!-- Deudas generales -->
       <div class="card">
-        <div class="head la">DEUDAS GENERALES <span>{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</span></div>
-        <div class="add" style="justify-content:flex-end">
-          <ion-button size="small" (click)="openAddMarinaModal()">+ Agregar pago</ion-button>
+        <div class="head">
+          <span class="lbl">Deudas generales</span>
+          <span class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
         </div>
-        <div class="tbl2 head" style="grid-template-columns:90px 80px 1fr 80px 60px 90px"><span>FECHA</span><span>TIPO</span><span>DESC</span><span>MONTO</span><span>MENS</span><span>TOTAL</span></div>
-        @for (d of deudasActivas; track d.id){
-          <div class="tbl2 row-click" (click)="editMarina(d)" style="grid-template-columns:90px 80px 1fr 80px 60px 90px">
-            <span>{{d.fechaInicio}}</span><span>{{d.tipo || '-'}}</span><span>{{d.nombre}}</span><span>{{d.mensualidad | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{d.pagados}}:{{d.pagos}}</span><span style="display:flex;align-items:center;gap:6px">{{d.saldo | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="cash-outline" (click)="toMarinaHistorial(d); $event.stopPropagation()" style="cursor:pointer;color:#0f3a5d;font-size:16px"></ion-icon></span>
-          </div>
-        }
-        @if(deudasActivas.length===0){<div class="empty">Sin deudas registradas</div>}
+        <div class="list">
+          @for (d of deudasActivas; track d.id){
+            <div class="li row-click" (click)="editMarina(d)">
+              <div class="li-body">
+                <span class="li-title">{{ d.nombre }}</span>
+                <span class="li-sub">{{ d.fechaInicio }} @if (d.tipo) { · {{ d.tipo }} } · {{ d.pagados }}/{{ d.pagos }} pagos</span>
+              </div>
+              <div class="li-right">
+                <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <span class="li-sub num">{{ d.mensualidad | currency:'MXN':'symbol':'1.0-0' }}/mes</span>
+              </div>
+              <button class="icon-btn" (click)="toMarinaHistorial(d); $event.stopPropagation()" aria-label="Ver historial de pagos de esta deuda">
+                <ion-icon name="cash-outline"></ion-icon>
+              </button>
+            </div>
+          }
+          @if(deudasActivas.length===0){<div class="empty">Sin deudas registradas</div>}
+        </div>
         <div class="totals">
-          <div>Deuda mensual <b>{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div>Deuda total <b>{{totalLa | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div>Deuda mensual <b class="num">{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div>Deuda total <b class="num">{{totalLa | currency:'MXN':'symbol':'1.0-0'}}</b></div>
         </div>
-        <div style="text-align:center">
-          <ion-button fill="clear" (click)="historialMarinaVisible=!historialMarinaVisible" style="--background:transparent;--box-shadow:none;color:#0fb27a;font-size:12px">
-            <ion-icon [name]="historialMarinaVisible?'eye-off-outline':'eye-outline'" slot="start"></ion-icon>
+        <div class="card-foot">
+          <ion-button size="small" fill="clear" (click)="historialMarinaVisible=!historialMarinaVisible">
             {{historialMarinaVisible?'Ocultar historial':'Ver historial de pagos'}}
           </ion-button>
         </div>
         @if(historialMarinaVisible){
-        <div class="card" style="margin:0 8px 8px 8px">
-          <div class="head" style="background:#0b7a3e">HISTORIAL DE PAGOS</div>
-          <div class="tbl2 head" style="grid-template-columns:90px 80px 1fr 80px 60px 90px"><span>FECHA</span><span>TIPO</span><span>DESC</span><span>MONTO</span><span>MENS</span><span>TOTAL</span></div>
+        <div class="sublist">
           @for (d of historialMarina; track d.id){
-            <div class="tbl2" style="grid-template-columns:90px 80px 1fr 80px 60px 90px">
-              <span>{{d.fechaInicio}}</span><span>{{d.tipo || '-'}}</span><span>{{d.nombre}}</span><span>{{d.mensualidad | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{d.pagados}}:{{d.pagos}}</span><span style="display:flex;align-items:center;gap:4px">{{d.saldo | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="checkmark-circle" style="color:#0fb27a;font-size:14px"></ion-icon></span>
+            <div class="li sm">
+              <div class="li-body">
+                <span class="li-title">{{ d.nombre }}</span>
+                <span class="li-sub">{{ d.fechaInicio }}</span>
+              </div>
+              <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
+              <ion-icon name="checkmark-circle" class="ok"></ion-icon>
             </div>
           }
           @if(historialMarina.length===0){<div class="empty">Sin historial</div>}
         </div>
         }
+        <div class="add"><ion-button size="small" fill="outline" (click)="openAddMarinaModal()">Agregar deuda</ion-button></div>
       </div>
 
+      <!-- Pagos de tarjeta -->
       <div class="card">
-        <div class="head blue">PAGOS TARJETA DE CREDITO RECURRENTES</div>
-        <div class="add" style="justify-content:flex-end">
-          <ion-button size="small" (click)="openAddTCModal()">+ Agregar pago</ion-button>
+        <div class="head">
+          <span class="lbl">Pagos de tarjeta</span>
+          <span class="money">{{ deudaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
         </div>
-        <div class="tbl2 head"><span>FECHA</span><span>DESC</span><span>MONTO</span><span>MENS</span><span>TOTAL</span></div>
-        @for (p of pagosActivos; track p.id){
-          <div class="tbl2 row-click" (click)="editTC(p)">
-            <span>{{p.fechaCompra}}</span><span>{{p.desc}}</span><span>{{p.monto | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{p.mensualidadPagada}}:{{p.mensualidad}}</span><span style="display:flex;align-items:center;gap:6px">{{p.montoTotal | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="cash-outline" (click)="toHistorial(p); $event.stopPropagation()" style="cursor:pointer;color:#0f3a5d;font-size:16px"></ion-icon></span>
-          </div>
-        }
+        <div class="list">
+          @for (p of pagosActivos; track p.id){
+            <div class="li row-click" (click)="editTC(p)">
+              <div class="li-body">
+                <span class="li-title">{{ p.desc }}</span>
+                <span class="li-sub">{{ p.fechaCompra }} · {{ p.mensualidadPagada }}/{{ p.mensualidad }} pagos</span>
+              </div>
+              <div class="li-right">
+                <span class="li-amount num">{{ p.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <span class="li-sub num">{{ p.monto | currency:'MXN':'symbol':'1.0-0' }}</span>
+              </div>
+              <button class="icon-btn" (click)="toHistorial(p); $event.stopPropagation()" aria-label="Ver historial de pagos de este pago">
+                <ion-icon name="cash-outline"></ion-icon>
+              </button>
+            </div>
+          }
+          @if(pagosActivos.length===0){<div class="empty">Sin pagos de tarjeta registrados</div>}
+        </div>
         <div class="totals">
-          <div>Deuda mensual <b>{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div>Deuda total <b>{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div>Deuda mensual <b class="num">{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div>Deuda total <b class="num">{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
         </div>
-        <div style="text-align:center">
-          <ion-button fill="clear" (click)="historialVisible=!historialVisible" style="--background:transparent;--box-shadow:none;color:#0fb27a;font-size:12px">
-            <ion-icon [name]="historialVisible?'eye-off-outline':'eye-outline'" slot="start"></ion-icon>
+        <div class="card-foot">
+          <ion-button size="small" fill="clear" (click)="historialVisible=!historialVisible">
             {{historialVisible?'Ocultar historial':'Ver historial de pagos'}}
           </ion-button>
         </div>
         @if(historialVisible){
-        <div class="card" style="margin:0 8px 8px 8px">
-          <div class="head" style="background:#0f3a5d">HISTORIAL DE PAGOS</div>
-          <div class="tbl2 head"><span>FECHA</span><span>DESC</span><span>MONTO</span><span>MENS</span><span>TOTAL</span></div>
+        <div class="sublist">
           @for (p of pagosPagados; track p.id){
-            <div class="tbl2">
-              <span>{{p.fechaCompra}}</span><span>{{p.desc}}</span><span>{{p.monto | currency:'MXN':'symbol':'1.0-0'}}</span><span>{{p.mensualidadPagada}}:{{p.mensualidad}}</span><span style="display:flex;align-items:center;gap:4px">{{p.montoTotal | currency:'MXN':'symbol':'1.0-0'}} <ion-icon name="checkmark-circle" style="color:#0fb27a;font-size:14px"></ion-icon></span>
+            <div class="li sm">
+              <div class="li-body">
+                <span class="li-title">{{ p.desc }}</span>
+                <span class="li-sub">{{ p.fechaCompra }}</span>
+              </div>
+              <span class="li-amount num">{{ p.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</span>
+              <ion-icon name="checkmark-circle" class="ok"></ion-icon>
             </div>
           }
           @if(pagosPagados.length===0){<div class="empty">Sin historial</div>}
         </div>
         }
+        <div class="add"><ion-button size="small" fill="outline" (click)="openAddTCModal()">Agregar pago</ion-button></div>
       </div>
-
 
     </div>
   </ion-content>
   `,
   styles: [`
   .bg{--background:#eef2f7}
-  .container{padding:10px;max-width:1000px;margin:0 auto}
-  .card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;margin-bottom:12px;padding-bottom:8px}
-  .head{padding:10px 14px;font-weight:800;color:#fff;display:flex;justify-content:space-between}
-  .head.la{background:#0b7a3e}
-  .head.blue{background:#2a6cb6}
-  .add{display:flex;gap:6px;padding:8px;flex-wrap:wrap;align-items:center}
-  .inp{--background:#f4f6f9;border-radius:8px;--padding-start:8px}
-  .inp.sm{max-width:130px}
-  .tbl{display:grid;grid-template-columns:1fr 90px 90px 80px 80px 70px 90px;gap:6px;padding:8px;font-size:11px;align-items:center;border-bottom:1px solid #f0f2f7}
-  .tbl.head{font-weight:700;color:#0f3a5d;background:#e8f5e9}
-  .tbl2{display:grid;grid-template-columns:90px 1fr 80px 60px 90px;gap:6px;padding:8px;font-size:11px;border-bottom:1px solid #f0f2f7;align-items:center}
-  .tbl2.head{font-weight:700;color:#0f3a5d;background:#eaf2ff}
-  .tbl2.paid{opacity:.5;text-decoration:line-through}
+  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+
+  /* Encabezado sin fondo de color: el monto al mes ya da la jerarquia */
+  .head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)}
+
+  .list{display:flex;flex-direction:column}
+  .sublist{background:var(--surface-sunken);border-top:1px solid var(--border-subtle)}
+
+  /* Antes: grid de 6 columnas con anchos fijos en px. En un telefono de 360px
+     eso suma mas del ancho disponible y la tabla se desbordaba con scroll
+     horizontal. Ahora cada deuda es una fila con el monto alineado a la derecha. */
+  .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+    border-bottom:1px solid var(--border-subtle);text-align:left;width:100%;background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
+  .li:last-child{border-bottom:none}
+  .li.sm{padding:10px var(--sp-4);background:transparent}
+  .li-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .li-title{font-size:14px;color:var(--text-body);overflow-wrap:anywhere}
+  .li-sub{font-size:11px;color:var(--text-faint)}
+  .li-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+  .li-amount{font-size:14px;font-weight:700;color:var(--text-strong);white-space:nowrap}
   .row-click{cursor:pointer}
-  .row-click:hover{background:#f8fafc}
-  .chip{background:#eef2f7;border-radius:999px;padding:2px 6px;font-size:10px}
-  .empty{text-align:center;color:#9aa8c0;padding:20px}
-  .totals{display:flex;gap:16px;justify-content:flex-end;padding:10px;font-size:12px;flex-wrap:wrap}
-  .totals b{color:#0f3a5d}
-  .pagado{color:#2a6cb6}
+  .row-click:hover{background:var(--surface-sunken)}
+  .icon-btn{border:none;background:transparent;color:var(--text-muted);cursor:pointer;
+    width:36px;height:36px;border-radius:var(--radius-sm);font-size:18px;flex:none}
+  .icon-btn:hover{background:var(--surface-input)}
+  .ok{color:var(--positive);font-size:16px;flex:none}
+
+  .totals{display:flex;gap:var(--sp-5);justify-content:flex-end;
+    padding:var(--sp-3) var(--sp-4);font-size:12px;color:var(--text-muted);flex-wrap:wrap;
+    border-top:1px solid var(--border-subtle)}
+  .totals b{color:var(--text-strong);font-size:13px}
+  .card-foot{display:flex;justify-content:center;padding:0 var(--sp-2) var(--sp-1)}
+  .add{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3)}
   `]
 })
 export class DeudasPage {
@@ -167,7 +213,7 @@ export class DeudasPage {
   historialMarina: any[] = [];
   newDeuda: any = { nombre: '', mensualidad: null, saldo: null };
   constructor(private budget: BudgetService, private modalCtrl: ModalController, private alertCtrl2: AlertController, private toastCtrl: ToastController) {
-    addIcons({ checkmarkCircle, eyeOutline, eyeOffOutline, cashOutline });
+    addIcons({ checkmarkCircle, cashOutline });
     this.refresh();
     this.budget.deudas$.subscribe(() => this.refresh());
     this.budget.pagosTC$.subscribe(() => this.refresh());

@@ -42,6 +42,39 @@ ionic serve          # alternativa con livereload de Ionic
 | `npm run test` | `ng test` (Vitest) |
 | `npm run lint` | `ng lint` |
 
+## Diseño
+
+Sistema de tokens en `src/global.scss`. Todo el color, el espaciado y los
+radios salen de ahí; si una página necesita algo nuevo, primero conviene
+preguntarse si aporta información o si es decorativo.
+
+**Color solo para estado.** Verde = sobra o pagado, rojo = falta o vencido.
+Ese es el único uso de color con significado, y por eso el bloque de arriba
+en el dashboard es lo único con fondo tinte: es lo que responde "¿cómo voy?".
+Los encabezados de sección ya no llevan fondo de color, porque competir por
+atención sin codificar nada hace que nada tenga jerarquía.
+
+**Cuatro niveles de texto.** `--text-strong` (títulos y cifras que importan),
+`--text-body` (texto normal), `--text-muted` (etiquetas secundarias),
+`--text-faint` (hints). La jerarquía sale del tamaño y el peso, no de las
+MAYÚSCULAS.
+
+**Las cifras siempre en Nunito con `tabular-nums`.** Comfortaa queda solo para
+títulos. Las columnas de dinero alinean y se comparan de un vistazo.
+
+**Filas en vez de tablas.** Las tablas de Deudas y Movimientos usaban
+`grid-template-columns` con anchos fijos en píxeles: en un teléfono de 360px
+sumaban más del ancho disponible y se desbordaban con scroll horizontal.
+Ahora cada registro es una fila flexible con el monto a la derecha, que se
+acomoda a cualquier ancho sin cortar contenido.
+
+**Orden de lectura en cada pantalla:** total o veredicto → detalle → acciones.
+En Deudores el total por cobrar sube al principio porque es lo que la pantalla
+viene a responder.
+
+Pestañas: `Inicio`, `Gastos`, `Deudas`, `Me deben`, `Movs`. Las etiquetas
+cortas entran en pantallas angostas; "Cuentas por Pagar" no entraba.
+
 ## Estructura
 
 ```

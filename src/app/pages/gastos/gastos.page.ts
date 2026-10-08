@@ -56,148 +56,166 @@ export class ImprevistoModalComponent {
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonSegment, IonSegmentButton, IonLabel, IonIcon, IonButton, FormsModule, CurrencyPipe],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, FormsModule, CurrencyPipe],
   template: `
   <ion-header><ion-toolbar><ion-title>Gastos</ion-title></ion-toolbar></ion-header>
   <ion-content class="bg">
     <div class="container">
-      <ion-segment [(ngModel)]="tab" class="seg">
-        <ion-segment-button value="Q1"><ion-label>Gastos Q1</ion-label></ion-segment-button>
-        <ion-segment-button value="Q2"><ion-label>Gastos Q2</ion-label></ion-segment-button>
-      </ion-segment>
 
-      <div class="grid" [class.single]="true">
-        @for (q of [tab]; track q) {
+      <!-- 1. Periodo -->
+      <div class="seg" role="group" aria-label="Periodo">
+        <button class="seg-btn" [class.on]="tab==='Q1'" (click)="tab='Q1'">Quincena 1</button>
+        <button class="seg-btn" [class.on]="tab==='Q2'" (click)="tab='Q2'">Quincena 2</button>
+      </div>
+
+      @for (q of [tab]; track q) {
+        <!-- 2. Cuanto va: previsto vs pagado vs lo que falta -->
+        <div class="card usage">
+          <div class="usage-head">
+            <span class="lbl">{{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }}</span>
+            <span class="usage-pct num">{{ pct(q) }}%</span>
+          </div>
+          <div class="progress"><div [style.width.%]="pct(q)"></div></div>
+          <div class="usage-foot">
+            <span>{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }} de {{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="usage-rest">faltan {{ faltante(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+          </div>
+        </div>
+
+        <!-- 3. Gastos previstos, con check para marcar pagado -->
         <div class="panel">
           <div class="panel-head">
-            <span>{{q==='Q1'?'Gastos Q1':'Gastos Q2'}}</span>
-            <div style="display:flex;gap:6px;align-items:center">
-              <span class="falt">FALTANTE {{faltante(q) | currency:'MXN':'symbol':'1.0-0'}}</span>
-              <span class="pag">PAGADO {{reales(q) | currency:'MXN':'symbol':'1.0-0'}}</span>
-            </div>
+            <span class="lbl">Gastos previstos</span>
+            <ion-button size="small" fill="outline" (click)="openAddGastoModal(q)">Agregar</ion-button>
           </div>
-          <div class="subhead">
-            <div class="add-row" style="justify-content:flex-end">
-              <ion-button size="small" (click)="openAddGastoModal(q)">+ Agregar gasto</ion-button>
-            </div>
-          </div>
-
-          <div class="table">
-            <div class="th"><span>Tipo</span><span>Descripción</span><span>Previsto</span><span>Pagado</span></div>
+          <div class="list">
             @for (g of gastos(q); track g.id) {
-              <div class="tr" [class.paid]="g.pagado">
-                <span class="chip" [style.background]="catColor(g.categoriaId)">{{catName(g.categoriaId)}}</span>
-                <span class="desc">{{g.descripcion}} <button class="del" (click)="removeGasto(g.id)">×</button></span>
-                <span>{{g.previsto | currency:'MXN':'symbol':'1.0-0'}}</span>
-                <span><input type="checkbox" [checked]="g.pagado" (change)="toggleGasto(g.id)"></span>
+              <div class="li" [class.paid]="g.pagado">
+                <input class="li-check" type="checkbox" [checked]="g.pagado" (change)="toggleGasto(g.id)"
+                       [attr.aria-label]="'Marcar ' + g.descripcion + ' como pagado'">
+                <div class="li-body">
+                  <span class="li-title">{{ g.descripcion }}</span>
+                  <span class="chip sm" [style.background]="catColor(g.categoriaId)">{{ catName(g.categoriaId) }}</span>
+                </div>
+                <span class="li-amount num">{{ g.previsto | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <button class="del" (click)="removeGasto(g.id)" [attr.aria-label]="'Eliminar ' + g.descripcion">&times;</button>
               </div>
             }
+            @if (gastos(q).length === 0) {
+              <div class="empty">Todavía no hay gastos previstos en esta quincena</div>
+            }
           </div>
-
-          <div class="imp-section">
-            <div class="imp-head">Imprevistos {{q}} <span class="imp-total">{{ impTotal(q) | currency:'MXN':'symbol':'1.0-0'}}</span></div>
-            <div class="add-row" style="justify-content:flex-end">
-              <ion-button size="small" (click)="openAddImpModal(q)">+ Agregar imprevisto</ion-button>
-            </div>
-            <div class="table imp-table">
-              <div class="th"><span>Fecha</span><span>Importe</span><span>Desc</span></div>
-              @for (i of imprevistos(q); track i.id){
-                <div class="tr">
-                  <span>{{i.fecha}}</span>
-                  <span>{{i.importe | currency:'MXN':'symbol':'1.0-0'}}</span>
-                  <span class="desc">{{i.descripcion}} <button class="del" (click)="removeImp(i.id)">×</button></span>
-                </div>
-              }
-              @if(imprevistos(q).length===0){ <div class="empty">Sin imprevistos</div> }
-            </div>
-          </div>
-
         </div>
-        <div class="card breakdown-card pad-card" [class.collapsed]="isPrevistosCollapsed(q)">
-          <div class="card-title sm clickable" (click)="togglePrevistos(q)">
-            <span><ion-icon [name]="isPrevistosCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos Previstos</span><span class="price">{{previstos(q) | currency:'MXN':'symbol':'1.0-0'}}</span>
+
+        <!-- 4. Imprevistos -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="lbl">Imprevistos</span>
+            <span class="num money">{{ impTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
           </div>
+          <div class="list">
+            @for (i of imprevistos(q); track i.id){
+              <div class="li">
+                <div class="li-body">
+                  <span class="li-title">{{ i.descripcion }}</span>
+                  <span class="li-sub">{{ i.fecha }}</span>
+                </div>
+                <span class="li-amount num">{{ i.importe | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <button class="del" (click)="removeImp(i.id)" [attr.aria-label]="'Eliminar ' + i.descripcion">&times;</button>
+              </div>
+            }
+            @if(imprevistos(q).length===0){ <div class="empty">Sin imprevistos</div> }
+          </div>
+          <div class="add-row">
+            <ion-button size="small" fill="clear" (click)="openAddImpModal(q)">+ Agregar imprevisto</ion-button>
+          </div>
+        </div>
+
+        <!-- 5. Reparto por categoria -->
+        <div class="card pad-card" [class.collapsed]="isPrevistosCollapsed(q)">
+          <button class="card-title sm clickable" (click)="togglePrevistos(q)" [attr.aria-expanded]="!isPrevistosCollapsed(q)">
+            <span><ion-icon [name]="isPrevistosCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Previsto por categoría</span>
+            <span class="money">{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+          </button>
           @if(!isPrevistosCollapsed(q)){
           <div class="summary single">
             @for (b of breakdown(q); track b.categoria.id){
-              <div class="brow"><span class="chip sm" [style.background]="b.categoria.color">{{b.categoria.nombre}}</span><span>{{b.total | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+              <div class="brow"><span class="chip sm" [style.background]="b.categoria.color">{{b.categoria.nombre}}</span><span class="num">{{b.total | currency:'MXN':'symbol':'1.0-0'}}</span></div>
             }
           </div>
           }
         </div>
-        <div class="card breakdown-card pad-card" [class.collapsed]="isRealesCollapsed(q)">
-          <div class="card-title sm clickable" (click)="toggleReales(q)">
-            <span><ion-icon [name]="isRealesCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos Reales</span><span class="price teal">{{reales(q) | currency:'MXN':'symbol':'1.0-0'}}</span>
-          </div>
+        <div class="card pad-card" [class.collapsed]="isRealesCollapsed(q)">
+          <button class="card-title sm clickable" (click)="toggleReales(q)" [attr.aria-expanded]="!isRealesCollapsed(q)">
+            <span><ion-icon [name]="isRealesCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Pagado por categoría</span>
+            <span class="money">{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+          </button>
           @if(!isRealesCollapsed(q)){
           <div class="summary single">
             @for (b of breakdown(q); track b.categoria.id){
-              <div class="brow"><span class="chip sm" [style.background]="b.categoria.color">{{b.categoria.nombre}}</span><span>{{ realesCat(q,b.categoria.id) | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+              <div class="brow"><span class="chip sm" [style.background]="b.categoria.color">{{b.categoria.nombre}}</span><span class="num">{{ realesCat(q,b.categoria.id) | currency:'MXN':'symbol':'1.0-0'}}</span></div>
             }
           </div>
           }
         </div>
         }
-      </div>
-
-      <div class="dual-view">
-        <div class="both">
-            <div class="mini">
-              <h5>{{tab}} • Previsto {{previstos(tab) | currency:'MXN':'symbol':'1.0-0'}} • Pagado {{reales(tab) | currency:'MXN':'symbol':'1.0-0'}} • Faltante {{faltante(tab) | currency:'MXN':'symbol':'1.0-0'}}</h5>
-              <div class="bar"><div [style.width.%]="pct(tab)"></div></div>
-            </div>
-        </div>
-      </div>
     </div>
   </ion-content>
   `,
   styles: [`
   .bg{--background:#eef2f7}
-  .container{padding:10px;max-width:1200px;margin:0 auto}
-  .seg{--background:#fff;margin:8px 0;border-radius:12px}
-  .panel{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;margin-bottom:12px}
-  .panel-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:800;color:#e67e22;background:#fff;border-bottom:1px solid #f0f2f7}
-  .falt{background:#fff3cd;border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid #ffe69c}
-  .pag{background:#eaf2ff;border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid #cfe0ff;color:#2a6cb6}
-  .imp-total{font-size:12px}
-  .add-row{display:flex;gap:6px;align-items:center;padding:8px;flex-wrap:wrap}
-  .table{padding:0 8px}
-  .th{display:grid;grid-template-columns:90px 1fr 90px 60px;gap:6px;font-size:11px;font-weight:700;color:#6b7a90;background:#f8fafc;padding:6px;border-radius:8px;margin:6px 0}
-  .tr{display:grid;grid-template-columns:90px 1fr 90px 60px;gap:6px;font-size:12px;padding:6px 0;border-bottom:1px solid #f0f2f7;align-items:center}
-  .tr.paid{opacity:.6;text-decoration:line-through}
-  .chip{border-radius:999px;padding:2px 6px;font-size:10px;font-weight:700;color:#0f3a5d;text-align:center}
-  .chip.sm{font-size:9px}
-  .desc{display:flex;gap:6px;align-items:center}
-  .del{border:none;background:transparent;color:#c0392b;font-size:16px;cursor:pointer}
-  .imp-section{border-top:2px solid #3a86ff;margin-top:10px;padding-top:8px}
-  .imp-head{font-weight:800;color:#3a86ff;padding:0 8px;display:flex;justify-content:space-between}
-  .imp-table .th{grid-template-columns:90px 90px 1fr}
-  .imp-table{margin-bottom:10px;margin-left:10px}
-  .imp-table .tr{grid-template-columns:90px 90px 1fr}
-  .imp-total{background:#eaf2ff;border-radius:999px;padding:2px 8px}
-  .empty{text-align:center;color:#9aa8c0;font-size:12px;padding:12px}
-  .summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-  .summary.single{grid-template-columns:1fr}
-  @media(max-width:700px){.summary{grid-template-columns:1fr}}
-  .sum-card{background:#fafbfc;border-radius:12px;padding:10px}
-  .sum-card h4{margin:0 0 8px;font-size:12px;color:#b03a5b;text-align:center}
-  .brow{display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid #f0f2f7}
-  .both{display:grid;grid-template-columns:1fr;gap:10px}
-  .mini{background:#fff;border-radius:12px;padding:10px;box-shadow:0 4px 12px rgba(0,0,0,.05)}
-  .mini h5{margin:0 0 6px;font-size:11px;color:#0f3a5d}
-  .bar{height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
-  .bar div{height:100%;background:#0fb27a}
-  .breakdown-card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;margin:12px 0 12px 0;border:1px solid #e6eaf0}
-  .breakdown-card.collapsed{opacity:.95}
-  .collapse-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:800;color:#0f3a5d;cursor:pointer;background:#fff;border-bottom:1px solid #f0f2f7}
-  .card-title{font-weight:800;color:#0f3a5d;margin-bottom:8px}
-  .card-title.sm{font-size:13px;display:flex;justify-content:space-between;align-items:center}
-  .card-title.sm.clickable{cursor:pointer}
-  .price{background:#ff9a3d;color:#fff;border-radius:999px;padding:2px 8px;font-size:12px}
-  .price.teal{background:#0f7a7a}
-  .pad-card{padding:14px}
-  .collapse-head ion-icon{margin-right:6px}
-  .collapse-hint{font-size:11px;color:#9aa8c0;font-weight:400}
+  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+
+  .seg{display:flex;gap:2px;background:var(--surface-sunken);padding:3px;border-radius:var(--radius-pill)}
+  .seg-btn{
+    flex:1;border:none;background:transparent;cursor:pointer;font-family:inherit;
+    font-size:13px;font-weight:700;color:var(--text-muted);
+    padding:8px 10px;border-radius:var(--radius-pill);
+  }
+  .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
+  .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
+  .usage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-2)}
+  .usage-pct{font-size:15px;font-weight:700;color:var(--text-strong)}
+  .usage-foot{display:flex;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-2);font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+
+  .panel{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)}
+
+  /* Filas tipo lista en vez de tabla de 4 columnas.
+     Las columnas fijas de 90px se desbordaban en pantalla angosta; con
+     grid flexible el monto queda siempre a la derecha sin importar el ancho. */
+  .list{display:flex;flex-direction:column}
+  .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+    border-bottom:1px solid var(--border-subtle)}
+  .li:last-child{border-bottom:none}
+  .li-check{flex:none;width:20px;height:20px;accent-color:var(--positive);cursor:pointer}
+  .li.paid .li-title{text-decoration:line-through;color:var(--text-faint)}
+  .li.paid .li-amount{color:var(--text-faint)}
+  .li-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+  .li-title{font-size:14px;color:var(--text-body);overflow-wrap:anywhere}
+  .li-sub{font-size:11px;color:var(--text-faint)}
+  .li-amount{font-size:14px;font-weight:700;color:var(--text-strong);white-space:nowrap}
+  .chip{border-radius:var(--radius-pill);padding:2px 8px;font-size:10px;font-weight:700;color:#fff;align-self:flex-start}
+  .del{border:none;background:transparent;color:var(--text-faint);font-size:20px;cursor:pointer;
+    line-height:1;width:32px;height:32px;border-radius:var(--radius-sm);flex:none}
+  .del:hover{background:var(--bad-bg);color:var(--bad)}
+
+  .add-row{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3)}
+
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+  .pad-card{padding:var(--sp-4)}
+  .card-title{width:100%;text-align:left;background:none;border:none;padding:0;margin:0 0 var(--sp-3);
+    font-family:inherit;font-size:14px;font-weight:700;color:var(--text-strong);cursor:pointer}
+  .card-title.sm{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)}
+  .card-title.sm > span:first-child{display:flex;align-items:center;gap:6px}
+  .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .summary{display:grid;gap:var(--sp-1)}
+  .brow{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    font-size:13px;padding:6px 0;border-bottom:1px solid var(--border-subtle)}
+  .brow:last-child{border-bottom:none}
   `]
 })
 export class GastosPage {

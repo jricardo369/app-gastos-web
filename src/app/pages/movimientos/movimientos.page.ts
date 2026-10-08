@@ -49,41 +49,75 @@ export class MovModalComponent {
   <ion-header><ion-toolbar><ion-title>Movimientos TC</ion-title></ion-toolbar></ion-header>
   <ion-content class="bg">
     <div class="container">
+
+      <!-- Configuracion: solo 3 datos, no necesita ser una tarjeta prominente -->
       <div class="card config-card">
-        <div class="cfg"><span>Fecha corte cada día <b>{{cfg.fechaCorte}}</b></span><span>Fecha pago cada día <b>{{cfg.fechaPago}}</b></span><span>PPNGI: <b>{{cfg.ppngi | currency:'MXN':'symbol':'1.0-0'}}</b></span><span class="cfg-edit" (click)="editConfig()">Editar configuración</span></div>
+        <div class="cfg">
+          <span>Corte día <b>{{cfg.fechaCorte}}</b></span>
+          <span>Pago día <b>{{cfg.fechaPago}}</b></span>
+          <span>PPNGI <b class="num">{{cfg.ppngi | currency:'MXN':'symbol':'1.0-0'}}</b></span>
+          <button class="cfg-edit" (click)="editConfig()">Editar</button>
+        </div>
       </div>
 
       <div class="card">
-        <div class="head" style="background:#0f3a5d">MOVIMIENTOS <ion-button size="small" (click)="openAdd()" style="--background:#fff;--color:#0f3a5d">+ Agregar</ion-button></div>
-        <div class="tbl head" style="grid-template-columns:90px 1fr 90px 90px 90px"><span style="text-align:left">Fecha</span><span style="text-align:left">Descripcion</span><span style="text-align:right">Compras</span><span style="text-align:right">Abonos</span><span style="text-align:right">Saldos</span></div>
-        @for (r of rows; track r.id){
-          <div class="tbl row-click" (click)="edit(r.orig)" style="grid-template-columns:90px 1fr 90px 90px 90px">
-            <span>{{r.fecha}}</span><span>{{r.descripcion}}</span><span style="text-align:right">{{r.compras ? (r.compras | currency:'MXN':'symbol':'1.0-0') : ''}}</span><span style="text-align:right;color:#0fb27a">{{r.abonos ? (r.abonos | currency:'MXN':'symbol':'1.0-0') : ''}}</span><span style="text-align:right;font-weight:700">{{r.saldo | currency:'MXN':'symbol':'1.0-0'}}</span>
-          </div>
-        }
-        @if(rows.length===0){<div class="empty">Sin movimientos</div>}
+        <div class="head">
+          <span class="lbl">Movimientos</span>
+          <ion-button size="small" fill="outline" (click)="openAdd()">Agregar</ion-button>
+        </div>
+        <div class="list">
+          @for (r of rows; track r.id){
+            <div class="li row-click" (click)="edit(r.orig)">
+              <div class="li-body">
+                <span class="li-title">{{ r.descripcion }}</span>
+                <span class="li-sub">{{ r.fecha }}</span>
+              </div>
+              <div class="li-moves">
+                @if (r.compras) { <span class="move out num">−{{ r.compras | currency:'MXN':'symbol':'1.0-0' }}</span> }
+                @if (r.abonos) { <span class="move in num">+{{ r.abonos | currency:'MXN':'symbol':'1.0-0' }}</span> }
+              </div>
+              <span class="li-saldo num">{{ r.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
+            </div>
+          }
+          @if(rows.length===0){<div class="empty">Sin movimientos</div>}
+        </div>
       </div>
     </div>
   </ion-content>
   `,
   styles: [`
   .bg{--background:#eef2f7}
-  .container{padding:10px;max-width:1100px;margin:0 auto}
-  .card{background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.06);overflow:hidden;margin-bottom:12px}
-  .config-card{padding:10px}
-  .cfg-edit{cursor:pointer;color:#0f3a5d;text-decoration:underline;font-size:11px}
-  .cfg-edit:hover{color:#c0392b}
-  .cfg{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:12px;color:#0f3a5d}
-  .cfg b{color:#c0392b}
-  .head{padding:10px 14px;font-weight:800;color:#fff;display:flex;justify-content:space-between;align-items:center}
-  .tbl{display:grid;gap:6px;padding:8px;font-size:11px;border-bottom:1px solid #f0f2f7;align-items:center}
-  .tbl.head{font-weight:700;color:#0f3a5d;background:#eaf2ff}
+  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
+
+  .config-card{padding:var(--sp-3)}
+  .cfg{display:flex;gap:var(--sp-4);align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text-muted)}
+  .cfg b{color:var(--text-strong)}
+  .cfg-edit{border:none;background:transparent;cursor:pointer;font-family:inherit;
+    font-size:12px;font-weight:700;color:var(--accent);text-decoration:underline;padding:4px}
+
+  .head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)}
+  .list{display:flex;flex-direction:column}
+
+  /* Compras y abonos van apilados con signo explicito (+ / −) en vez de
+     dos columnas mas un saldo. En mobile se lee mejor y no hay que
+     recordar que columna era cada una. */
+  .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
+    border-bottom:1px solid var(--border-subtle);text-align:left;width:100%;
+    background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
+  .li:last-child{border-bottom:none}
+  .li-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+  .li-title{font-size:14px;color:var(--text-body);overflow-wrap:anywhere}
+  .li-sub{font-size:11px;color:var(--text-faint)}
+  .li-moves{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
+  .move{font-size:12px;white-space:nowrap}
+  .move.in{color:var(--ok)}
+  .move.out{color:var(--bad)}
+  .li-saldo{font-size:14px;font-weight:700;color:var(--text-strong);white-space:nowrap;
+    min-width:88px;text-align:right;flex:none}
   .row-click{cursor:pointer}
-  .row-click:hover{background:#f8fafc}
-  .edit-icon{font-size:16px;background:rgba(15,58,93,.1);border-radius:6px;padding:4px;color:#0f3a5d}
-  .empty{text-align:center;color:#9aa8c0;padding:20px}
-  @media(max-width:768px){.tbl,.tbl.head{grid-template-columns:80px 1fr 75px 75px 75px !important;gap:2px;font-size:10px}}
-  @media(min-width:769px) and (max-width:1024px){.tbl,.tbl.head{font-size:11px}}
+  .row-click:hover{background:var(--surface-sunken)}
   `]
 })
 export class MovimientosPage {
