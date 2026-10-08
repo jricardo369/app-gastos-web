@@ -150,6 +150,20 @@ atributo es de menor prioridad que cualquier `display` de autor, así que un
 `global.scss` fuerza `[hidden]{display:none!important}`. Si se agrega otra
 sección que se oculta con `[hidden]`, esa regla ya está.
 
+**Editar gastos.** Cada fila de "Gastos previstos" abre el modal con
+descripción, categoría y monto ya cargados. El mismo modal sirve para alta y
+edición, según un `isEdit`, y devuelve `update: true` para que la página llame a
+`updateGasto` en vez de `addGasto`. El check de pagado y el botón de borrar
+detienen la propagación para que no disparen el modal.
+
+Antes solo se podía agregar y borrar: `updateGasto` existía en el servicio pero
+nadie lo llamaba.
+
+Ojo con los seeds: los gastos de ejemplo (Gas, Detergentes, Papel baño…) viven
+en `seedGastos()` en `budget.service.ts`, pero en cuanto se carga la app se
+copian a `localStorage`. Editar el seed **no** cambia lo que ya está guardado;
+para eso está la edición en pantalla.
+
 ## Estructura
 
 ```
@@ -170,7 +184,7 @@ src/
     ├── pages/
     │   ├── login/           # LoginPage (email demo@hogar.com, validación local mín. 4 chars)
     │   ├── dashboard/       # Resumen quincenal + ingresos (modal IngresoModalComponent)
-    │   ├── gastos/          # Gastos por categoría/Q + imprevistos (modales Gasto/Imprevisto)
+    │   ├── gastos/          # Gastos por categoría/Q + imprevistos (modales Gasto/Imprevisto, alta y edición)
     │   ├── deudas/          # Pagos TC a meses (modal TcModalComponent)
     │   ├── deudores/        # Quién me debe / a quién debo (modal DeudorSimpleModal)
     │   └── movimientos/     # Compras vs abonos + config corte/pago (modal MovModalComponent)

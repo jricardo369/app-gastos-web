@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonSegment, IonSegmentButton, IonLabel, IonIcon, IonButton, IonItem, IonInput, IonSelect, IonSelectOption, ModalController, IonButtons } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonSelect, IonSelectOption, IonText, ModalController, IonButtons } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { Gasto, Imprevisto, Quincena } from '../../core/models/budget.model';
@@ -10,24 +10,40 @@ import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 @Component({
   selector: 'app-gasto-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonSelect, IonSelectOption, IonText, IonButton, IonButtons, FormsModule],
   template: `
-  <ion-header><ion-toolbar><ion-title>Nuevo gasto</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
+  <ion-header><ion-toolbar><ion-title>{{ isEdit ? 'Editar gasto' : 'Nuevo gasto' }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
     <ion-item><ion-select label="Categoría" labelPlacement="stacked" [(ngModel)]="categoriaId"><ion-select-option value="hogar">Hogar</ion-select-option><ion-select-option value="escuelas">Escuelas</ion-select-option><ion-select-option value="carro">Carro</ion-select-option><ion-select-option value="ejercicio">Ejercicio</ion-select-option><ion-select-option value="credito">Trj crédito</ion-select-option><ion-select-option value="lamarina">La Marina</ion-select-option><ion-select-option value="adic">Adic.</ion-select-option><ion-select-option value="impv">Impv.</ion-select-option><ion-select-option value="ahorro">Ahorro</ion-select-option><ion-select-option value="ropa">Ropa</ion-select-option></ion-select></ion-item>
     <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Gasolina"></ion-input></ion-item>
     <ion-item><ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input></ion-item>
-    <ion-button expand="block" style="margin-top:20px" (click)="save()">Agregar</ion-button>
+    @if(error){ <ion-text color="danger" class="err">{{error}}</ion-text> }
+    <ion-button expand="block" style="margin-top:20px" (click)="save()">{{ isEdit ? 'Guardar cambios' : 'Agregar' }}</ion-button>
   </ion-content>
   `,
+  styles: [`
+  .err{display:block;margin:10px 0 0;font-size:13px}
+  `],
 })
 export class GastoModalComponent {
   @Input() categoriaId: string = 'hogar';
   @Input() descripcion: string = '';
   @Input() previsto: any = null;
+  /** En modo edicion devuelve update:true para que la pagina no duplique el gasto. */
+  @Input() isEdit: boolean = false;
+  error = '';
   constructor(private modalCtrl: ModalController) {}
   cancel(){ this.modalCtrl.dismiss(null); }
-  save(){ if(!this.descripcion||this.previsto==null||this.previsto==='') return; this.modalCtrl.dismiss({ categoriaId:this.categoriaId, descripcion:this.descripcion.trim(), previsto:Number(this.previsto)}); }
+  save(){
+    if (!this.descripcion?.trim()) { this.error = 'Poné una descripción'; return; }
+    if (this.previsto === null || this.previsto === '' || Number(this.previsto) < 0) { this.error = 'Poné un monto válido'; return; }
+    this.modalCtrl.dismiss({
+      update: this.isEdit,
+      categoriaId: this.categoriaId,
+      descripcion: this.descripcion.trim(),
+      previsto: Number(this.previsto),
+    });
+  }
 }
 
 @Component({
@@ -90,15 +106,19 @@ export class ImprevistoModalComponent {
           </div>
           <div class="list">
             @for (g of gastos(q); track g.id) {
-              <div class="li" [class.paid]="g.pagado">
-                <input class="li-check" type="checkbox" [checked]="g.pagado" (change)="toggleGasto(g.id)"
-                       [attr.aria-label]="'Marcar ' + g.descripcion + ' como pagado'">
+              <!-- La fila abre la edicion. El check y el boton de borrar
+                   detienen la propagacion para que no abran el modal. -->
+              <div class="li li-edit" [class.paid]="g.pagado" (click)="openEditGastoModal(g)"
+                   role="button" tabindex="0" [attr.aria-label]="'Editar ' + g.descripcion"
+                   (keydown.enter)="openEditGastoModal(g)">
+                <input class="li-check" type="checkbox" [checked]="g.pagado" (change)="toggleGasto(g.id); $event.stopPropagation()"
+                       [attr.aria-label]="'Marcar ' + g.descripcion + ' como pagado'" (click)="$event.stopPropagation()">
                 <div class="li-body">
                   <span class="li-title">{{ g.descripcion }}</span>
                   <span class="chip sm" [style.background]="catColor(g.categoriaId)">{{ catName(g.categoriaId) }}</span>
                 </div>
                 <span class="li-amount num">{{ g.previsto | currency:'MXN':'symbol':'1.0-0' }}</span>
-                <button class="del" (click)="removeGasto(g.id)" [attr.aria-label]="'Eliminar ' + g.descripcion">&times;</button>
+                <button class="del" (click)="removeGasto(g.id); $event.stopPropagation()" [attr.aria-label]="'Eliminar ' + g.descripcion">&times;</button>
               </div>
             }
             @if (gastos(q).length === 0) {
@@ -191,6 +211,10 @@ export class ImprevistoModalComponent {
   .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
     border-bottom:1px solid var(--border-subtle)}
   .li:last-child{border-bottom:none}
+  /* Fila que abre la edicion del gasto */
+  .li-edit{cursor:pointer}
+  .li-edit:hover{background:var(--surface-sunken)}
+  .li-edit:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .li-check{flex:none;width:20px;height:20px;accent-color:var(--positive);cursor:pointer}
   .li.paid .li-title{text-decoration:line-through;color:var(--text-faint)}
   .li.paid .li-amount{color:var(--text-faint)}
@@ -245,6 +269,18 @@ export class GastosPage {
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data) this.budget.addGasto({ quincena: q, categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, pagado: false, tipo: 'fijo' });
+  }
+  /** Edita un gasto existente. Antes no habia forma: solo agregar y borrar. */
+  async openEditGastoModal(g: Gasto) {
+    const modal = await this.modalCtrl.create({
+      component: GastoModalComponent,
+      componentProps: { isEdit: true, categoriaId: g.categoriaId, descripcion: g.descripcion, previsto: g.previsto },
+      breakpoints: [0, 0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70',
+    });
+    await modal.present();
+    const { data } = await modal.onWillDismiss();
+    if (!data) return;
+    this.budget.updateGasto(g.id, { categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto });
   }
   async openAddImpModal(q: Quincena) {
     const modal = await this.modalCtrl.create({ component: ImprevistoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
