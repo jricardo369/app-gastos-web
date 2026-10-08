@@ -21,47 +21,84 @@ const DEFAULT_PRESUPUESTO: Presupuesto = {
   q2: { dinero: { efectivo: 13500, vales: 1345, nomina: 0 }, ingresos: [{ id: 'nomina', concepto: 'Nomina', monto: 13500 }, { id: 'vales', concepto: 'Vales', monto: 1345 }] },
 };
 
+/**
+ * Gastos de ejemplo, separados por quincena.
+ *
+ * Para editarlo: cambiá el numero dentro del bloque de la quincena que
+ * corresponda y recargá. Q1 y Q2 son bloques independientes, asi que un
+ * gasto puede existir en una y no en la otra.
+ *
+ * Solo se usa cuando no hay nada en localStorage. En cuanto se guarda algo,
+ * la app deja de leer esto y usa los datos del dispositivo.
+ *
+ * Campos: categoriaId, descripcion, previsto, pagado, tipo.
+ * Las categorias validas estan en CATEGORIAS mas abajo.
+ */
+const GASTOS_Q1: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 90, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel baño', previsto: 70, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Pasta y jabon', previsto: 50, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'carro', descripcion: 'Seguro carro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 120, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Adicionales', previsto: 0, pagado: false, tipo: 'fijo' },
+];
+
+const GASTOS_Q2: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P2', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 90, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel baño', previsto: 70, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Pasta y jabon', previsto: 50, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'carro', descripcion: 'Seguro carro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 120, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Adicionales', previsto: 0, pagado: false, tipo: 'fijo' },
+];
+
+/** Arma la lista final con id estable por quincena. */
 function seedGastos(): Gasto[] {
-  const base: Omit<Gasto, 'id' | 'quincena'>[] = [
-    { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 700, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 250, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Comida P2', previsto: 1600, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Agua', previsto: 90, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 300, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Papel baño', previsto: 70, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 80, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Pasta y jabon', previsto: 50, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Minoxit y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1200, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1200, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'carro', descripcion: 'Seguro carro', previsto: 0, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'ejercicio', descripcion: 'Creatina', previsto: 120, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1800, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'lamarina', descripcion: 'Pago la Marina', previsto: 0, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'Terapeuta', previsto: 300, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'Ale', previsto: 600, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'Pago papá', previsto: 0, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'HBO', previsto: 0, pagado: false, tipo: 'fijo' },
-    { categoriaId: 'adic', descripcion: 'Adicionales', previsto: 0, pagado: false, tipo: 'fijo' },
-  ];
-  const out: Gasto[] = [];
-  (['Q1', 'Q2'] as Quincena[]).forEach(q => {
-    base.forEach((b, i) => out.push({ ...b, quincena: q, id: `${q}-${i}-${b.descripcion}` }));
-  });
-  return out;
+  const marcar = (items: Omit<Gasto, 'id' | 'quincena'>[], q: Quincena): Gasto[] =>
+    items.map((g, i) => ({ ...g, quincena: q, id: `${q}-${i}-${g.descripcion}` }));
+  return [...marcar(GASTOS_Q1, 'Q1'), ...marcar(GASTOS_Q2, 'Q2')];
 }
 
 const DEFAULT_PAGOS_TC: PagoTC[] = [
