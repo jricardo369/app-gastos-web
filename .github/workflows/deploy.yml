@@ -34,12 +34,43 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build -- --configuration production --base-href /app-gastos/
 
+      - name: Validar formato de la clave SSH
+        env:
+          KEY: ${{ secrets.EC2_SSH_KEY }}
+          PASSPHRASE: ${{ secrets.EC2_SSH_PASSPHRASE }}
+          SSH_USER: ${{ secrets.EC2_USER }}
+          SSH_HOST: ${{ secrets.EC2_HOST }}
+        run: |
+          set -e
+          if [ -z "$KEY" ]; then echo "::error::EC2_SSH_KEY esta vacio"; exit 1; fi
+          # CRLF rompe la autenticacion: el server rechaza una clave con \r
+          if printf '%s' "$KEY" | grep -q $'\r'; then
+            echo "::error::EC2_SSH_KEY tiene finales de linea CRLF. Rehaz el secret con solo LF."
+            exit 1
+          fi
+          # Cabecera PEM valida (nunca mostrar el contenido)
+          if ! printf '%s' "$KEY" | head -1 | grep -q 'BEGIN .*PRIVATE KEY'; then
+            echo "::error::EC2_SSH_KEY no empieza con una cabecera PEM valida (BEGIN ... PRIVATE KEY). Revisa que pegaste la clave entera."
+            exit 1
+          fi
+          # Clave cifrada: appleboy/ssh-action necesita el passphrase explicito
+          if printf '%s' "$KEY" | grep -q 'ENCRYPTED'; then
+            if [ -z "$PASSPHRASE" ]; then
+              echo "::error::La clave esta cifrada y falta el secret EC2_SSH_PASSPHRASE."
+              exit 1
+            fi
+            echo "Clave cifrada, se usara EC2_SSH_PASSPHRASE."
+          fi
+          echo "Clave OK: $(printf '%s' "$KEY" | grep -c .) lineas | usuario=$SSH_USER | host=$SSH_HOST"
+
       - name: Deploy por SSH al EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          passphrase: ${{ secrets.EC2_SSH_PASSPHRASE }}
+          fingerprint: ${{ secrets.EC2_SSH_FINGERPRINT }}
           port: 22
           script: |
             set -e
