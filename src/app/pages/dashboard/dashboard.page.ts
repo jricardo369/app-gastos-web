@@ -99,22 +99,7 @@ export class IngresoModalComponent {
         </div>
       </div>
 
-      <!-- 4. Uso del presupuesto: la unica barra de progreso de la app -->
-      <div class="card usage">
-        <div class="usage-head">
-          <span class="lbl">Uso del presupuesto</span>
-          <b class="num">{{ pctGlobal }}%</b>
-        </div>
-        <div class="progress"><div [style.width.%]="pctGlobal"></div></div>
-        <div class="usage-foot">
-          <span>{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }} previstos</span>
-          @if (pendienteGlobal > 0) {
-            <span class="usage-rest">faltan {{ pendienteGlobal | currency:'MXN':'symbol':'1.0-0' }}</span>
-          }
-        </div>
-      </div>
-
-      <!-- 5. Detalle por quincena -->
+      <!-- 4. Detalle por quincena -->
       <div class="section-title">Detalle</div>
       <div class="grid2">
         @for (q of filteredQs; track q) {
@@ -327,12 +312,9 @@ export class IngresoModalComponent {
 .saldo-neg{background:var(--bad-bg);border-color:#f3b0b0}
 .saldo-neg .saldo-monto{color:var(--bad)}
 
-/* Uso del presupuesto */
-.usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);box-shadow:var(--shadow);border:1px solid var(--border)}
-  .usage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-2)}
-  .usage-head b{font-size:15px;color:var(--text-strong)}
-  .usage-foot{display:flex;justify-content:space-between;gap:var(--sp-2);margin-top:var(--sp-2);font-size:12px;color:var(--text-muted);flex-wrap:wrap}
-  .usage-rest{color:var(--text-muted);font-size:12px}
+/* El porcentaje del previsto se muestra dentro de cada quincena, asi que
+   aca solo queda el texto auxiliar que acompaña a la barra. */
+.usage-rest{color:var(--text-muted);font-size:12px}
 
   /* Resumenes de una linea (deudas / deudores). Clickeable = navegable. */
   .sum{
@@ -545,9 +527,6 @@ export class DashboardPage {
   get previstoGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.previstos(q), 0);
   }
-  get pendienteGlobal(): number {
-    return this.filteredQs.reduce((s, q) => s + this.pendiente(q), 0);
-  }
   /** Efectivo + vales + nomina: el dinero que hay sobre la mesa. */
   get dineroTotalGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.ingreso(q), 0);
@@ -581,9 +560,6 @@ export class DashboardPage {
    */
   get todoBienGlobal(): number {
     return (this.ingresoTotalGlobal - this.gastoRealGlobal) - this.dineroTotalGlobal;
-  }
-  get pctGlobal(): number {
-    return this.previstoGlobal ? Math.round((this.gastoRealGlobal / this.previstoGlobal) * 100) : 0;
   }
   toggleCollapse(q: string) { this.collapsed[q] = !this.collapsed[q]; if (this.collapsed[q]) this.manualToggle.add(q); else this.manualToggle.delete(q); }
   toggleIngCollapse(q: string) { this.collapsedIng[q] = !this.collapsedIng[q]; if (this.collapsedIng[q]) this.manualIngToggle.add(q); else this.manualIngToggle.delete(q); }

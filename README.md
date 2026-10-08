@@ -115,9 +115,19 @@ acomoda a cualquier ancho sin cortar contenido.
 
 **Orden de lectura en cada pantalla:** total o veredicto → detalle → acciones.
 
-En el dashboard el orden es: selector de periodo, veredicto, saldo previsto,
-uso del presupuesto, **detalle por quincena**, **cuentas pendientes**
-(cuentas por pagar y me deben), gastos por categoría e ingresos.
+En el dashboard el orden es: selector de periodo, **veredicto**, **saldo
+previsto**, **detalle por quincena**, **cuentas pendientes** (cuentas por pagar
+y me deben), gastos por categoría e ingresos (cerrada).
+
+Cada cifra aparece una sola vez. Hubo una tarjeta "Uso del presupuesto" con el
+porcentaje de gasto contra lo previsto, pero el detalle de cada quincena ya
+muestra previsto, gastado real, barra y porcentaje, así que la tarjeta solo
+repetía lo mismo en dos niveles y se quitó. El mismo criterio se aplicó con
+la fila "Disponible", que mostraba un número que el indicador de la quincena
+ya daba.
+
+Si al agregar algo hay que preguntarse "esto ya está en otra tarjeta", es
+redundante: conviene calcularlo en el lugar donde se lee.
 
 Las cuentas pendientes van después del detalle a propósito: el detalle es el
 dinero de la quincena en curso, mientras que cuentas por pagar y me deben son
