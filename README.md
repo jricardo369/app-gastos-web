@@ -173,6 +173,12 @@ La app se puede instalar como acceso directo desde el cel, sin nada nativo.
 `start_url` y `scope` son relativos (`.`) porque el proxy recorta `/app-gastos/`:
 resuelven a la raíz del contenedor, no a un subdirectorio inexistente.
 
+Caché: `nginx.conf` excluye `manifest.webmanifest` y `assets/icon/*.png` de la
+regla de `immutable` de 1 año, porque esos archivos tienen nombre fijo y no hash.
+Si los cachearan, cambiar un ícono o el nombre de la app tardaría hasta un año
+en llegar a los teléfonos que ya la visitaron. Los bundles JS/CSS sí van con
+hash (`main-XXXX.js`) y ahí sí conviene el cache largo.
+
 Cómo instalarlo:
 
 - **Android / Chrome**: menú ⋮ → "Agregar a la pantalla de inicio".
