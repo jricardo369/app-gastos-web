@@ -48,11 +48,21 @@ Sistema de tokens en `src/global.scss`. Todo el color, el espaciado y los
 radios salen de ahí; si una página necesita algo nuevo, primero conviene
 preguntarse si aporta información o si es decorativo.
 
-**Color solo para estado.** Verde = sobra o pagado, rojo = falta o vencido.
-Ese es el único uso de color con significado, y por eso el bloque de arriba
-en el dashboard es lo único con fondo tinte: es lo que responde "¿cómo voy?".
-Los encabezados de sección ya no llevan fondo de color, porque competir por
-atención sin codificar nada hace que nada tenga jerarquía.
+**Color solo para estado.** Tres estados y cada uno con un color:
+
+| Estado | Color | Por qué |
+|---|---|---|
+| Sobra (no calza) | amarillo | es una diferencia sin cuadrar, ni buena ni mala |
+| Falta (no calza) | rojo | el gasto pasó lo que hay |
+| Todo en orden | verde | los números cuadran |
+
+"Sobra" no va en verde a propósito: no es que te sobre dinero por tener más,
+es que lo gastado no coincide con lo que tenés. Por eso el texto lo dice
+explícito ("lo gastado no coincide") y no solo "sobra". El verde queda
+reservado para el único caso que sí es una buena noticia: que cuadre.
+
+Aparece en dos lugares, ambos con `todoBien(q)`: el veredicto del periodo
+activo arriba y el indicador dentro de cada tarjeta de detalle.
 
 **El aviso de "FALTA DINERO".** La comparación que importa es
 `(ingresos − gastadoReal) − dineroTotal`, donde `dineroTotal` es efectivo +

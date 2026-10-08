@@ -72,9 +72,9 @@ export class IngresoModalComponent {
         </div>
         <p class="verdict-txt">
           @if (todoBienGlobal > 0) {
-            Sobra <b>{{ todoBienGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> de lo que tienes
+            Sobra <b>{{ todoBienGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>: lo gastado no coincide con lo que tienes
           } @else if (todoBienGlobal < 0) {
-            Falta <b>{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> de lo que tienes
+            Falta <b>{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>: lo gastado pasó lo que tienes
           } @else {
             Lo gastado calza justo con lo que tienes
           }
@@ -160,13 +160,14 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Indicador por quincena: es el aviso de que lo gastado no calza
-                 con el dinero que hay. Se calcula con todoBien(q). -->
+            <!-- Indicador por quincena: avisa cuando lo gastado no calza con el dinero
+                 que hay. "Sobra" y "Falta" son el mismo aviso en distinto signo:
+                 no son buenos ni malos, son una diferencia sin cuadrar. -->
             <div class="flag" [class.flag-sobra]="todoBien(q) > 0" [class.flag-falta]="todoBien(q) < 0" [class.flag-ok]="todoBien(q) === 0">
               @if (todoBien(q) > 0) {
-                <span>Sobra dinero</span><b>{{ todoBien(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+                <span>Sobra: lo gastado no coincide</span><b>{{ todoBien(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
               } @else if (todoBien(q) < 0) {
-                <span>Falta dinero</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+                <span>Falta: lo gastado pasó lo que tienes</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
               } @else {
                 <span>Todo en orden</span><b>✓</b>
               }
@@ -301,14 +302,17 @@ export class IngresoModalComponent {
     box-shadow:var(--shadow);border:1px solid var(--border);
     border-left:4px solid var(--text-muted);
   }
-  .verdict.estado-sobra{border-left-color:var(--ok);background:linear-gradient(0deg,var(--ok-bg) 0 100%)}
+  /* "Sobra" va en amarillo, no en verde: no es una buena noticia, es una
+   diferencia entre lo gastado y lo que hay. Verde queda solo para el caso
+   en que los numeros calzan (estado-ok). */
+.verdict.estado-sobra{border-left-color:var(--warn);background:linear-gradient(0deg,var(--warn-bg) 0 100%)}
   .verdict.estado-falta{border-left-color:var(--bad);background:linear-gradient(0deg,var(--bad-bg) 0 100%)}
-  .verdict.estado-ok{border-left-color:var(--info)}
+  .verdict.estado-ok{border-left-color:var(--ok);background:linear-gradient(0deg,var(--ok-bg) 0 100%)}
   .verdict-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
   .verdict-monto{font-size:26px;line-height:1.1;letter-spacing:-.02em}
   .verdict-tag{background:var(--ok-bg);color:var(--ok);font-size:12px;font-weight:800;
     padding:4px 10px;border-radius:var(--radius-pill)}
-  .estado-sobra .verdict-monto{color:var(--ok)}
+  .estado-sobra .verdict-monto{color:var(--warn)}
   .estado-falta .verdict-monto{color:var(--bad)}
   .verdict-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
   .verdict-txt b{color:var(--text-strong)}
