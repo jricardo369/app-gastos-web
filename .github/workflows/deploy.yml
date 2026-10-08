@@ -10,6 +10,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # Necesario para el build local de verificacion (npm ci necesita el repo)
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Validar secrets
         run: |
           set -e
