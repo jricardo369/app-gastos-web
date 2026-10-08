@@ -57,24 +57,32 @@ export class IngresoModalComponent {
         <button class="seg-btn" [class.on]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
-      <!-- 2. Veredicto: la respuesta a "¿como voy?" sin scrollear -->
-      <div class="verdict" [class.estado-sobra]="saldoGlobal > 0" [class.estado-falta]="saldoGlobal < 0" [class.estado-ok]="saldoGlobal === 0">
+      <!-- 2. Veredicto: "lo que tengo" vs "lo que llevo gastado".
+           Ojo: NO es ingresos - gastado. Falta el dineroTotal, que es el
+           efectivo + vales + nomina que hay sobre la mesa. Sin ese termino
+           el numero no responde si el gasto real se sostiene con lo que hay. -->
+      <div class="verdict" [class.estado-sobra]="todoBienGlobal > 0" [class.estado-falta]="todoBienGlobal < 0" [class.estado-ok]="todoBienGlobal === 0">
         <div class="verdict-head">
           <span class="lbl">{{etiquetaPeriodo}}</span>
-          <span class="verdict-monto money">{{ saldoGlobal | currency:'MXN':'symbol':'1.0-0' }}</span>
+          @if (todoBienGlobal === 0) {
+            <span class="verdict-tag">Todo en orden</span>
+          } @else {
+            <span class="verdict-monto money">{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</span>
+          }
         </div>
         <p class="verdict-txt">
-          @if (saldoGlobal > 0) {
-            Te sobra <b>{{ saldoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> este periodo
-          } @else if (saldoGlobal < 0) {
-            Te falta <b>{{ (saldoGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> este periodo
+          @if (todoBienGlobal > 0) {
+            Sobra <b>{{ todoBienGlobal | currency:'MXN':'symbol':'1.0-0' }}</b> de lo que tienes
+          } @else if (todoBienGlobal < 0) {
+            Falta <b>{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b> de lo que tienes
           } @else {
-            Justo, ni sobra ni falta
+            Lo gastado calza justo con lo que tienes
           }
         </p>
         <div class="verdict-split">
-          <div><span class="lbl">Ingresos</span><b class="num">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div><span class="lbl">Tienes</span><b class="num">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
           <div><span class="lbl">Gastado</span><b class="num">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div><span class="lbl">Registrado</span><b class="num">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
 
@@ -152,6 +160,18 @@ export class IngresoModalComponent {
             @if (pendiente(q) > 0) {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
+
+            <!-- Indicador por quincena: es el aviso de que lo gastado no calza
+                 con el dinero que hay. Se calcula con todoBien(q). -->
+            <div class="flag" [class.flag-sobra]="todoBien(q) > 0" [class.flag-falta]="todoBien(q) < 0" [class.flag-ok]="todoBien(q) === 0">
+              @if (todoBien(q) > 0) {
+                <span>Sobra dinero</span><b>{{ todoBien(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+              } @else if (todoBien(q) < 0) {
+                <span>Falta dinero</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+              } @else {
+                <span>Todo en orden</span><b>✓</b>
+              }
+            </div>
           </div>
           }
         </div>
@@ -262,6 +282,8 @@ export class IngresoModalComponent {
   .verdict.estado-ok{border-left-color:var(--info)}
   .verdict-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
   .verdict-monto{font-size:26px;line-height:1.1;letter-spacing:-.02em}
+  .verdict-tag{background:var(--ok-bg);color:var(--ok);font-size:12px;font-weight:800;
+    padding:4px 10px;border-radius:var(--radius-pill)}
   .estado-sobra .verdict-monto{color:var(--ok)}
   .estado-falta .verdict-monto{color:var(--bad)}
   .verdict-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
@@ -309,6 +331,19 @@ export class IngresoModalComponent {
   .total-row{font-size:16px;font-weight:700}
   .total-row b.pos{color:var(--ok)}
   .total-row b.neg{color:var(--bad)}
+
+  /* Indicador de cierre de la quincena. Es el aviso que faltaba:
+     avisa cuando lo gastado no calza con el dinero disponible. */
+  .flag{
+    display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    margin-top:var(--sp-3);padding:10px var(--sp-3);
+    border-radius:var(--radius-sm);font-size:13px;font-weight:700;
+    border:1px solid transparent;
+  }
+  .flag b{font-variant-numeric:tabular-nums;font-weight:800}
+  .flag-sobra{background:var(--warn-bg);color:var(--warn);border-color:#ffd88a}
+  .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:#f3b0b0}
+  .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:#b6e3ca}
 
   .link{background:none;border:none;padding:0;margin-top:var(--sp-2);cursor:pointer;
     font-family:inherit;font-size:12px;font-weight:700;color:var(--accent);text-decoration:underline}
@@ -465,8 +500,16 @@ export class DashboardPage {
   get pendienteGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.pendiente(q), 0);
   }
-  get saldoGlobal(): number {
-    return this.ingresoTotalGlobal - this.gastoRealGlobal;
+  /** Efectivo + vales + nomina: el dinero que hay sobre la mesa. */
+  get dineroTotalGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.ingreso(q), 0);
+  }
+  /**
+   * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
+   * (ingresos - gastadoReal) - dineroTotal.
+   */
+  get todoBienGlobal(): number {
+    return (this.ingresoTotalGlobal - this.gastoRealGlobal) - this.dineroTotalGlobal;
   }
   get pctGlobal(): number {
     return this.previstoGlobal ? Math.round((this.gastoRealGlobal / this.previstoGlobal) * 100) : 0;

@@ -54,6 +54,17 @@ en el dashboard es lo único con fondo tinte: es lo que responde "¿cómo voy?".
 Los encabezados de sección ya no llevan fondo de color, porque competir por
 atención sin codificar nada hace que nada tenga jerarquía.
 
+**El aviso de "FALTA DINERO".** La comparación que importa es
+`(ingresos − gastadoReal) − dineroTotal`, donde `dineroTotal` es efectivo +
+vales + nómina, o sea el dinero que hay sobre la mesa. Sin ese término el
+resultado siempre sale positivo y el aviso nunca aparece: con 12,000 gastados
+contra 9,000 disponibles, `ingresos − gastadoReal` daba "+1,500 sobra" cuando
+en realidad faltaban 7,500.
+
+Aparece en dos lugares: el veredicto del periodo activo (arriba, con las tres
+cifras que lo sostienen a la vista) y el indicador por quincena dentro de cada
+tarjeta de detalle. Ambas usan `todoBien(q)`, así que no pueden discrepar.
+
 **Cuatro niveles de texto.** `--text-strong` (títulos y cifras que importan),
 `--text-body` (texto normal), `--text-muted` (etiquetas secundarias),
 `--text-faint` (hints). La jerarquía sale del tamaño y el peso, no de las
