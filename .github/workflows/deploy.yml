@@ -1,0 +1,58 @@
+name: Deploy App Gastos a EC2 (puerto 80 /app-gastos)
+
+# Solo rama master
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar secrets
+        run: |
+          set -e
+          # EC2_HOST debe ser IP o DNS pelado, sin http://, sin puerto, sin slash final
+          HOST="${{ secrets.EC2_HOST }}"
+          if [ -z "$HOST" ]; then echo "::error::Falta secret EC2_HOST"; exit 1; fi
+          if [ -z "${{ secrets.EC2_USER }}" ]; then echo "::error::Falta secret EC2_USER"; exit 1; fi
+          if [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then echo "::error::Falta secret EC2_SSH_KEY"; exit 1; fi
+          case "$HOST" in
+            http*|*/*|*:*|*" "*) echo "::error::EC2_HOST inválido='$HOST'. Usa solo IP (ej 3.85.1.2) o DNS (ec2-...compute.amazonaws.com), sin http:// ni :puerto ni /"; exit 1;;
+          esac
+          echo "Host OK (longitud ${#HOST} chars). Intentando resolver DNS..."
+          getent hosts "$HOST" || nslookup "$HOST" || (echo "::warning::No se pudo resolver $HOST desde el runner, revisa que la IP/DNS sea correcta y la instancia esté running"; exit 1)
+
+      - name: Build local (verifica que la app compile)
+        run: |
+          set -e
+          npm ci --no-audit --no-fund
+          npm run build -- --configuration production --base-href /app-gastos/
+
+      - name: Deploy por SSH al EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            DEPLOY_DIR="${{ secrets.EC2_PATH }}"
+            if [ -z "$DEPLOY_DIR" ]; then DEPLOY_DIR="$HOME/sitios/sitios-deploy-vjtech"; fi
+
+            echo "== Actualizar repo de infra =="
+            if [ -d "$DEPLOY_DIR/.git" ]; then
+              cd "$DEPLOY_DIR"
+              git fetch origin master
+              git reset --hard origin/master
+            else
+              mkdir -p "$(dirname "$DEPLOY_DIR")"
+              # Usa HTTPS público. Si el repo es privado, cambia a git@github.com:... con deploy key
+              git clone --branch master https://github.com/jricardo369/sitios-deploy-vjtech.git "$DEPLOY_DIR"
+              cd "$DEPLOY_DIR"
+            fi
+
+            echo "== Deploy (build + proxy puerto 80) =="
+            bash deploy.sh

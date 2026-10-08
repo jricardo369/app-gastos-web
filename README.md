@@ -124,6 +124,36 @@ Config raíz: `angular.json` (output `www/`, budgets 2MB warn/5MB err, lint, tes
 
 `auth_user, auth_token, presupuesto, gastos, imprevistos, pagosTC, deudas, deudores, deudoresLista, movimientos, movConfig, quincenaActual`. Borrar `localStorage` restaura los seeds.
 
+## Deploy web (EC2, puerto 80 `/app-gastos/`)
+
+La app se publica como tercer sitio del reverse proxy nginx en
+[sitios-deploy-vjtech](https://github.com/jricardo369/sitios-deploy-vjtech):
+
+| Ruta | Servicio | Repo |
+|---|---|---|
+| `/thunder-team/` | `thunder` | sitio-team-thunder |
+| `/vj-tech/` | `vjtech` | landing-page-vjtech |
+| `/app-gastos/` | `gastos` | app-gastos-web |
+
+Pieces:
+
+- `Dockerfile`: build en dos stages (`node:22-alpine` → `nginx:1.27-alpine`).
+- `nginx.conf`: SPA fallback (`try_files ... /index.html`) + cache por hash.
+- `.github/workflows/deploy.yml`: push a `master` → SSH al EC2 → `bash deploy.sh`.
+
+El build usa `--base-href /app-gastos/` para que el router de Angular genere
+URLs con el prefijo; el proxy recorta `/app-gastos/` antes de enviar la
+petición al contenedor, así que internamente la app se sirve en la raíz.
+
+Secrets requeridos en este repo: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`,
+`EC2_PATH` (= `sitios/sitios-deploy-vjtech` o ruta absoluta).
+
+Build local equivalente al de producción:
+
+```bash
+npm run build -- --configuration production --base-href /app-gastos/
+```
+
 ## Build móvil (Capacitor)
 
 ```bash

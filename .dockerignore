@@ -1,0 +1,14 @@
+node_modules
+www
+dist
+.git
+.github
+.gitignore
+.dockerignore
+Dockerfile
+.dockerignore
+android
+ios
+.vscode
+.idea
+*.log
