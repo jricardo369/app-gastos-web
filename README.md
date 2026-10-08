@@ -124,6 +124,12 @@ espacio con las cifras. El encabezado dice "tocar para cargar o editar" para
 que se entienda que hay algo adentro. Cuando está abierta, cada quincena
 conserva su propio colapso.
 
+Ojo con `[hidden]` en Angular: el `display:none` que el navegador aplica al
+atributo es de menor prioridad que cualquier `display` de autor, así que un
+`.grid2{display:grid}` lo pisa y el elemento queda visible igual. Por eso
+`global.scss` fuerza `[hidden]{display:none!important}`. Si se agrega otra
+sección que se oculta con `[hidden]`, esa regla ya está.
+
 ## Estructura
 
 ```
