@@ -145,13 +145,14 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Aviso por quincena, con la misma medida que el veredicto de
-                 arriba: cuánto queda de lo que hay en la mesa. -->
+            <!-- Aviso por quincena, con la misma medida que el estado general
+                 de arriba: cuánto queda de lo que hay en la mesa. Sin monto a
+                 propósito: la cifra acá se confundía con "lo que tengo de más". -->
             <div class="flag" [class.flag-sobra]="queda(q) > 0" [class.flag-falta]="queda(q) < 0" [class.flag-ok]="queda(q) === 0">
               @if (queda(q) > 0) {
-                <span>Tienes de más: te queda dinero</span><b>{{ queda(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+                <span>Tienes de más: te queda dinero</span>
               } @else if (queda(q) < 0) {
-                <span>Te falta: gastaste más de lo que tienes</span><b>{{ (queda(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+                <span>Te falta: gastaste más de lo que tienes</span>
               } @else {
                 <span>Todo en orden</span><b aria-hidden="true">✓</b>
               }
