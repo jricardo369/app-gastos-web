@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+﻿import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonItem, IonButtons, ModalController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
@@ -68,55 +68,58 @@ export class IngresoModalComponent {
         <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
-      <!-- 2. Veredicto: "lo que tengo" vs "lo que llevo gastado".
-           Ojo: NO es ingresos - gastado. Falta el dineroTotal, que es el
-           efectivo + vales + nomina que hay sobre la mesa. Sin ese termino
-           el numero no responde si el gasto real se sostiene con lo que hay.
-           Tarjeta blanca como las demas: el color semantico va en el aviso
-           de abajo, no de fondo en toda la tarjeta. -->
+      <!-- 2. Veredicto: cuánto te queda de lo que tienes en la mesa.
+           Ojo: antes media el "cuadre contra el registro" (ingresos - gastado
+           vs dinero), que se pone negativo en cuanto se marca un gasto como
+           pagado, aunque sobre dinero. Eso hacia que dijera "Falta" siempre.
+           Ahora mide lo que queda: positivo = tienes de más. -->
       <div class="card verdict">
         <div class="v-head">
           <div class="panel-title">
             <span class="lbl">{{etiquetaPeriodo}}</span>
-            <span class="count">Lo gastado contra lo que tienes</span>
+            <span class="count">Lo que te queda de lo que tienes</span>
           </div>
-          @if (todoBienGlobal === 0) {
+          @if (quedaGlobal === 0) {
             <span class="tag ok">Todo en orden</span>
           } @else {
-            <span class="tag" [class.warn]="todoBienGlobal > 0" [class.bad]="todoBienGlobal < 0">
-              {{ todoBienGlobal > 0 ? 'Sobra' : 'Falta' }}
+            <span class="tag" [class.warn]="quedaGlobal > 0" [class.bad]="quedaGlobal < 0">
+              {{ quedaGlobal > 0 ? 'Tienes de más' : 'Te falta' }}
             </span>
           }
         </div>
-        <strong class="v-monto" [class.warn]="todoBienGlobal > 0" [class.bad]="todoBienGlobal < 0">
-          {{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}
+        <!-- El monto va siempre positivo: la etiqueta de arriba ya dice de que
+             lado está. Antes se multiplicaba por -1 y un sobrante se veía como
+             un faltante. -->
+        <strong class="v-monto" [class.warn]="quedaGlobal > 0" [class.bad]="quedaGlobal < 0">
+          {{ verdictMonto | currency:'MXN':'symbol':'1.0-0' }}
         </strong>
         <p class="v-txt">
-          @if (todoBienGlobal > 0) {
-            Lo gastado no coincide con lo que tienes en la mesa
-          } @else if (todoBienGlobal < 0) {
-            Lo gastado pasó lo que tienes en la mesa
+          @if (quedaGlobal > 0) {
+            Tienes de más: te queda dinero después de lo que gastaste
+          } @else if (quedaGlobal < 0) {
+            Gastaste más de lo que tienes en la mesa
           } @else {
-            Lo gastado calza justo con lo que tienes en la mesa
+            Gastaste justo lo que tienes en la mesa
           }
         </p>
         <div class="stats">
           <div class="stat"><span class="lbl">Tienes</span><b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
           <div class="stat"><span class="lbl">Gastado</span><b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div class="stat"><span class="lbl">Registrado</span><b class="money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="stat"><span class="lbl">Te queda</span><b class="money" [class.ok]="quedaGlobal >= 0" [class.bad]="quedaGlobal < 0">{{ quedaGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
 
       <!-- 3. Cuanto sobra si se gasta lo planeado.
            El monto cambia con el selector de arriba: si esta en "Todo el mes"
            es la suma de Q1+Q2, si esta en una quincena es solo esa.
-           Color solo cuando avisa: rojo = ya no alcanza, ambar = sobra muy justo. -->
+           El monto va CON su signo: positivo = te sobra, negativo = no alcanza.
+           Antes se invertía, así que "te sobra $5,000" se pintaba -$5,000. -->
       <div class="card saldo" [class.saldo-cero]="saldoCercaDeCero" [class.saldo-neg]="sobranteGlobal < 0">
         <div class="s-head">
           <span class="lbl">{{ etiquetaPeriodoPrevisto }}</span>
           <span class="count">si gastás lo previsto</span>
         </div>
-        <b class="s-monto">{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+        <b class="s-monto">{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
       </div>
 
       <!-- 4. Detalle por quincena -->
@@ -166,14 +169,13 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Indicador por quincena: avisa cuando lo gastado no calza con el dinero
-                 que hay. "Sobra" y "Falta" son el mismo aviso en distinto signo:
-                 no son buenos ni malos, son una diferencia sin cuadrar. -->
-            <div class="flag" [class.flag-sobra]="todoBien(q) > 0" [class.flag-falta]="todoBien(q) < 0" [class.flag-ok]="todoBien(q) === 0">
-              @if (todoBien(q) > 0) {
-                <span>Sobra: lo gastado no coincide</span><b>{{ todoBien(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
-              } @else if (todoBien(q) < 0) {
-                <span>Falta: lo gastado pasó lo que tienes</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+            <!-- Aviso por quincena, con la misma medida que el veredicto de
+                 arriba: cuánto queda de lo que hay en la mesa. -->
+            <div class="flag" [class.flag-sobra]="queda(q) > 0" [class.flag-falta]="queda(q) < 0" [class.flag-ok]="queda(q) === 0">
+              @if (queda(q) > 0) {
+                <span>Tienes de más: te queda dinero</span><b>{{ queda(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+              } @else if (queda(q) < 0) {
+                <span>Te falta: gastaste más de lo que tienes</span><b>{{ (queda(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
               } @else {
                 <span>Todo en orden</span><b aria-hidden="true">✓</b>
               }
@@ -348,6 +350,9 @@ export class IngresoModalComponent {
   .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
     background:var(--surface-sunken);border-radius:var(--radius)}
   .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  /* "Te queda" con el color semantico: verde si alcanza, rojo si no */
+  .stat b.ok{color:var(--ok)}
+  .stat b.bad{color:var(--bad)}
 
   /* Saldo previsto: solo el monto. El color marca el estado:
      rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
@@ -605,9 +610,31 @@ export class DashboardPage {
   get sobranteGlobal(): number {
     return this.dineroTotalGlobal - this.previstoGlobal;
   }
-  /** "Saldo previsto · Todo el mes" / "· Quincena 1" */
+  /**
+   * Cuánto queda del dinero que hay en la mesa después de lo ya gastado.
+   * Es la pregunta del veredicto: positivo = tienes de más, negativo = te falta.
+   * (Antes acá estaba el "cuadre contra el registro", que se ponía negativo
+   * en cuanto se marcaba un gasto como pagado y por eso siempre decia "Falta".
+   */
+  get quedaGlobal(): number {
+    return this.dineroTotalGlobal - this.gastoRealGlobal;
+  }
+  /** Lo mismo, para una quincena: el aviso del detalle usa la misma medida. */
+  queda(q: any): number {
+    return this.ingreso(q) - this.reales(q);
+  }
+  /**
+   * Magnitud del veredicto, siempre positiva: la etiqueta de arriba ya dice si
+   * es "Tienes de más" o "Te falta". Antes el monto se multiplicaba por -1 y un
+   * sobrante se mostraba negativo, que se lee como faltante.
+   */
+  get verdictMonto(): number {
+    return Math.abs(this.quedaGlobal);
+  }
+  /** "Te sobra el mes" / "Te sobra la Quincena 1", o "No te alcanza" si es negativo. */
   get etiquetaPeriodoPrevisto(): string {
-    return this.quincenaActual === 'TODO' ? 'Te sobra el mes' : `Te sobra la ${this.etiquetaQuincena(this.quincenaActual)}`;
+    const periodo = this.quincenaActual === 'TODO' ? 'el mes' : `la ${this.etiquetaQuincena(this.quincenaActual)}`;
+    return this.sobranteGlobal < 0 ? `No te alcanza ${periodo}` : `Te sobra ${periodo}`;
   }
   /**
    * Cerca de cero: el saldo es menor al 5% de lo que tenes a mano, o es
