@@ -67,7 +67,9 @@ export class TcModalComponent {
             <span class="lbl">Deudas generales</span>
             <span class="count">{{ deudasActivas.length }} activas</span>
           </div>
-          <span class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
+          <ion-button size="small" (click)="openAddMarinaModal()">
+            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
+          </ion-button>
         </header>
         <div class="list">
           @for (d of deudasActivas; track d.id){
@@ -130,11 +132,6 @@ export class TcModalComponent {
           @if(historialMarina.length===0){ <div class="empty sm">Sin historial</div> }
         </div>
         }
-        <div class="add">
-          <ion-button size="small" fill="outline" (click)="openAddMarinaModal()">
-            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar deuda
-          </ion-button>
-        </div>
       </div>
 
       <!-- Pagos de tarjeta -->
@@ -144,7 +141,9 @@ export class TcModalComponent {
             <span class="lbl">Pagos de tarjeta</span>
             <span class="count">{{ pagosActivos.length }} activos</span>
           </div>
-          <span class="money">{{ deudaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
+          <ion-button size="small" (click)="openAddTCModal()">
+            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
+          </ion-button>
         </header>
         <div class="list">
           @for (p of pagosActivos; track p.id){
@@ -206,11 +205,6 @@ export class TcModalComponent {
           @if(pagosPagados.length===0){ <div class="empty sm">Sin historial</div> }
         </div>
         }
-        <div class="add">
-          <ion-button size="small" fill="outline" (click)="openAddTCModal()">
-            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar pago
-          </ion-button>
-        </div>
       </div>
 
     </div>
@@ -221,12 +215,14 @@ export class TcModalComponent {
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
 
-  /* Encabezado sin fondo de color: el monto al mes ya da la jerarquia */
+  /* Encabezado como en la pestaña de gastos: etiqueta + cuántas hay a la
+     izquierda y el boton de Agregar a la derecha. El monto al mes quedó
+     abajo, en los totales, para no repetirlo en dos lugares. */
   .head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
     padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle);flex-wrap:wrap}
   .panel-title{display:flex;flex-direction:column;gap:1px;min-width:0}
   .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint)}
-  .head ion-button{margin:0;min-height:36px}
+  .head ion-button{margin:0;min-height:34px}
 
   .list{display:flex;flex-direction:column}
   .sublist{background:var(--surface-sunken);border-top:1px solid var(--border-subtle)}
@@ -283,9 +279,6 @@ export class TcModalComponent {
   .empty ion-icon{font-size:26px;color:var(--text-faint)}
   .empty p{margin:0;font-size:13px;color:var(--text-faint)}
   .empty ion-button{margin:var(--sp-1) 0 0;min-height:36px}
-
-  .add{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3)}
-  .add ion-button{margin:0;min-height:36px}
 
   @media (prefers-reduced-motion: reduce){
     .row-click,.icon-btn,.bar-fill{transition:none}
