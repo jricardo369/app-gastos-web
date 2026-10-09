@@ -79,29 +79,29 @@ export class IngresoModalComponent {
             {{ etiquetaPeriodoPrevisto }}
           </span>
           <b class="res-monto">{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="count">recibido − previstos − variables</span>
+          <span class="count">ingreso total − previstos − variables</span>
         </div>
 
         <!-- Medidor: cuanto de lo recibido ya se gasto. La marca dice donde
              deberia estar el gasto si se cumple lo planeado. -->
-        <div class="med" [class.pasado]="gastoRealGlobal > planeadoGlobal" [class.excedido]="gastoRealGlobal > dineroTotalGlobal">
+        <div class="med" [class.pasado]="gastoRealGlobal > planeadoGlobal" [class.excedido]="gastoRealGlobal > ingresoTotalGlobal">
           <div class="med-track" role="img"
                [attr.aria-label]="'Gastaste el ' + pctReal + '% de lo recibido. Lo planeado marca el ' + pctPlaneado + '%'">
             <div class="med-fill" [style.width.%]="anchoReal"></div>
           </div>
           <div class="med-mark" [style.left.%]="posMarca" aria-hidden="true"></div>
           <div class="med-pie">
-            <span class="count">Gastaste {{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }} que recibiste</span>
+            <span class="count">Gastaste {{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }} que recibiste</span>
             <span class="count"><i class="med-tick" aria-hidden="true"></i> planeado {{ pctPlaneado }}%</span>
           </div>
         </div>
 
         <!-- Las cuatro cifras del calculo de arriba, en el mismo orden:
-             lo que entra menos lo previsto menos los variables es lo que sobra. -->
+             el ingreso menos lo previsto menos los variables es lo que sobra. -->
         <div class="res-stats">
           <div class="stat">
-            <span class="lbl">Recibís</span>
-            <b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+            <span class="lbl">Ingreso</span>
+            <b class="money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
           <div class="stat">
             <span class="lbl">Gastos previstos</span>
@@ -144,15 +144,17 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Letrero de la quincena. Misma formula que el monto grande de
-                 arriba, pero en palabras: lo RECIBIDO (efectivo + vales +
-                 nomina) contra el saldo total (gastos previstos + variables).
-                 Sin monto a proposito: la cifra aca se confundia con el saldo. -->
+            <!-- Letrero de la quincena. Es la formula de la hoja:
+                 D3  = lo recibido = efectivo + vales + nomina (el bolsillo)
+                 D12 = saldo total = ingreso total - gasto real
+                 o sea, cuanto dinero DEBERIA haber. Si el bolsillo no le
+                 llega, avisa. Sin monto a proposito: la cifra aca se
+                 confundia con el saldo. -->
             <div class="flag" [class.flag-sobra]="saldo(q) > 0" [class.flag-falta]="saldo(q) < 0" [class.flag-ok]="saldo(q) === 0">
               @if (saldo(q) < 0) {
-                <span>Falta dinero: no alcanza lo que recibiste</span>
+                <span>Falta dinero: traés menos de lo que debería quedar</span>
               } @else if (saldo(q) > 0) {
-                <span>Tengo de más: sobra dinero</span>
+                <span>Tengo de más: traés más de lo que debería quedar</span>
               } @else {
                 <span>Todo bien</span><b aria-hidden="true">✓</b>
               }
@@ -584,8 +586,6 @@ export class DashboardPage {
   nomina(q: string) { return this.budget.getDinero(q as any).nomina; }
   previstos(q: any) { return this.budget.resumenQuincena(q).previstos; }
   reales(q: any) { return this.budget.resumenQuincena(q).reales; }
-  saldoTotal(q: any) { return this.budget.getIngresoTotal(q) - this.budget.resumenQuincena(q).reales; }
-  todoBien(q: any) { return this.saldoTotal(q) - this.ingreso(q); }
   pendiente(q: any) { return this.budget.resumenQuincena(q).pendiente; }
   pct(q: any) { const r = this.budget.resumenQuincena(q); return r.previstos ? Math.round((r.reales / r.previstos) * 100) : 0; }
   isCollapsed(q: string) { return !!this.collapsed[q]; }
@@ -615,29 +615,25 @@ export class DashboardPage {
   get imprevistosGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.budget.getImprevistos(q as any).reduce((t, i: any) => t + (Number(i.importe) || 0), 0), 0);
   }
-  /** Efectivo + vales + nomina: el dinero que hay sobre la mesa. */
-  get dineroTotalGlobal(): number {
-    return this.filteredQs.reduce((s, q) => s + this.ingreso(q), 0);
-  }
   /**
-   * "Cuanto sobra": lo que recibis menos lo previsto menos los variables.
-   * Es el numero grande de la tarjeta de resumen, y por eso arriba se ven las
-   * tres cifras que lo forman, en ese mismo orden.
-   * OJO: no es lo mismo que todoBienGlobal. Este mira lo PLANEADO
-   * (recibido - previstos - variables), el otro mira lo REAL.
+   * "Cuanto sobra": el INGRESO total del periodo menos lo previsto menos los
+   * variables. Es el numero grande de la tarjeta de resumen, y por eso arriba
+   * se ven las tres cifras que lo forman, en ese mismo orden.
    */
   get sobranteGlobal(): number {
-    return this.dineroTotalGlobal - this.previstoGlobal - this.imprevistosGlobal;
+    return this.ingresoTotalGlobal - this.previstoGlobal - this.imprevistosGlobal;
   }
   /**
    * Letrero de la quincena. Es la formula de la hoja:
-   * recibido (efectivo + vales + nomina) contra el saldo total, que es lo
-   * previsto mas los variables.
-   * Negativo = FALTA DINERO, positivo = TENGO DE MAS, cero = TODO BIEN.
-   * Es el mismo calculo del monto grande del resumen, pero por quincena.
+   *   D3  = lo recibido = efectivo + vales + nomina (el bolsillo)
+   *   D12 = saldo total = ingreso total - gasto real (cuanto DEBERIA haber)
+   * Negativo (D3 < D12) = FALTA DINERO, positivo (D3 > D12) = TENGO DE MAS,
+   * cero = TODO BIEN.
+   * OJO con los nombres: `ingreso(q)` de este componente es el dinero del
+   * bolsillo; el ingreso total sale de getIngresoTotal(q).
    */
   saldo(q: any): number {
-    return this.ingreso(q) - (this.previstos(q) + this.imprevistos(q));
+    return this.ingreso(q) - (this.getIngresoTotal(q) - this.reales(q));
   }
   /** Los variables (imprevistos) de la quincena: tambien salen del bolsillo. */
   imprevistos(q: any): number {
@@ -649,18 +645,18 @@ export class DashboardPage {
     return this.sobranteGlobal < 0 ? `No te alcanza ${periodo}` : `Te sobra ${periodo}`;
   }
   /**
-   * Cerca de cero: el saldo es menor al 5% de lo que tenes a mano, o es
-   * exactamente cero. Por debajo de ese umbral el saldo es real pero no
-   * alcanza para nada, asi que conviene avisarlo antes de que se haga
-   * negativo. Solo aplica cuando no es negativo; si ya es negativo va rojo.
+   * Cerca de cero: el saldo es menor al 5% del ingreso, o es exactamente
+   * cero. Por debajo de ese umbral el saldo es real pero no alcanza para
+   * nada, asi que conviene avisarlo antes de que se haga negativo. Solo
+   * aplica cuando no es negativo; si ya es negativo va rojo.
    */
   get saldoCercaDeCero(): boolean {
     if (this.sobranteGlobal < 0) return false;
-    return this.sobranteGlobal < this.dineroTotalGlobal * 0.05;
+    return this.sobranteGlobal < this.ingresoTotalGlobal * 0.05;
   }
   /** Cuanto de lo recibido ya se gasto, en %: el numero bajo el medidor. */
   get pctReal(): number {
-    return this.dineroTotalGlobal ? Math.round((this.gastoRealGlobal / this.dineroTotalGlobal) * 100) : 0;
+    return this.ingresoTotalGlobal ? Math.round((this.gastoRealGlobal / this.ingresoTotalGlobal) * 100) : 0;
   }
   /** Ancho de la barra: el % real, sin pasarse de 100. */
   get anchoReal(): number { return Math.min(100, this.pctReal); }
@@ -670,17 +666,10 @@ export class DashboardPage {
   }
   /** Donde deberia estar el gasto si se cumple lo planeado: la marca. */
   get pctPlaneado(): number {
-    return this.dineroTotalGlobal ? Math.round((this.planeadoGlobal / this.dineroTotalGlobal) * 100) : 0;
+    return this.ingresoTotalGlobal ? Math.round((this.planeadoGlobal / this.ingresoTotalGlobal) * 100) : 0;
   }
   /** Posicion de la marca, siempre visible dentro de la barra. */
   get posMarca(): number { return Math.min(99, Math.max(1, this.pctPlaneado)); }
-  /**
-   * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
-   * (ingresos - gastadoReal) - dineroTotal.
-   */
-  get todoBienGlobal(): number {
-    return (this.ingresoTotalGlobal - this.gastoRealGlobal) - this.dineroTotalGlobal;
-  }
   toggleCollapse(q: string) { this.collapsed[q] = !this.collapsed[q]; if (this.collapsed[q]) this.manualToggle.add(q); else this.manualToggle.delete(q); }
   toggleIngCollapse(q: string) { this.collapsedIng[q] = !this.collapsedIng[q]; if (this.collapsedIng[q]) this.manualIngToggle.add(q); else this.manualIngToggle.delete(q); }
   setActual(q: 'Q1'|'Q2'|'TODO') { this.budget.setQuincenaActual(q as any); this.manualToggle.clear(); this.manualIngToggle.clear(); this.applyAutoCollapse(); }
