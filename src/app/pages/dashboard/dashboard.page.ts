@@ -126,27 +126,6 @@ export class IngresoModalComponent {
           </button>
           @if(!isCollapsed(q)){
           <div class="q-body">
-            @if(!editing[q]){
-              <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <!-- Mismo boton solido con icono que usa el resto de las pestañas -->
-              <ion-button size="small" class="edit-btn" (click)="toggleEdit(q)">
-                <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar montos
-              </ion-button>
-            } @else {
-              <div class="edit-grid">
-                <label>Efectivo<ion-input type="number" [(ngModel)]="editVals[q].efectivo" class="edit-inp"></ion-input></label>
-                <label>Vales<ion-input type="number" [(ngModel)]="editVals[q].vales" class="edit-inp"></ion-input></label>
-                <label>Nómina<ion-input type="number" [(ngModel)]="editVals[q].nomina" class="edit-inp"></ion-input></label>
-              </div>
-              <div class="edit-actions">
-                <ion-button size="small" fill="outline" color="medium" (click)="toggleEdit(q)">Cancelar</ion-button>
-                <ion-button size="small" (click)="saveEdit(q)">Guardar</ion-button>
-              </div>
-            }
-
-            <hr class="sep" />
             <div class="row"><span>Previsto en gastos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="row"><span>Gastado real</span><b>{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="progress" role="progressbar" [attr.aria-valuenow]="pct(q)" aria-valuemin="0" aria-valuemax="100"
@@ -174,6 +153,29 @@ export class IngresoModalComponent {
                 <span>Todo en orden</span><b aria-hidden="true">✓</b>
               }
             </div>
+
+            <!-- El dinero del bolsillo va al final: es el dato que se corrige
+                 de vez en cuando, no el que se consulta a diario. -->
+            <hr class="sep" />
+            @if(!editing[q]){
+              <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+              <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+              <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+              <!-- Mismo boton solido con icono que usa el resto de las pestañas -->
+              <ion-button size="small" class="edit-btn" (click)="toggleEdit(q)">
+                <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar montos
+              </ion-button>
+            } @else {
+              <div class="edit-grid">
+                <label>Efectivo<ion-input type="number" [(ngModel)]="editVals[q].efectivo" class="edit-inp"></ion-input></label>
+                <label>Vales<ion-input type="number" [(ngModel)]="editVals[q].vales" class="edit-inp"></ion-input></label>
+                <label>Nómina<ion-input type="number" [(ngModel)]="editVals[q].nomina" class="edit-inp"></ion-input></label>
+              </div>
+              <div class="edit-actions">
+                <ion-button size="small" fill="outline" color="medium" (click)="toggleEdit(q)">Cancelar</ion-button>
+                <ion-button size="small" (click)="saveEdit(q)">Guardar</ion-button>
+              </div>
+            }
           </div>
           }
         </div>
