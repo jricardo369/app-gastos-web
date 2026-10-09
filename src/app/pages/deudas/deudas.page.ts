@@ -1,17 +1,17 @@
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonButtons, IonIcon, ModalController, AlertController, ToastController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonButtons, IonIcon, IonText, ModalController, AlertController, ToastController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
-import { checkmarkCircle, cashOutline } from 'ionicons/icons';
+import { checkmarkCircle, cashOutline, addOutline, chevronDownOutline, chevronUpOutline, chevronForwardOutline, walletOutline, cardOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tc-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, IonText, FormsModule],
   template: `
-  <ion-header><ion-toolbar><ion-title>{{isEdit?'Editar':'Nuevo'}} pago TC</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
+  <ion-header><ion-toolbar><ion-title>{{ titulo }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
     <ion-item><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></ion-item>
     @if(showTipo){ <ion-item><ion-input label="Tipo" labelPlacement="stacked" [(ngModel)]="tipo" placeholder="Ej. General"></ion-input></ion-item> }
@@ -19,14 +19,18 @@ import { checkmarkCircle, cashOutline } from 'ionicons/icons';
     <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
     <ion-item><ion-input label="Mensualidades (total)" labelPlacement="stacked" type="number" [(ngModel)]="mensualidad"></ion-input></ion-item>
     @if(isEdit){ <ion-item><ion-input label="Mensualidades pagadas" labelPlacement="stacked" type="number" [(ngModel)]="pagadas"></ion-input></ion-item> }
+    <!-- Antes el guardar no hacia nada si faltaba algo: ahora se ve que falta. -->
+    @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">
       @if(isEdit){ <ion-button color="danger" fill="outline" (click)="remove()" style="flex:1">Eliminar</ion-button> }
       <ion-button (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
     </div>
   </ion-content>
   `,
+  styles: [`.err{display:block;margin:8px 0 0;font-size:13px}`],
 })
 export class TcModalComponent {
+  @Input() titulo: string = 'Nuevo pago';
   @Input() fecha: string = new Date().toISOString().slice(0,10);
   @Input() desc: string = '';
   @Input() monto: any = null;
@@ -35,11 +39,14 @@ export class TcModalComponent {
   @Input() tipo: string = '';
   @Input() showTipo: boolean = false;
   @Input() isEdit: boolean = false;
+  error = '';
   constructor(private modalCtrl: ModalController) {}
   cancel(){ this.modalCtrl.dismiss(null); }
   remove(){ this.modalCtrl.dismiss({ remove: true }); }
   save(){
-    if(!this.desc || this.monto==null || this.monto==='') return;
+    if (!this.desc?.trim()) { this.error = 'Escribe una descripción'; return; }
+    if (this.monto === null || this.monto === '' || Number(this.monto) <= 0) { this.error = 'Escribe un monto válido'; return; }
+    this.error = '';
     this.modalCtrl.dismiss({ fecha:this.fecha, desc:this.desc.trim(), monto:Number(this.monto), mensualidad:Number(this.mensualidad)||1, pagadas:Number(this.pagadas)||0, tipo:this.tipo });
   }
 }
@@ -55,34 +62,56 @@ export class TcModalComponent {
 
       <!-- Deudas generales -->
       <div class="card">
-        <div class="head">
-          <span class="lbl">Deudas generales</span>
+        <header class="head">
+          <div class="panel-title">
+            <span class="lbl">Deudas generales</span>
+            <span class="count">{{ deudasActivas.length }} activas</span>
+          </div>
           <span class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
-        </div>
+        </header>
         <div class="list">
           @for (d of deudasActivas; track d.id){
-            <div class="li row-click" (click)="editMarina(d)">
+            <div class="li row-click" role="button" tabindex="0"
+                 [attr.aria-label]="'Editar ' + d.nombre" (click)="editMarina(d)" (keydown.enter)="editMarina(d)">
               <div class="li-body">
                 <span class="li-title">{{ d.nombre }}</span>
-                <span class="li-sub">{{ d.fechaInicio }} @if (d.tipo) { · {{ d.tipo }} } · {{ d.pagados }}/{{ d.pagos }} pagos</span>
+                <span class="li-sub">
+                  <span>{{ fechaCorta(d.fechaInicio) }}</span>
+                  @if (d.tipo) { <span>· {{ d.tipo }}</span> }
+                  <span class="li-steps num">{{ d.pagados }}/{{ d.pagos }} pagos</span>
+                </span>
+                <div class="bar" role="progressbar" [attr.aria-valuenow]="pctPagado(d)" aria-valuemin="0" aria-valuemax="100"
+                     [attr.aria-label]="'Pagos de ' + d.nombre">
+                  <div class="bar-fill" [style.width.%]="pctPagado(d)"></div>
+                </div>
               </div>
               <div class="li-right">
                 <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
                 <span class="li-sub num">{{ d.mensualidad | currency:'MXN':'symbol':'1.0-0' }}/mes</span>
               </div>
-              <button class="icon-btn" (click)="toMarinaHistorial(d); $event.stopPropagation()" aria-label="Ver historial de pagos de esta deuda">
-                <ion-icon name="cash-outline"></ion-icon>
+              <button type="button" class="icon-btn" (click)="toMarinaHistorial(d); $event.stopPropagation()"
+                      [attr.aria-label]="'Terminar la deuda ' + d.nombre + ' y enviarla al historial'">
+                <ion-icon name="cash-outline" aria-hidden="true"></ion-icon>
               </button>
+              <ion-icon class="li-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </div>
           }
-          @if(deudasActivas.length===0){<div class="empty">Sin deudas registradas</div>}
+          @if(deudasActivas.length===0){
+            <div class="empty">
+              <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
+              <p>Sin deudas registradas</p>
+              <ion-button size="small" fill="outline" (click)="openAddMarinaModal()">Agregar deuda</ion-button>
+            </div>
+          }
         </div>
         <div class="totals">
-          <div>Deuda mensual <b class="num">{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div>Deuda total <b class="num">{{totalLa | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Mensual</span><b class="money">{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Saldo</span><b class="money">{{totalLa | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Liquidadas</span><b class="money ok">{{historialMarina.length}}</b></div>
         </div>
         <div class="card-foot">
           <ion-button size="small" fill="clear" (click)="historialMarinaVisible=!historialMarinaVisible">
+            <ion-icon slot="start" [name]="historialMarinaVisible ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
             {{historialMarinaVisible?'Ocultar historial':'Ver historial de pagos'}}
           </ion-button>
         </div>
@@ -92,48 +121,73 @@ export class TcModalComponent {
             <div class="li sm">
               <div class="li-body">
                 <span class="li-title">{{ d.nombre }}</span>
-                <span class="li-sub">{{ d.fechaInicio }}</span>
+                <span class="li-sub">{{ fechaCorta(d.fechaInicio) }} · {{ d.pagos }} pagos</span>
               </div>
               <span class="li-amount num">{{ d.saldo | currency:'MXN':'symbol':'1.0-0' }}</span>
-              <ion-icon name="checkmark-circle" class="ok"></ion-icon>
+              <ion-icon name="checkmark-circle" class="ok" aria-hidden="true"></ion-icon>
             </div>
           }
-          @if(historialMarina.length===0){<div class="empty">Sin historial</div>}
+          @if(historialMarina.length===0){ <div class="empty sm">Sin historial</div> }
         </div>
         }
-        <div class="add"><ion-button size="small" fill="outline" (click)="openAddMarinaModal()">Agregar deuda</ion-button></div>
+        <div class="add">
+          <ion-button size="small" fill="outline" (click)="openAddMarinaModal()">
+            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar deuda
+          </ion-button>
+        </div>
       </div>
 
       <!-- Pagos de tarjeta -->
       <div class="card">
-        <div class="head">
-          <span class="lbl">Pagos de tarjeta</span>
+        <header class="head">
+          <div class="panel-title">
+            <span class="lbl">Pagos de tarjeta</span>
+            <span class="count">{{ pagosActivos.length }} activos</span>
+          </div>
           <span class="money">{{ deudaMensual | currency:'MXN':'symbol':'1.0-0' }} al mes</span>
-        </div>
+        </header>
         <div class="list">
           @for (p of pagosActivos; track p.id){
-            <div class="li row-click" (click)="editTC(p)">
+            <div class="li row-click" role="button" tabindex="0"
+                 [attr.aria-label]="'Editar ' + p.desc" (click)="editTC(p)" (keydown.enter)="editTC(p)">
               <div class="li-body">
                 <span class="li-title">{{ p.desc }}</span>
-                <span class="li-sub">{{ p.fechaCompra }} · {{ p.mensualidadPagada }}/{{ p.mensualidad }} pagos</span>
+                <span class="li-sub">
+                  <span>{{ fechaCorta(p.fechaCompra) }}</span>
+                  <span class="li-steps num">{{ p.mensualidadPagada }}/{{ p.mensualidad }} pagos</span>
+                </span>
+                <div class="bar" role="progressbar" [attr.aria-valuenow]="pctPagadoP(p)" aria-valuemin="0" aria-valuemax="100"
+                     [attr.aria-label]="'Mensualidades de ' + p.desc">
+                  <div class="bar-fill" [style.width.%]="pctPagadoP(p)"></div>
+                </div>
               </div>
               <div class="li-right">
                 <span class="li-amount num">{{ p.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</span>
-                <span class="li-sub num">{{ p.monto | currency:'MXN':'symbol':'1.0-0' }}</span>
+                <span class="li-sub num">{{ p.monto | currency:'MXN':'symbol':'1.0-0' }}/mes</span>
               </div>
-              <button class="icon-btn" (click)="toHistorial(p); $event.stopPropagation()" aria-label="Ver historial de pagos de este pago">
-                <ion-icon name="cash-outline"></ion-icon>
+              <button type="button" class="icon-btn" (click)="toHistorial(p); $event.stopPropagation()"
+                      [attr.aria-label]="'Terminar el pago ' + p.desc + ' y enviarlo al historial'">
+                <ion-icon name="cash-outline" aria-hidden="true"></ion-icon>
               </button>
+              <ion-icon class="li-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </div>
           }
-          @if(pagosActivos.length===0){<div class="empty">Sin pagos de tarjeta registrados</div>}
+          @if(pagosActivos.length===0){
+            <div class="empty">
+              <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
+              <p>Sin pagos de tarjeta registrados</p>
+              <ion-button size="small" fill="outline" (click)="openAddTCModal()">Agregar pago</ion-button>
+            </div>
+          }
         </div>
         <div class="totals">
-          <div>Deuda mensual <b class="num">{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div>Deuda total <b class="num">{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Mensual</span><b class="money">{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Total</span><b class="money">{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          <div class="tot"><span class="lbl">Pagado</span><b class="money ok">{{pagadoTC | currency:'MXN':'symbol':'1.0-0'}}</b></div>
         </div>
         <div class="card-foot">
           <ion-button size="small" fill="clear" (click)="historialVisible=!historialVisible">
+            <ion-icon slot="start" [name]="historialVisible ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
             {{historialVisible?'Ocultar historial':'Ver historial de pagos'}}
           </ion-button>
         </div>
@@ -143,16 +197,20 @@ export class TcModalComponent {
             <div class="li sm">
               <div class="li-body">
                 <span class="li-title">{{ p.desc }}</span>
-                <span class="li-sub">{{ p.fechaCompra }}</span>
+                <span class="li-sub">{{ fechaCorta(p.fechaCompra) }} · {{ p.mensualidad }} mensualidades</span>
               </div>
               <span class="li-amount num">{{ p.montoTotal | currency:'MXN':'symbol':'1.0-0' }}</span>
-              <ion-icon name="checkmark-circle" class="ok"></ion-icon>
+              <ion-icon name="checkmark-circle" class="ok" aria-hidden="true"></ion-icon>
             </div>
           }
-          @if(pagosPagados.length===0){<div class="empty">Sin historial</div>}
+          @if(pagosPagados.length===0){ <div class="empty sm">Sin historial</div> }
         </div>
         }
-        <div class="add"><ion-button size="small" fill="outline" (click)="openAddTCModal()">Agregar pago</ion-button></div>
+        <div class="add">
+          <ion-button size="small" fill="outline" (click)="openAddTCModal()">
+            <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar pago
+          </ion-button>
+        </div>
       </div>
 
     </div>
@@ -164,8 +222,11 @@ export class TcModalComponent {
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
 
   /* Encabezado sin fondo de color: el monto al mes ya da la jerarquia */
-  .head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
-    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle)}
+  .head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border-subtle);flex-wrap:wrap}
+  .panel-title{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint)}
+  .head ion-button{margin:0;min-height:36px}
 
   .list{display:flex;flex-direction:column}
   .sublist{background:var(--surface-sunken);border-top:1px solid var(--border-subtle)}
@@ -174,27 +235,61 @@ export class TcModalComponent {
      eso suma mas del ancho disponible y la tabla se desbordaba con scroll
      horizontal. Ahora cada deuda es una fila con el monto alineado a la derecha. */
   .li{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);
-    border-bottom:1px solid var(--border-subtle);text-align:left;width:100%;background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
+    min-height:56px;border-bottom:1px solid var(--border-subtle);text-align:left;width:100%;
+    background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
   .li:last-child{border-bottom:none}
-  .li.sm{padding:10px var(--sp-4);background:transparent}
-  .li-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
-  .li-title{font-size:14px;color:var(--text-body);overflow-wrap:anywhere}
-  .li-sub{font-size:11px;color:var(--text-faint)}
+  .li.sm{padding:10px var(--sp-4);min-height:48px;background:transparent}
+  .li-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+  .li-title{font-size:14px;font-weight:600;color:var(--text-body);overflow-wrap:anywhere}
+  .li-sub{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-faint)}
+  /* Cuantos pagos van, al final de la linea del detalle */
+  .li-steps{margin-left:auto;font-weight:700;color:var(--text-muted)}
   .li-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none}
-  .li-amount{font-size:14px;font-weight:700;color:var(--text-strong);white-space:nowrap}
-  .row-click{cursor:pointer}
+  .li-amount{font-size:14px;font-weight:800;color:var(--text-strong);white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+  /* Progreso de mensualidades: antes solo se veia "2/12 pagos" como texto */
+  .bar{height:6px;background:var(--surface-sunken);border-radius:var(--radius-pill);overflow:hidden;
+    margin-top:3px;border:1px solid var(--border-subtle)}
+  .bar-fill{height:100%;background:var(--positive);border-radius:var(--radius-pill);transition:width .25s ease}
+  .row-click{cursor:pointer;transition:background .15s ease}
   .row-click:hover{background:var(--surface-sunken)}
-  .icon-btn{border:none;background:transparent;color:var(--text-muted);cursor:pointer;
-    width:36px;height:36px;border-radius:var(--radius-sm);font-size:18px;flex:none}
-  .icon-btn:hover{background:var(--surface-input)}
+  .row-click:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  /* Flecha: la fila se edita al tocarla */
+  .li-chev{flex:none;font-size:16px;color:var(--text-faint)}
+  .icon-btn{display:flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;
+    border:none;background:transparent;color:var(--text-muted);cursor:pointer;
+    border-radius:var(--radius-sm);font-size:18px;transition:background .15s ease}
+  .icon-btn ion-icon{font-size:18px}
+  .icon-btn:hover{background:var(--surface-input);color:var(--text-strong)}
+  .icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .ok{color:var(--positive);font-size:16px;flex:none}
 
-  .totals{display:flex;gap:var(--sp-5);justify-content:flex-end;
-    padding:var(--sp-3) var(--sp-4);font-size:12px;color:var(--text-muted);flex-wrap:wrap;
-    border-top:1px solid var(--border-subtle)}
-  .totals b{color:var(--text-strong);font-size:13px}
+  /* Totales como tres cifras comparables, no como texto suelto a la derecha */
+  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);
+    padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--border-subtle)}
+  .tot{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
+    background:var(--surface-sunken);border-radius:var(--radius)}
+  .tot b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  .money.ok{color:var(--ok)}
+
   .card-foot{display:flex;justify-content:center;padding:0 var(--sp-2) var(--sp-1)}
+  .card-foot ion-button{margin:0;min-height:36px}
+  .card-foot ion-icon{font-size:14px}
+
+  /* Estado vacio con accion directa */
+  .empty{display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);
+    padding:var(--sp-6) var(--sp-4);text-align:center}
+  .empty.sm{padding:var(--sp-4)}
+  .empty ion-icon{font-size:26px;color:var(--text-faint)}
+  .empty p{margin:0;font-size:13px;color:var(--text-faint)}
+  .empty ion-button{margin:var(--sp-1) 0 0;min-height:36px}
+
   .add{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3)}
+  .add ion-button{margin:0;min-height:36px}
+
+  @media (prefers-reduced-motion: reduce){
+    .row-click,.icon-btn,.bar-fill{transition:none}
+  }
   `]
 })
 export class DeudasPage {
@@ -213,11 +308,23 @@ export class DeudasPage {
   historialMarina: any[] = [];
   newDeuda: any = { nombre: '', mensualidad: null, saldo: null };
   constructor(private budget: BudgetService, private modalCtrl: ModalController, private alertCtrl2: AlertController, private toastCtrl: ToastController) {
-    addIcons({ checkmarkCircle, cashOutline });
+    addIcons({ checkmarkCircle, cashOutline, addOutline, chevronDownOutline, chevronUpOutline, chevronForwardOutline, walletOutline, cardOutline });
     this.refresh();
     this.budget.deudas$.subscribe(() => this.refresh());
     this.budget.pagosTC$.subscribe(() => this.refresh());
   }
+  /** Las fechas vienen en ISO (2026-10-09): se muestran en formato local
+      legible en vez de la cadena cruda, que ademas es ambigua. */
+  private readonly fmtFecha = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  fechaCorta(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return this.fmtFecha.format(d).replace(/\.$/, '');
+  }
+  /** Cuantas mensualidades van respecto del total, en porcentaje. */
+  pctPagado(d: any): number { return d.pagos ? Math.round((d.pagados / d.pagos) * 100) : 0; }
+  pctPagadoP(p: any): number { return p.mensualidad ? Math.round((p.mensualidadPagada / p.mensualidad) * 100) : 0; }
   refresh() {
     this.deudas = this.budget.getDeudas();
     this.pagos = this.budget.getPagosTC();
@@ -253,7 +360,7 @@ export class DeudasPage {
     await alert.present();
   }
   async openAddTCModal() {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, titulo: 'Nuevo pago de tarjeta' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data && data.desc) {
@@ -262,7 +369,7 @@ export class DeudasPage {
     }
   }
   async editTC(p: any) {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: p.fechaCompra, desc: p.desc, monto: p.monto, mensualidad: p.mensualidad, pagadas: p.mensualidadPagada, isEdit: true }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: p.fechaCompra, desc: p.desc, monto: p.monto, mensualidad: p.mensualidad, pagadas: p.mensualidadPagada, isEdit: true, titulo: 'Editar pago de tarjeta' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data?.remove) { this.budget.removePagoTC(p.id); this.refresh(); return; }
@@ -272,7 +379,7 @@ export class DeudasPage {
     }
   }
   async openAddMarinaModal() {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, showTipo: true, tipo: '' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, showTipo: true, tipo: '', titulo: 'Nueva deuda' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data && data.desc) {
@@ -281,7 +388,7 @@ export class DeudasPage {
     }
   }
   async editMarina(d: any) {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: d.fechaInicio, desc: d.nombre, monto: d.mensualidad, mensualidad: d.pagos||1, pagadas: d.pagados||0, tipo: d.tipo||'', showTipo: true, isEdit: true }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: d.fechaInicio, desc: d.nombre, monto: d.mensualidad, mensualidad: d.pagos||1, pagadas: d.pagados||0, tipo: d.tipo||'', showTipo: true, isEdit: true, titulo: 'Editar deuda' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data?.remove) { this.budget.removeDeuda(d.id); this.refresh(); return; }
