@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline } from 'ionicons/icons';
 import pkg from '../../../../package.json';
 
 /** Versión desde package.json: una sola fuente, no se desincroniza. */
@@ -68,37 +68,51 @@ export class IngresoModalComponent {
         <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
-      <!-- 2. Estado general: solo dice si todo está bien. Sin montos: lo que
-           importa acá es el aviso, no la cifra.
-           Mide cuánto queda (lo que tienes - lo que gastaste); antes media el
-           cuadre contra el registro y por eso decía "Falta" siempre. -->
-      <div class="card verdict">
-        <div class="v-head">
-          <span class="lbl">{{etiquetaPeriodo}}</span>
-          @if (quedaGlobal === 0) {
-            <span class="tag ok">Todo en orden</span>
-          } @else {
-            <span class="tag" [class.warn]="quedaGlobal > 0" [class.bad]="quedaGlobal < 0">
-              {{ quedaGlobal > 0 ? 'Tienes de más' : 'Te falta' }}
-            </span>
-          }
-        </div>
-      </div>
-
-      <!-- 3. Cuanto sobra si se gasta lo planeado.
-           El monto cambia con el selector de arriba: si esta en "Todo el mes"
-           es la suma de Q1+Q2, si esta en una quincena es solo esa.
-           El monto va CON su signo: positivo = te sobra, negativo = no alcanza.
-           Antes se invertía, así que "te sobra $5,000" se pintaba -$5,000. -->
-      <div class="card saldo" [class.saldo-cero]="saldoCercaDeCero" [class.saldo-neg]="sobranteGlobal < 0">
-        <div class="s-head">
-          <span class="lbl">{{ etiquetaPeriodoPrevisto }}</span>
+      <!-- 2. Resumen del periodo: cuanto recibis, cuanto pensabas gastar,
+            cuanto gastaste de verdad y cuanto te queda. Los cuatro numeros
+            salen del periodo elegido arriba: en "Todo el mes" es la suma de
+            Q1+Q2, en una quincena es solo esa. -->
+      <div class="card resumen" [class.res-cerca]="saldoCercaDeCero" [class.res-neg]="sobranteGlobal < 0">
+        <div class="res-hero">
+          <span class="lbl res-estado">
+            <ion-icon [name]="sobranteGlobal < 0 ? 'trending-down-outline' : 'trending-up-outline'" aria-hidden="true"></ion-icon>
+            {{ etiquetaPeriodoPrevisto }}
+          </span>
+          <b class="res-monto">{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           <span class="count">si gastás lo previsto</span>
         </div>
-        <b class="s-monto">{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+
+        <!-- Medidor: cuanto de lo recibido ya se gasto. La marca dice donde
+             deberia estar el gasto si se cumpliera lo previsto. -->
+        <div class="med" [class.pasado]="gastoRealGlobal > previstoGlobal" [class.excedido]="gastoRealGlobal > dineroTotalGlobal">
+          <div class="med-track" role="img"
+               [attr.aria-label]="'Gastaste el ' + pctReal + '% de lo recibido. Lo previsto marca el ' + pctPrevisto + '%'">
+            <div class="med-fill" [style.width.%]="anchoReal"></div>
+          </div>
+          <div class="med-mark" [style.left.%]="posMarca" aria-hidden="true"></div>
+          <div class="med-pie">
+            <span class="count">Gastaste {{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }} que recibiste</span>
+            <span class="count"><i class="med-tick" aria-hidden="true"></i> previsto {{ pctPrevisto }}%</span>
+          </div>
+        </div>
+
+        <div class="res-stats">
+          <div class="cell">
+            <span class="lbl">Recibís</span>
+            <b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          </div>
+          <div class="cell">
+            <span class="lbl">Gasto previsto</span>
+            <b class="money">{{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          </div>
+          <div class="cell">
+            <span class="lbl">Gasto real</span>
+            <b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          </div>
+        </div>
       </div>
 
-      <!-- 4. Detalle por quincena -->
+      <!-- 3. Detalle por quincena -->
       <span class="section-title">Detalle</span>
       <div class="grid2">
         @for (q of filteredQs; track q) {
@@ -163,9 +177,9 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 6. Deudas y deudores: van despues del detalle porque son otra cosa.
-           El detalle es el dinero de la quincena; esto es lo que se debe
-           fuera del ciclo, asi que no compite con el veredicto de arriba. -->
+      <!-- 4. Deudas y deudores: van despues del detalle porque son otra cosa.
+            El detalle es el dinero de la quincena; esto es lo que se debe
+            fuera del ciclo, asi que no compite con el aviso de cada quincena. -->
       <span class="section-title">Cuentas pendientes</span>
       <div class="grid2">
         <button type="button" class="card sum" (click)="go('/tabs/deudas')">
@@ -305,28 +319,43 @@ export class IngresoModalComponent {
   .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
   .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Estado general: una franja con el periodo y el aviso. Sin cifras: lo que
-     importa es saber si todo está bien o no. */
-  .verdict{padding:var(--sp-3) var(--sp-4)}
-  .v-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    min-height:44px;flex-wrap:wrap}
-  .tag{font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:5px 12px;
-    border-radius:var(--radius-pill);flex:none}
-  .tag.ok{background:var(--ok-bg);color:var(--ok)}
-  /* "Tienes de más" va en ambar y "Te falta" en rojo: verde queda para cuando
-     los números calzan. */
-  .tag.warn{background:var(--warn-bg);color:var(--warn)}
-  .tag.bad{background:var(--bad-bg);color:var(--bad)}
+  /* Estado general: el aviso vive en cada quincena, no aca. */
 
-  /* Saldo previsto: solo el monto. El color marca el estado:
-     rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
-     normal = sobra con holgura. */
-  .saldo{padding:var(--sp-4)}
-  .s-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
-  .s-monto{display:block;margin-top:var(--sp-2);font-size:26px;line-height:1.1;
-    color:var(--text-strong);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .saldo-cero .s-monto{color:var(--warn)}
-  .saldo-neg .s-monto{color:var(--bad)}
+  /* Resumen del periodo: cuanto recibis, lo previsto, lo real y lo que queda.
+     El monto grande es la respuesta; el medidor y las tres cifras la sostienen.
+     El color solo refuerza: el texto ("Te sobra" / "No te alcanza") ya dice el estado. */
+  .resumen{padding:var(--sp-4)}
+  .res-hero{display:flex;flex-direction:column;gap:2px}
+  .res-estado{display:inline-flex;align-items:center;gap:5px;color:var(--ok)}
+  .res-estado ion-icon{font-size:15px}
+  .res-monto{display:block;margin-top:var(--sp-1);font-size:28px;line-height:1.05;
+    letter-spacing:-.02em;color:var(--text-strong)}
+  .res-cerca .res-monto,.res-cerca .res-estado{color:var(--warn)}
+  .res-neg .res-monto,.res-neg .res-estado{color:var(--bad)}
+
+  /* Medidor: barra de lo gastado contra lo recibido, con la marca de lo previsto */
+  .med{position:relative;margin-top:var(--sp-4)}
+  .med-track{height:10px;background:var(--surface-sunken);border-radius:var(--radius-pill);overflow:hidden}
+  .med-fill{height:100%;background:var(--positive);border-radius:var(--radius-pill);
+    transition:width .25s ease}
+  /* Te pasaste de lo previsto (ambar) o de lo que recibiste (rojo). El numero
+     de abajo dice lo mismo, asi que el color no es el unico aviso. */
+  .med.pasado .med-fill{background:var(--warn)}
+  .med.excedido .med-fill{background:var(--bad)}
+  .med-mark{position:absolute;top:0;left:0;width:2px;height:10px;border-radius:1px;
+    background:var(--text-strong);transform:translateX(-1px)}
+  .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+    flex-wrap:wrap;margin-top:6px}
+  .med-pie .count{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+  .med-tick{width:2px;height:10px;background:var(--text-strong);border-radius:1px;
+    display:inline-block;flex:none}
+
+  /* Las tres cifras que sostienen el monto grande */
+  .res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
+  @media(max-width:420px){.res-stats{grid-template-columns:1fr}}
+  .res-stats .cell{display:flex;flex-direction:column;gap:2px;background:var(--surface-sunken);
+    border-radius:var(--radius-sm);padding:var(--sp-3)}
+  .res-stats .cell b{font-size:17px}
 
   /* El porcentaje del previsto se muestra dentro de cada quincena, asi que
      aca solo queda el texto auxiliar que acompaña a la barra. */
@@ -447,7 +476,7 @@ export class IngresoModalComponent {
   .empty.sm{padding:var(--sp-3);background:transparent}
 
   @media (prefers-reduced-motion: reduce){
-    .seg-btn,.sum,.icon-btn{transition:none}
+    .seg-btn,.sum,.icon-btn,.med-fill{transition:none}
   }
   `]
 })
@@ -485,7 +514,7 @@ export class DashboardPage {
   private manualIngToggle = new Set<string>();
 
   constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline });
+    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.applyAutoCollapse();
@@ -538,10 +567,6 @@ export class DashboardPage {
   isIngCollapsed(q: string) { return !!this.collapsedIng[q]; }
   go(url: string) { this.router.navigateByUrl(url); }
 
-  /** Etiqueta del periodo activo, usada en el veredicto. */
-  get etiquetaPeriodo(): string {
-    return this.quincenaActual === 'TODO' ? 'Todo el mes' : this.etiquetaQuincena(this.quincenaActual);
-  }
   /** "Q1" -> "Quincena 1". Evita repetir el ternario en cada template. */
   etiquetaQuincena(q: string): string {
     return q === 'Q1' ? 'Quincena 1' : 'Quincena 2';
@@ -580,9 +605,6 @@ export class DashboardPage {
    * (Antes acá estaba el "cuadre contra el registro", que se ponía negativo
    * en cuanto se marcaba un gasto como pagado y por eso siempre decia "Falta".
    */
-  get quedaGlobal(): number {
-    return this.dineroTotalGlobal - this.gastoRealGlobal;
-  }
   /** Lo mismo, para una quincena: el aviso del detalle usa la misma medida. */
   queda(q: any): number {
     return this.ingreso(q) - this.reales(q);
@@ -602,6 +624,18 @@ export class DashboardPage {
     if (this.sobranteGlobal < 0) return false;
     return this.sobranteGlobal < this.dineroTotalGlobal * 0.05;
   }
+  /** Cuanto de lo recibido ya se gasto, en %: el numero bajo el medidor. */
+  get pctReal(): number {
+    return this.dineroTotalGlobal ? Math.round((this.gastoRealGlobal / this.dineroTotalGlobal) * 100) : 0;
+  }
+  /** Ancho de la barra: el % real, sin pasarse de 100. */
+  get anchoReal(): number { return Math.min(100, this.pctReal); }
+  /** Donde deberia estar el gasto si se cumpliera lo previsto: la marca. */
+  get pctPrevisto(): number {
+    return this.dineroTotalGlobal ? Math.round((this.previstoGlobal / this.dineroTotalGlobal) * 100) : 0;
+  }
+  /** Posicion de la marca, siempre visible dentro de la barra. */
+  get posMarca(): number { return Math.min(99, Math.max(1, this.pctPrevisto)); }
   /**
    * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
    * (ingresos - gastadoReal) - dineroTotal.
