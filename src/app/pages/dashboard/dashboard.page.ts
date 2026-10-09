@@ -137,7 +137,8 @@ export class IngresoModalComponent {
               <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
               <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
               <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <ion-button size="small" fill="outline" class="edit-btn" (click)="toggleEdit(q)">
+              <!-- Mismo boton solido con icono que usa el resto de las pestañas -->
+              <ion-button size="small" class="edit-btn" (click)="toggleEdit(q)">
                 <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar montos
               </ion-button>
             } @else {
@@ -285,7 +286,7 @@ export class IngresoModalComponent {
                 <div class="empty sm">Sin ingresos cargados</div>
               }
               <div class="add-ing">
-                <ion-button size="small" fill="outline" (click)="openAddIngresoModal(q)">
+                <ion-button size="small" (click)="openAddIngresoModal(q)">
                   <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
                 </ion-button>
               </div>
