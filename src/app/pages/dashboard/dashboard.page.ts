@@ -126,7 +126,7 @@ export class IngresoModalComponent {
           </button>
           @if(!isCollapsed(q)){
           <div class="q-body">
-            <div class="row"><span>Previsto en gastos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+            <div class="row"><span>Gastos previstos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="row"><span>Gastado real</span><b>{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="progress" role="progressbar" [attr.aria-valuenow]="pct(q)" aria-valuemin="0" aria-valuemax="100"
                  [attr.aria-label]="'Avance del previsto de la ' + etiquetaQuincena(q)">
