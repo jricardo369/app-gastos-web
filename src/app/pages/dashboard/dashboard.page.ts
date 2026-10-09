@@ -159,14 +159,17 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Aviso por quincena, con la misma medida que el estado general
-                 de arriba: cuánto queda de lo que hay en la mesa. Sin monto a
-                 propósito: la cifra acá se confundía con "lo que tengo de más". -->
-            <div class="flag" [class.flag-sobra]="queda(q) > 0" [class.flag-falta]="queda(q) < 0" [class.flag-ok]="queda(q) === 0">
-              @if (queda(q) > 0) {
-                <span>Tienes de más: te queda dinero</span>
-              } @else if (queda(q) < 0) {
-                <span>Te falta: gastaste más de lo que tienes</span>
+            <!-- Aviso por quincena: cuadra el INGRESO declarado de la quincena
+                 contra el dinero que hay en el bolsillo (efectivo + vales +
+                 nomina). Si uno es mayor que el otro avisa: es la forma de ver
+                 que lo que dice el ingreso coincide con lo que traes.
+                 Sin monto a proposito: la cifra aca se confundia con "lo que
+                 tengo de mas". -->
+            <div class="flag" [class.flag-sobra]="cuadreIngreso(q) > 0" [class.flag-falta]="cuadreIngreso(q) < 0" [class.flag-ok]="cuadreIngreso(q) === 0">
+              @if (cuadreIngreso(q) > 0) {
+                <span>Tienes de más: tu ingreso es mayor que lo que traés</span>
+              } @else if (cuadreIngreso(q) < 0) {
+                <span>Te falta: tu ingreso es menor que lo que traés</span>
               } @else {
                 <span>Todo en orden</span><b aria-hidden="true">✓</b>
               }
@@ -612,14 +615,17 @@ export class DashboardPage {
     return this.dineroTotalGlobal - this.previstoGlobal;
   }
   /**
-   * Cuánto queda del dinero que hay en la mesa después de lo ya gastado.
-   * Es la pregunta del veredicto: positivo = tienes de más, negativo = te falta.
-   * (Antes acá estaba el "cuadre contra el registro", que se ponía negativo
-   * en cuanto se marcaba un gasto como pagado y por eso siempre decia "Falta".
+   * Cuadre de la quincena: el INGRESO declarado (la lista de ingresos) contra
+   * el dinero que hay en el bolsillo (efectivo + vales + nomina). Sirve para
+   * ver que lo que dice el ingreso coincide con lo que realmente se trae.
+   * OJO con los nombres: `ingreso(q)` de este componente es el dinero del
+   * bolsillo; el ingreso declarado sale de getIngresoTotal(q).
+   * Positivo = el ingreso es mayor -> "Tienes de mas".
+   * Negativo = el ingreso es menor -> "Te falta".
+   * Cero = cuadran.
    */
-  /** Lo mismo, para una quincena: el aviso del detalle usa la misma medida. */
-  queda(q: any): number {
-    return this.ingreso(q) - this.reales(q);
+  cuadreIngreso(q: any): number {
+    return this.getIngresoTotal(q) - this.ingreso(q);
   }
   /** "Te sobra el mes" / "Te sobra la Quincena 1", o "No te alcanza" si es negativo. */
   get etiquetaPeriodoPrevisto(): string {
