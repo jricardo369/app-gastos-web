@@ -97,15 +97,15 @@ export class IngresoModalComponent {
         </div>
 
         <div class="res-stats">
-          <div class="cell">
+          <div class="stat">
             <span class="lbl">Recibís</span>
             <b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
-          <div class="cell">
+          <div class="stat">
             <span class="lbl">Gasto previsto</span>
             <b class="money">{{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
-          <div class="cell">
+          <div class="stat">
             <span class="lbl">Gasto real</span>
             <b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
@@ -350,12 +350,24 @@ export class IngresoModalComponent {
   .med-tick{width:2px;height:10px;background:var(--text-strong);border-radius:1px;
     display:inline-block;flex:none}
 
-  /* Las tres cifras que sostienen el monto grande */
-  .res-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
-  @media(max-width:420px){.res-stats{grid-template-columns:1fr}}
-  .res-stats .cell{display:flex;flex-direction:column;gap:2px;background:var(--surface-sunken);
-    border-radius:var(--radius-sm);padding:var(--sp-3)}
-  .res-stats .cell b{font-size:17px}
+  /* Las tres cifras que sostienen el monto grande. Siempre en horizontal:
+     tres columnas iguales con separadores finos, sin cajas, para que quepan
+     hasta en una pantalla de 320px sin apretar los numeros. */
+  .res-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4)}
+  .res-stats .stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 var(--sp-2)}
+  .res-stats .stat:first-child{padding-left:0}
+  .res-stats .stat:last-child{padding-right:0}
+  .res-stats .stat + .stat{border-left:1px solid var(--border-subtle)}
+  .res-stats .lbl{line-height:1.2}
+  .res-stats .money{font-size:17px}
+  /* En pantallas muy angostas se afina el tamano, no se apilan: seguiria
+     siendo horizontal, que es lo que se compara de un vistazo. */
+  @media(max-width:360px){
+    .res-stats{gap:var(--sp-1)}
+    .res-stats .stat{padding:0 var(--sp-1)}
+    .res-stats .money{font-size:15px}
+    .res-stats .lbl{font-size:10px}
+  }
 
   /* El porcentaje del previsto se muestra dentro de cada quincena, asi que
      aca solo queda el texto auxiliar que acompaña a la barra. */
