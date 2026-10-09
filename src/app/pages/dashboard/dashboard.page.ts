@@ -79,34 +79,40 @@ export class IngresoModalComponent {
             {{ etiquetaPeriodoPrevisto }}
           </span>
           <b class="res-monto">{{ sobranteGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="count">si gastás lo previsto</span>
+          <span class="count">recibido − previstos − variables</span>
         </div>
 
         <!-- Medidor: cuanto de lo recibido ya se gasto. La marca dice donde
-             deberia estar el gasto si se cumpliera lo previsto. -->
-        <div class="med" [class.pasado]="gastoRealGlobal > previstoGlobal" [class.excedido]="gastoRealGlobal > dineroTotalGlobal">
+             deberia estar el gasto si se cumple lo planeado. -->
+        <div class="med" [class.pasado]="gastoRealGlobal > planeadoGlobal" [class.excedido]="gastoRealGlobal > dineroTotalGlobal">
           <div class="med-track" role="img"
-               [attr.aria-label]="'Gastaste el ' + pctReal + '% de lo recibido. Lo previsto marca el ' + pctPrevisto + '%'">
+               [attr.aria-label]="'Gastaste el ' + pctReal + '% de lo recibido. Lo planeado marca el ' + pctPlaneado + '%'">
             <div class="med-fill" [style.width.%]="anchoReal"></div>
           </div>
           <div class="med-mark" [style.left.%]="posMarca" aria-hidden="true"></div>
           <div class="med-pie">
             <span class="count">Gastaste {{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }} de {{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }} que recibiste</span>
-            <span class="count"><i class="med-tick" aria-hidden="true"></i> previsto {{ pctPrevisto }}%</span>
+            <span class="count"><i class="med-tick" aria-hidden="true"></i> planeado {{ pctPlaneado }}%</span>
           </div>
         </div>
 
+        <!-- Las cuatro cifras del calculo de arriba, en el mismo orden:
+             lo que entra menos lo previsto menos los variables es lo que sobra. -->
         <div class="res-stats">
           <div class="stat">
             <span class="lbl">Recibís</span>
             <b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
           <div class="stat">
-            <span class="lbl">Gasto previsto</span>
+            <span class="lbl">Gastos previstos</span>
             <b class="money">{{ previstoGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
           <div class="stat">
-            <span class="lbl">Gasto real</span>
+            <span class="lbl">Gastos variables</span>
+            <b class="money">{{ imprevistosGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
+          </div>
+          <div class="stat">
+            <span class="lbl">Gastos reales</span>
             <b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>
           </div>
         </div>
@@ -343,7 +349,7 @@ export class IngresoModalComponent {
   .med-track{height:10px;background:var(--surface-sunken);border-radius:var(--radius-pill);overflow:hidden}
   .med-fill{height:100%;background:var(--positive);border-radius:var(--radius-pill);
     transition:width .25s ease}
-  /* Te pasaste de lo previsto (ambar) o de lo que recibiste (rojo). El numero
+  /* Te pasaste de lo planeado (ambar) o de lo que recibiste (rojo). El numero
      de abajo dice lo mismo, asi que el color no es el unico aviso. */
   .med.pasado .med-fill{background:var(--warn)}
   .med.excedido .med-fill{background:var(--bad)}
@@ -355,22 +361,26 @@ export class IngresoModalComponent {
   .med-tick{width:2px;height:10px;background:var(--text-strong);border-radius:1px;
     display:inline-block;flex:none}
 
-  /* Las tres cifras que sostienen el monto grande. Siempre en horizontal:
-     tres columnas iguales con separadores finos, sin cajas, para que quepan
+  /* Las cuatro cifras que forman el monto grande, en el mismo orden en que se
+     calcula: lo que entra − lo previsto − los variables. Siempre en horizontal:
+     cuatro columnas iguales con separadores finos, sin cajas, para que quepan
      hasta en una pantalla de 320px sin apretar los numeros. */
-  .res-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4)}
+  .res-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4)}
   .res-stats .stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 var(--sp-2)}
   .res-stats .stat:first-child{padding-left:0}
   .res-stats .stat:last-child{padding-right:0}
   .res-stats .stat + .stat{border-left:1px solid var(--border-subtle)}
   .res-stats .lbl{line-height:1.2}
-  .res-stats .money{font-size:17px}
+  .res-stats .money{font-size:16px}
   /* En pantallas muy angostas se afina el tamano, no se apilan: seguiria
      siendo horizontal, que es lo que se compara de un vistazo. */
-  @media(max-width:360px){
+  @media(max-width:400px){
     .res-stats{gap:var(--sp-1)}
     .res-stats .stat{padding:0 var(--sp-1)}
-    .res-stats .money{font-size:15px}
+    .res-stats .money{font-size:14px}
+  }
+  @media(max-width:340px){
+    .res-stats .money{font-size:12px}
     .res-stats .lbl{font-size:10px}
   }
 
@@ -603,18 +613,23 @@ export class DashboardPage {
   get previstoGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.previstos(q), 0);
   }
+  /** Los variables (imprevistos) del periodo: pagados o no, tambien salen del bolsillo. */
+  get imprevistosGlobal(): number {
+    return this.filteredQs.reduce((s, q) => s + this.budget.getImprevistos(q as any).reduce((t, i: any) => t + (Number(i.importe) || 0), 0), 0);
+  }
   /** Efectivo + vales + nomina: el dinero que hay sobre la mesa. */
   get dineroTotalGlobal(): number {
     return this.filteredQs.reduce((s, q) => s + this.ingreso(q), 0);
   }
   /**
-   * "Cuanto sobra si gasto lo planeado": dinero que tenes menos lo previsto.
-   * Es el numero que vivia en la tarjeta saldo-card del diseño anterior.
-   * OJO: no es lo mismo que todoBienGlobal. Este mira lo PREVISTO
-   * (ingreso - previstos), el otro mira lo REAL (ingresos - gastadoReal).
+   * "Cuanto sobra": lo que recibis menos lo previsto menos los variables.
+   * Es el numero grande de la tarjeta de resumen, y por eso arriba se ven las
+   * tres cifras que lo forman, en ese mismo orden.
+   * OJO: no es lo mismo que todoBienGlobal. Este mira lo PLANEADO
+   * (recibido - previstos - variables), el otro mira lo REAL.
    */
   get sobranteGlobal(): number {
-    return this.dineroTotalGlobal - this.previstoGlobal;
+    return this.dineroTotalGlobal - this.previstoGlobal - this.imprevistosGlobal;
   }
   /**
    * Cuadre de la quincena: el INGRESO declarado (la lista de ingresos) contra
@@ -650,12 +665,16 @@ export class DashboardPage {
   }
   /** Ancho de la barra: el % real, sin pasarse de 100. */
   get anchoReal(): number { return Math.min(100, this.pctReal); }
-  /** Donde deberia estar el gasto si se cumpliera lo previsto: la marca. */
-  get pctPrevisto(): number {
-    return this.dineroTotalGlobal ? Math.round((this.previstoGlobal / this.dineroTotalGlobal) * 100) : 0;
+  /** Lo planeado: lo previsto mas los variables. Es lo que se deberia gastar. */
+  get planeadoGlobal(): number {
+    return this.previstoGlobal + this.imprevistosGlobal;
+  }
+  /** Donde deberia estar el gasto si se cumple lo planeado: la marca. */
+  get pctPlaneado(): number {
+    return this.dineroTotalGlobal ? Math.round((this.planeadoGlobal / this.dineroTotalGlobal) * 100) : 0;
   }
   /** Posicion de la marca, siempre visible dentro de la barra. */
-  get posMarca(): number { return Math.min(99, Math.max(1, this.pctPrevisto)); }
+  get posMarca(): number { return Math.min(99, Math.max(1, this.pctPlaneado)); }
   /**
    * Positivo = sobra, negativo = FALTA DINERO. Misma formula que todoBien(q):
    * (ingresos - gastadoReal) - dineroTotal.
