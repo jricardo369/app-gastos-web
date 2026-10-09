@@ -68,17 +68,13 @@ export class IngresoModalComponent {
         <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
-      <!-- 2. Veredicto: cuánto te queda de lo que tienes en la mesa.
-           Ojo: antes media el "cuadre contra el registro" (ingresos - gastado
-           vs dinero), que se pone negativo en cuanto se marca un gasto como
-           pagado, aunque sobre dinero. Eso hacia que dijera "Falta" siempre.
-           Ahora mide lo que queda: positivo = tienes de más. -->
+      <!-- 2. Estado general: solo dice si todo está bien. Sin montos: lo que
+           importa acá es el aviso, no la cifra.
+           Mide cuánto queda (lo que tienes - lo que gastaste); antes media el
+           cuadre contra el registro y por eso decía "Falta" siempre. -->
       <div class="card verdict">
         <div class="v-head">
-          <div class="panel-title">
-            <span class="lbl">{{etiquetaPeriodo}}</span>
-            <span class="count">Lo que te queda de lo que tienes</span>
-          </div>
+          <span class="lbl">{{etiquetaPeriodo}}</span>
           @if (quedaGlobal === 0) {
             <span class="tag ok">Todo en orden</span>
           } @else {
@@ -86,26 +82,6 @@ export class IngresoModalComponent {
               {{ quedaGlobal > 0 ? 'Tienes de más' : 'Te falta' }}
             </span>
           }
-        </div>
-        <!-- El monto va siempre positivo: la etiqueta de arriba ya dice de que
-             lado está. Antes se multiplicaba por -1 y un sobrante se veía como
-             un faltante. -->
-        <strong class="v-monto" [class.warn]="quedaGlobal > 0" [class.bad]="quedaGlobal < 0">
-          {{ verdictMonto | currency:'MXN':'symbol':'1.0-0' }}
-        </strong>
-        <p class="v-txt">
-          @if (quedaGlobal > 0) {
-            Tienes de más: te queda dinero después de lo que gastaste
-          } @else if (quedaGlobal < 0) {
-            Gastaste más de lo que tienes en la mesa
-          } @else {
-            Gastaste justo lo que tienes en la mesa
-          }
-        </p>
-        <div class="stats">
-          <div class="stat"><span class="lbl">Tienes</span><b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div class="stat"><span class="lbl">Gastado</span><b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div class="stat"><span class="lbl">Te queda</span><b class="money" [class.ok]="quedaGlobal >= 0" [class.bad]="quedaGlobal < 0">{{ quedaGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
 
@@ -328,31 +304,18 @@ export class IngresoModalComponent {
   .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
   .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Veredicto: la cifra grande primero y el detalle en tres cajas, igual que
-     las tarjetas de avance de las otras pestañas. El color semantico va en la
-     etiqueta y en el monto, no de fondo en toda la tarjeta: antes la tarjeta
-     entera se pintaba y tapaba el contenido. */
-  .verdict{padding:var(--sp-4)}
-  .v-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2);flex-wrap:wrap}
-  .tag{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;padding:4px 10px;
+  /* Estado general: una franja con el periodo y el aviso. Sin cifras: lo que
+     importa es saber si todo está bien o no. */
+  .verdict{padding:var(--sp-3) var(--sp-4)}
+  .v-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+    min-height:44px;flex-wrap:wrap}
+  .tag{font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;padding:5px 12px;
     border-radius:var(--radius-pill);flex:none}
   .tag.ok{background:var(--ok-bg);color:var(--ok)}
-  /* "Sobra" va en ambar y "Falta" en rojo: no es una buena noticia, es una
-     diferencia entre lo gastado y lo que hay. */
+  /* "Tienes de más" va en ambar y "Te falta" en rojo: verde queda para cuando
+     los números calzan. */
   .tag.warn{background:var(--warn-bg);color:var(--warn)}
   .tag.bad{background:var(--bad-bg);color:var(--bad)}
-  .v-monto{display:block;margin-top:var(--sp-2);font-size:32px;line-height:1.05;
-    color:var(--text-strong);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .v-monto.warn{color:var(--warn)}
-  .v-monto.bad{color:var(--bad)}
-  .v-txt{margin:var(--sp-2) 0 0;font-size:13px;color:var(--text-body)}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
-  .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
-  .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
-  /* "Te queda" con el color semantico: verde si alcanza, rojo si no */
-  .stat b.ok{color:var(--ok)}
-  .stat b.bad{color:var(--bad)}
 
   /* Saldo previsto: solo el monto. El color marca el estado:
      rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
@@ -622,14 +585,6 @@ export class DashboardPage {
   /** Lo mismo, para una quincena: el aviso del detalle usa la misma medida. */
   queda(q: any): number {
     return this.ingreso(q) - this.reales(q);
-  }
-  /**
-   * Magnitud del veredicto, siempre positiva: la etiqueta de arriba ya dice si
-   * es "Tienes de más" o "Te falta". Antes el monto se multiplicaba por -1 y un
-   * sobrante se mostraba negativo, que se lee como faltante.
-   */
-  get verdictMonto(): number {
-    return Math.abs(this.quedaGlobal);
   }
   /** "Te sobra el mes" / "Te sobra la Quincena 1", o "No te alcanza" si es negativo. */
   get etiquetaPeriodoPrevisto(): string {
