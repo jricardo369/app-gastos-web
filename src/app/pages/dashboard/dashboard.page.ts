@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, logOutOutline, personCircleOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline } from 'ionicons/icons';
 import pkg from '../../../../package.json';
 
 /** Versión desde package.json: una sola fuente, no se desincroniza. */
@@ -42,7 +42,7 @@ export class IngresoModalComponent {
     <ion-toolbar>
       <ion-buttons slot="start">
         <ion-button fill="clear" (click)="go('/tabs/perfil')" aria-label="Ver perfil">
-          <ion-icon name="person-circle-outline"></ion-icon>
+          <ion-icon name="person-circle-outline" aria-hidden="true"></ion-icon>
         </ion-button>
       </ion-buttons>
       <ion-title>
@@ -51,7 +51,9 @@ export class IngresoModalComponent {
         </div>
       </ion-title>
       <ion-buttons slot="end">
-        <ion-button fill="clear" (click)="logout()"><ion-icon name="log-out-outline"></ion-icon></ion-button>
+        <ion-button fill="clear" (click)="logout()" aria-label="Cerrar sesión">
+          <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
+        </ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
@@ -61,61 +63,70 @@ export class IngresoModalComponent {
 
       <!-- 1. Selector de quincena: decide que muestra todo lo de abajo -->
       <div class="seg" role="group" aria-label="Periodo">
-        <button class="seg-btn" [class.on]="quincenaActual==='TODO'" (click)="setActual('TODO')">Todo el mes</button>
-        <button class="seg-btn" [class.on]="quincenaActual==='Q1'" (click)="setActual('Q1')">Quincena 1</button>
-        <button class="seg-btn" [class.on]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
+        <button type="button" class="seg-btn" [class.on]="quincenaActual==='TODO'" [attr.aria-pressed]="quincenaActual==='TODO'" (click)="setActual('TODO')">Todo el mes</button>
+        <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q1'" [attr.aria-pressed]="quincenaActual==='Q1'" (click)="setActual('Q1')">Quincena 1</button>
+        <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
       </div>
 
       <!-- 2. Veredicto: "lo que tengo" vs "lo que llevo gastado".
            Ojo: NO es ingresos - gastado. Falta el dineroTotal, que es el
            efectivo + vales + nomina que hay sobre la mesa. Sin ese termino
-           el numero no responde si el gasto real se sostiene con lo que hay. -->
-      <div class="verdict" [class.estado-sobra]="todoBienGlobal > 0" [class.estado-falta]="todoBienGlobal < 0" [class.estado-ok]="todoBienGlobal === 0">
-        <div class="verdict-head">
-          <span class="lbl">{{etiquetaPeriodo}}</span>
+           el numero no responde si el gasto real se sostiene con lo que hay.
+           Tarjeta blanca como las demas: el color semantico va en el aviso
+           de abajo, no de fondo en toda la tarjeta. -->
+      <div class="card verdict">
+        <div class="v-head">
+          <div class="panel-title">
+            <span class="lbl">{{etiquetaPeriodo}}</span>
+            <span class="count">Lo gastado contra lo que tienes</span>
+          </div>
           @if (todoBienGlobal === 0) {
-            <span class="verdict-tag">Todo en orden</span>
+            <span class="tag ok">Todo en orden</span>
           } @else {
-            <span class="verdict-monto money">{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</span>
+            <span class="tag" [class.warn]="todoBienGlobal > 0" [class.bad]="todoBienGlobal < 0">
+              {{ todoBienGlobal > 0 ? 'Sobra' : 'Falta' }}
+            </span>
           }
         </div>
-        <p class="verdict-txt">
+        <strong class="v-monto" [class.warn]="todoBienGlobal > 0" [class.bad]="todoBienGlobal < 0">
+          {{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}
+        </strong>
+        <p class="v-txt">
           @if (todoBienGlobal > 0) {
-            Sobra <b>{{ todoBienGlobal | currency:'MXN':'symbol':'1.0-0' }}</b>: lo gastado no coincide con lo que tienes
+            Lo gastado no coincide con lo que tienes en la mesa
           } @else if (todoBienGlobal < 0) {
-            Falta <b>{{ (todoBienGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>: lo gastado pasó lo que tienes
+            Lo gastado pasó lo que tienes en la mesa
           } @else {
-            Lo gastado calza justo con lo que tienes
+            Lo gastado calza justo con lo que tienes en la mesa
           }
         </p>
-        <div class="verdict-split">
-          <div><span class="lbl">Tienes</span><b class="num">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div><span class="lbl">Gastado</span><b class="num">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div><span class="lbl">Registrado</span><b class="num">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+        <div class="stats">
+          <div class="stat"><span class="lbl">Tienes</span><b class="money">{{ dineroTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="stat"><span class="lbl">Gastado</span><b class="money">{{ gastoRealGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="stat"><span class="lbl">Registrado</span><b class="money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
 
       <!-- 3. Cuanto sobra si se gasta lo planeado.
            El monto cambia con el selector de arriba: si esta en "Todo el mes"
            es la suma de Q1+Q2, si esta en una quincena es solo esa.
-           Color: rojo si es negativo, amarillo si esta cerca de cero. -->
-      <div class="card saldo"
-           [class.saldo-cero]="saldoCercaDeCero"
-           [class.saldo-neg]="sobranteGlobal < 0">
-        <div class="saldo-head">
+           Color solo cuando avisa: rojo = ya no alcanza, ambar = sobra muy justo. -->
+      <div class="card saldo" [class.saldo-cero]="saldoCercaDeCero" [class.saldo-neg]="sobranteGlobal < 0">
+        <div class="s-head">
           <span class="lbl">{{ etiquetaPeriodoPrevisto }}</span>
-          <b class="money saldo-monto">{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
+          <span class="count">si gastás lo previsto</span>
         </div>
+        <b class="s-monto">{{ (sobranteGlobal * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
       </div>
 
       <!-- 4. Detalle por quincena -->
-      <div class="section-title">Detalle</div>
+      <span class="section-title">Detalle</span>
       <div class="grid2">
         @for (q of filteredQs; track q) {
         <div class="card q-card" [class.collapsed]="isCollapsed(q)">
           <button class="q-head" (click)="toggleCollapse(q)" [attr.aria-expanded]="!isCollapsed(q)">
             <span class="head-left">
-              <ion-icon [name]="isCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon>
+              <ion-icon [name]="isCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
               <span class="lbl">{{ etiquetaQuincena(q) }}</span>
             </span>
             <span class="head-right money">{{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
@@ -126,7 +137,9 @@ export class IngresoModalComponent {
               <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
               <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
               <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <button class="link" (click)="toggleEdit(q)">Editar montos</button>
+              <ion-button size="small" fill="outline" class="edit-btn" (click)="toggleEdit(q)">
+                <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar montos
+              </ion-button>
             } @else {
               <div class="edit-grid">
                 <label>Efectivo<ion-input type="number" [(ngModel)]="editVals[q].efectivo" class="edit-inp"></ion-input></label>
@@ -134,7 +147,7 @@ export class IngresoModalComponent {
                 <label>Nómina<ion-input type="number" [(ngModel)]="editVals[q].nomina" class="edit-inp"></ion-input></label>
               </div>
               <div class="edit-actions">
-                <ion-button size="small" color="medium" fill="outline" (click)="toggleEdit(q)">Cancelar</ion-button>
+                <ion-button size="small" fill="outline" color="medium" (click)="toggleEdit(q)">Cancelar</ion-button>
                 <ion-button size="small" (click)="saveEdit(q)">Guardar</ion-button>
               </div>
             }
@@ -142,7 +155,10 @@ export class IngresoModalComponent {
             <hr class="sep" />
             <div class="row"><span>Previsto en gastos</span><b>{{ previstos(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             <div class="row"><span>Gastado real</span><b>{{ reales(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-            <div class="progress"><div [style.width.%]="pct(q)"></div></div>
+            <div class="progress" role="progressbar" [attr.aria-valuenow]="pct(q)" aria-valuemin="0" aria-valuemax="100"
+                 [attr.aria-label]="'Avance del previsto de la ' + etiquetaQuincena(q)">
+              <div [style.width.%]="pct(q)"></div>
+            </div>
             <span class="usage-rest">{{ pct(q) }}% del previsto</span>
 
             @if (pendiente(q) > 0) {
@@ -158,7 +174,7 @@ export class IngresoModalComponent {
               } @else if (todoBien(q) < 0) {
                 <span>Falta: lo gastado pasó lo que tienes</span><b>{{ (todoBien(q) * -1) | currency:'MXN':'symbol':'1.0-0' }}</b>
               } @else {
-                <span>Todo en orden</span><b>✓</b>
+                <span>Todo en orden</span><b aria-hidden="true">✓</b>
               }
             </div>
           </div>
@@ -170,31 +186,38 @@ export class IngresoModalComponent {
       <!-- 6. Deudas y deudores: van despues del detalle porque son otra cosa.
            El detalle es el dinero de la quincena; esto es lo que se debe
            fuera del ciclo, asi que no compite con el veredicto de arriba. -->
-      <div class="section-title">Cuentas pendientes</div>
+      <span class="section-title">Cuentas pendientes</span>
       <div class="grid2">
-        <a class="card sum" (click)="go('/tabs/deudas')">
-          <span class="lbl">Cuentas por pagar</span>
+        <button type="button" class="card sum" (click)="go('/tabs/deudas')">
+          <div class="panel-title">
+            <span class="lbl">Cuentas por pagar</span>
+            <span class="count">{{ pagosPendientesCount }} pagos de tarjeta</span>
+          </div>
           <b class="money">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="sum-sub">al mes · {{ pagosPendientesCount }} pagos de tarjeta</span>
-        </a>
-        <a class="card sum" (click)="go('/tabs/deudores')">
-          <span class="lbl">Me deben</span>
+          <ion-icon class="sum-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+        </button>
+        <button type="button" class="card sum" (click)="go('/tabs/deudores')">
+          <div class="panel-title">
+            <span class="lbl">Me deben</span>
+            <span class="count">{{ deudoresLista.length }} personas</span>
+          </div>
           <b class="money">{{ deudoresTotal | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="sum-sub">{{ deudoresLista.length }} personas</span>
-        </a>
+          <ion-icon class="sum-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+        </button>
       </div>
 
       <!-- 7. Gastos por categoria -->
-      <div class="card table-card" [class.collapsed]="gastosCollapsed">
-        <button class="card-title clickable" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
-          <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Gastos por categoría</span>
+      <div class="card pad-card" [class.collapsed]="gastosCollapsed">
+        <button class="card-title" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
+          <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon> Gastos por categoría</span>
+          <span class="money">{{ (totalQ1+totalQ2) | currency:'MXN':'symbol':'1.0-0' }}</span>
         </button>
         @if(!gastosCollapsed){
           @if(quincenaActual==='TODO'){
             <div class="tbl head"><span>Categoría</span><span class="num">Q1</span><span class="num">Q2</span><span class="num">Total</span></div>
             @for (r of rows; track r.cat.id) {
               <div class="tbl">
-                <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
+                <span class="cat"><i [style.background]="r.cat.color" aria-hidden="true"></i>{{r.cat.nombre}}</span>
                 <span class="num">{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
                 <span class="num">{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
                 <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
@@ -205,7 +228,7 @@ export class IngresoModalComponent {
             <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Total mes</span></div>
             @for (r of rows; track r.cat.id) { @if(r.q1>0){
               <div class="tbl th-3">
-                <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
+                <span class="cat"><i [style.background]="r.cat.color" aria-hidden="true"></i>{{r.cat.nombre}}</span>
                 <span class="num">{{r.q1 | currency:'MXN':'symbol':'1.0-0'}}</span>
                 <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
               </div>
@@ -215,7 +238,7 @@ export class IngresoModalComponent {
             <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Total mes</span></div>
             @for (r of rows; track r.cat.id) { @if(r.q2>0){
               <div class="tbl th-3">
-                <span class="cat"><i [style.background]="r.cat.color"></i>{{r.cat.nombre}}</span>
+                <span class="cat"><i [style.background]="r.cat.color" aria-hidden="true"></i>{{r.cat.nombre}}</span>
                 <span class="num">{{r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
                 <span class="num bold">{{r.q1+r.q2 | currency:'MXN':'symbol':'1.0-0'}}</span>
               </div>
@@ -229,32 +252,42 @@ export class IngresoModalComponent {
            cargar o corregir algo, asi que arranca cerrada y se abre con un
            clic en el encabezado. -->
       <div class="ing-section">
-        <button class="section-title clickable" (click)="toggleIngresos()"
+        <button class="ing-toggle" (click)="toggleIngresos()"
                 [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
-          <span><ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> Ingresos</span>
-          <span class="ing-hint">@if (ingresosHidden) { tocar para cargar o editar }</span>
+          <span class="t-left">
+            <ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
+            <span class="lbl">Ingresos</span>
+          </span>
+          @if (ingresosHidden) { <span class="count">tocar para cargar o editar</span> }
         </button>
         <div class="grid2" id="ingresosPanel" [hidden]="ingresosHidden">
           @for (q of filteredQs; track q) {
-          <div class="card ingreso-table-card" [class.collapsed]="isIngCollapsed(q)">
-            <button class="ing-head clickable" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
-              <span><ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'"></ion-icon> {{ etiquetaQuincena(q) }}</span>
+          <div class="card ing-card" [class.collapsed]="isIngCollapsed(q)">
+            <button class="ing-head" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
+              <span class="head-left">
+                <ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
+                <span class="lbl">{{ etiquetaQuincena(q) }}</span>
+              </span>
               <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
             </button>
             @if(!isIngCollapsed(q)){
-            <div class="ing-col">
+            <div class="ing-body">
               @for (ing of getIngresos(q); track ing.id) {
                 <div class="ing-list">
-                  <span><input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso"></span>
-                  <span><input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso"></span>
-                  <span><button class="del" (click)="removeIngreso(q, ing.id)" aria-label="Eliminar ingreso">&times;</button></span>
+                  <input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso">
+                  <input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso">
+                  <button type="button" class="icon-btn" (click)="removeIngreso(q, ing.id)" [attr.aria-label]="'Eliminar el ingreso ' + ing.concepto">
+                    <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+                  </button>
                 </div>
               }
               @if (getIngresos(q).length === 0) {
-                <div class="empty">Sin ingresos cargados</div>
+                <div class="empty sm">Sin ingresos cargados</div>
               }
               <div class="add-ing">
-                <ion-button size="small" fill="outline" (click)="openAddIngresoModal(q)">Agregar ingreso</ion-button>
+                <ion-button size="small" fill="outline" (click)="openAddIngresoModal(q)">
+                  <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
+                </ion-button>
               </div>
             </div>
             }
@@ -272,101 +305,102 @@ export class IngresoModalComponent {
   .bg{--background:#eef2f7}
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
 
+  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+    border:1px solid var(--border);overflow:hidden}
+  .panel-title{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint)}
+  .pad-card{padding:var(--sp-4)}
+  ion-button{margin:0;min-height:34px}
+
   /* Segmento de periodo: botones reales, no labels con checkbox.
      El checkbox escondido obligaba a adivinar si estaba activo. */
-  .seg{display:flex;gap:2px;background:var(--surface-sunken);padding:3px;border-radius:var(--radius-pill)}
+  .seg{display:flex;gap:var(--sp-1);background:var(--surface-sunken);padding:4px;
+    border-radius:var(--radius-pill);border:1px solid var(--border-subtle)}
   .seg-btn{
     flex:1;border:none;background:transparent;cursor:pointer;
-    font-family:inherit;font-size:13px;font-weight:700;
+    font-family:'Nunito', sans-serif;font-size:13px;font-weight:700;
     color:var(--text-muted);padding:8px 10px;border-radius:var(--radius-pill);
-    transition:background .15s ease,color .15s ease;
+    min-height:44px;transition:background .15s ease,color .15s ease;
   }
   .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
   .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Veredicto: lo primero que se ve, y lo unico con color de fondo fuerte.
-     Verde = sobra, rojo = falta, neutro = justo. El color aqui SI significa algo. */
-  .verdict{
-    background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
-    box-shadow:var(--shadow);border:1px solid var(--border);
-    border-left:4px solid var(--text-muted);
-  }
-  /* "Sobra" va en amarillo, no en verde: no es una buena noticia, es una
-   diferencia entre lo gastado y lo que hay. Verde queda solo para el caso
-   en que los numeros calzan (estado-ok). */
-.verdict.estado-sobra{border-left-color:var(--warn);background:linear-gradient(0deg,var(--warn-bg) 0 100%)}
-  .verdict.estado-falta{border-left-color:var(--bad);background:linear-gradient(0deg,var(--bad-bg) 0 100%)}
-  .verdict.estado-ok{border-left-color:var(--ok);background:linear-gradient(0deg,var(--ok-bg) 0 100%)}
-  .verdict-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
-  .verdict-monto{font-size:26px;line-height:1.1;letter-spacing:-.02em}
-  .verdict-tag{background:var(--ok-bg);color:var(--ok);font-size:12px;font-weight:800;
-    padding:4px 10px;border-radius:var(--radius-pill)}
-  .estado-sobra .verdict-monto{color:var(--warn)}
-  .estado-falta .verdict-monto{color:var(--bad)}
-  .verdict-txt{margin:6px 0 0;font-size:14px;color:var(--text-body)}
-  .verdict-txt b{color:var(--text-strong)}
-  .verdict-split{display:flex;gap:var(--sp-5);margin-top:var(--sp-3);padding-top:var(--sp-3);border-top:1px solid var(--border)}
-  .verdict-split > div{display:flex;flex-direction:column;gap:2px}
-  .verdict-split b{font-size:15px}
+  /* Veredicto: la cifra grande primero y el detalle en tres cajas, igual que
+     las tarjetas de avance de las otras pestañas. El color semantico va en la
+     etiqueta y en el monto, no de fondo en toda la tarjeta: antes la tarjeta
+     entera se pintaba y tapaba el contenido. */
+  .verdict{padding:var(--sp-4)}
+  .v-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2);flex-wrap:wrap}
+  .tag{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;padding:4px 10px;
+    border-radius:var(--radius-pill);flex:none}
+  .tag.ok{background:var(--ok-bg);color:var(--ok)}
+  /* "Sobra" va en ambar y "Falta" en rojo: no es una buena noticia, es una
+     diferencia entre lo gastado y lo que hay. */
+  .tag.warn{background:var(--warn-bg);color:var(--warn)}
+  .tag.bad{background:var(--bad-bg);color:var(--bad)}
+  .v-monto{display:block;margin-top:var(--sp-2);font-size:32px;line-height:1.05;
+    color:var(--text-strong);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .v-monto.warn{color:var(--warn)}
+  .v-monto.bad{color:var(--bad)}
+  .v-txt{margin:var(--sp-2) 0 0;font-size:13px;color:var(--text-body)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
+  .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
+    background:var(--surface-sunken);border-radius:var(--radius)}
+  .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
 
-/* Saldo previsto: solo el monto. El color marca el estado:
-   rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
-   normal = sobra con holgura. */
-.saldo{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
-    box-shadow:var(--shadow);border:1px solid var(--border)}
-.saldo-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
-.saldo-monto{font-size:22px;letter-spacing:-.02em}
-.saldo-cero{background:var(--warn-bg);border-color:#ffd88a}
-.saldo-cero .saldo-monto{color:var(--warn)}
-.saldo-neg{background:var(--bad-bg);border-color:#f3b0b0}
-.saldo-neg .saldo-monto{color:var(--bad)}
+  /* Saldo previsto: solo el monto. El color marca el estado:
+     rojo = ya no alcanza, amarillo = sobra pero menos del 5% de lo que tenes,
+     normal = sobra con holgura. */
+  .saldo{padding:var(--sp-4)}
+  .s-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);flex-wrap:wrap}
+  .s-monto{display:block;margin-top:var(--sp-2);font-size:26px;line-height:1.1;
+    color:var(--text-strong);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .saldo-cero .s-monto{color:var(--warn)}
+  .saldo-neg .s-monto{color:var(--bad)}
 
-/* El porcentaje del previsto se muestra dentro de cada quincena, asi que
-   aca solo queda el texto auxiliar que acompaña a la barra. */
-.usage-rest{color:var(--text-muted);font-size:12px}
+  /* El porcentaje del previsto se muestra dentro de cada quincena, asi que
+     aca solo queda el texto auxiliar que acompaña a la barra. */
+  .usage-rest{color:var(--text-muted);font-size:12px}
+
+  /* Titulos de seccion: misma etiqueta que usan las tarjetas de las otras pestañas */
+  .section-title{font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
+    letter-spacing:.02em;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
 
   /* Resumenes de una linea (deudas / deudores). Clickeable = navegable. */
   .sum{
-    display:flex;flex-direction:column;gap:2px;padding:var(--sp-4);cursor:pointer;
-    background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
-    border:1px solid var(--border);text-decoration:none;
+    position:relative;display:flex;flex-direction:column;gap:var(--sp-2);
+    padding:var(--sp-4) calc(var(--sp-4) + 24px) var(--sp-4) var(--sp-4);
+    cursor:pointer;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:left;
+    font-family:inherit;transition:background .15s ease;
   }
-  .sum b{font-size:20px;letter-spacing:-.01em}
-  .sum-sub{font-size:12px;color:var(--text-muted)}
-  .sum:active{background:var(--surface-sunken)}
+  .sum b{font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .sum:hover{background:var(--surface-sunken)}
+  .sum:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* Flecha: indica que lleva a otra pestaña */
+  .sum-chev{position:absolute;top:50%;right:var(--sp-4);transform:translateY(-50%);
+    font-size:16px;color:var(--text-faint)}
 
-  .section-title{font-family:'Comfortaa',cursive;font-size:13px;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
-  /* Igual que .section-title pero como boton, para las secciones que se abren */
-  .section-title.clickable{
-    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
-    padding:10px var(--sp-3);cursor:pointer;font-family:inherit;text-align:left;
-    color:var(--text-strong);font-size:13px;font-weight:700;
-  }
-  .section-title.clickable > span{display:flex;align-items:center;gap:6px}
-  .section-title.clickable:hover{background:var(--surface-sunken)}
-  .section-title.clickable:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  /* Pista de que hay algo adentro: la seccion esta cerrada pero no vacia */
-  .ing-hint{font-family:'Nunito',sans-serif;font-size:11px;font-weight:400;color:var(--text-faint)}
-  .ing-section{display:flex;flex-direction:column;gap:var(--sp-3)}
+  .ing-section{display:flex;flex-direction:column;gap:var(--sp-2)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
   @media(max-width:700px){.grid2{grid-template-columns:1fr}}
-
-  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
 
   /* Encabezados de tarjeta: sin fondo de color, sin mayusculas.
      El peso y el tamano dan la jerarquia; el color se reserva para el estado. */
   .q-head{
     width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    padding:var(--sp-3) var(--sp-4);cursor:pointer;border:none;
-    background:var(--surface);font-family:inherit;
+    min-height:56px;padding:var(--sp-3) var(--sp-4);cursor:pointer;border:none;
+    border-bottom:1px solid var(--border-subtle);
+    background:var(--surface);font-family:inherit;text-align:left;
   }
+  .card.collapsed .q-head{border-bottom:none}
   .q-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .head-left{display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:11px}
   .head-right{font-size:16px}
-  .q-body{padding:0 var(--sp-4) var(--sp-4)}
+  .q-body{padding:var(--sp-3) var(--sp-4) var(--sp-4)}
+  .edit-btn{margin:var(--sp-2) 0 0}
 
-.sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
+  .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
 
   /* Indicador de cierre de la quincena. Es el aviso que faltaba:
      avisa cuando lo gastado no calza con el dinero disponible. */
@@ -381,8 +415,6 @@ export class IngresoModalComponent {
   .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:#f3b0b0}
   .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:#b6e3ca}
 
-  .link{background:none;border:none;padding:0;margin-top:var(--sp-2);cursor:pointer;
-    font-family:inherit;font-size:12px;font-weight:700;color:var(--accent);text-decoration:underline}
   .edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin:var(--sp-3) 0}
   @media(max-width:500px){.edit-grid{grid-template-columns:1fr}}
   .edit-grid label{font-size:11px;color:var(--text-muted);font-weight:700;display:flex;flex-direction:column;gap:4px}
@@ -390,16 +422,16 @@ export class IngresoModalComponent {
   .edit-actions{display:flex;gap:var(--sp-2);justify-content:flex-end}
 
   /* Tablas: cifras alineadas a la derecha con tabular-nums */
-  .table-card{padding:var(--sp-4)}
   .card-title{
-    width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
-    font-size:14px;font-weight:700;color:var(--text-strong);margin-bottom:var(--sp-3);
-    display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
+    font-size:14px;font-weight:700;color:var(--text-strong);margin:0 0 var(--sp-3);padding:0;
   }
+  .card-title > span:first-child{display:flex;align-items:center;gap:6px}
   .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:var(--sp-2);padding:8px 0;
     border-bottom:1px solid var(--border-subtle);font-size:13px;align-items:center}
-  .tbl .num{text-align:right}
+  .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
   .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
   .tbl.head{font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-sunken);
     border-radius:var(--radius-sm);padding:8px;border-bottom:none}
@@ -407,24 +439,46 @@ export class IngresoModalComponent {
     border-bottom:none;margin-top:var(--sp-2)}
   .cat{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
   .cat i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
-  .bold{font-weight:700}
+  .bold{font-weight:800}
 
-  .ingreso-table-card{padding:var(--sp-4)}
+  /* Secciones desplegables: cabecera con la misma forma que las tarjetas */
+  .ing-toggle{
+    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+    min-height:56px;padding:var(--sp-3) var(--sp-4);cursor:pointer;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);font-family:inherit;text-align:left;color:var(--text-strong);
+  }
+  .ing-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .t-left{display:flex;align-items:center;gap:6px}
+
   .ing-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    width:100%;text-align:left;background:none;border:none;padding:0 0 var(--sp-3);
-    cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:var(--text-strong)}
-  .ing-head:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .ing-head > span{display:flex;align-items:center;gap:6px}
-  .ing-col{background:var(--surface-sunken);border-radius:var(--radius);padding:var(--sp-2)}
-  .ing-list{display:grid;grid-template-columns:1fr 96px 32px;gap:var(--sp-2);
-    align-items:center;padding:4px 0}
+    width:100%;min-height:56px;text-align:left;background:none;border:none;
+    padding:var(--sp-3) var(--sp-4);cursor:pointer;font-family:inherit;
+    font-size:14px;color:var(--text-strong);border-bottom:1px solid var(--border-subtle)}
+  .ing-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .ing-body{padding:var(--sp-3)}
+  .ing-list{display:grid;grid-template-columns:1fr 96px 36px;gap:var(--sp-2);
+    align-items:center;min-height:44px;padding:2px 0}
   .cell-inp{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
     padding:8px;font-size:13px;background:var(--surface);font-family:inherit;color:var(--text-body)}
   .cell-inp.num{text-align:right;font-variant-numeric:tabular-nums}
+  /* Boton de borrar: icono y area de toque, como en el resto de las pestañas */
+  .icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;
+    border:none;background:transparent;color:var(--text-faint);cursor:pointer;
+    border-radius:var(--radius-sm);transition:background .15s ease,color .15s ease}
+  .icon-btn ion-icon{font-size:16px}
+  .icon-btn:hover{background:var(--bad-bg);color:var(--bad)}
+  .icon-btn:focus-visible{outline:2px solid var(--bad);outline-offset:1px}
   .add-ing{display:flex;justify-content:flex-end;margin-top:var(--sp-2)}
-  .del{border:none;background:transparent;color:var(--text-faint);font-size:20px;
-    cursor:pointer;line-height:1;width:32px;height:32px;border-radius:var(--radius-sm)}
-  .del:hover{background:var(--bad-bg);color:var(--bad)}
+
+  /* Estado vacio, igual que en las otras pestañas */
+  .empty{padding:var(--sp-4);text-align:center;color:var(--text-faint);font-size:13px;
+    background:var(--surface-sunken);border-radius:var(--radius-sm)}
+  .empty.sm{padding:var(--sp-3);background:transparent}
+
+  @media (prefers-reduced-motion: reduce){
+    .seg-btn,.sum,.icon-btn{transition:none}
+  }
   `]
 })
 export class DashboardPage {
@@ -461,7 +515,7 @@ export class DashboardPage {
   private manualIngToggle = new Set<string>();
 
   constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronDownOutline, chevronUpOutline, logOutOutline, personCircleOutline });
+    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.applyAutoCollapse();
