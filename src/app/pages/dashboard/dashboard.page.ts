@@ -144,20 +144,27 @@ export class IngresoModalComponent {
               <div class="row"><span>Falta por gastar</span><b>{{ pendiente(q) | currency:'MXN':'symbol':'1.0-0' }}</b></div>
             }
 
-            <!-- Letrero de la quincena. Es la formula de la hoja:
+            <!-- Letrero de la quincena. Es la formula de la hoja, tal cual:
                  D3  = lo que traes = efectivo + vales + nomina (el bolsillo)
-                 D12 = saldo total = ingreso total - gasto real
+                 D12 = saldo total = ingreso total - gastos reales - imprevistos
                  =SI(D3<D12,"FALTA DINERO",SI(D3>D12,"TENGO DE MAS","TODO BIEN"))
-                 Se muestran las dos cifras para ver de una vez por que sale
-                 lo que sale. -->
+                 Abajo se ven las cifras de la cuenta completa, para poder
+                 revisarla sin salir a adivinarla. -->
             <div class="flag" [class.flag-sobra]="cuadre(q)==='sobra'" [class.flag-falta]="cuadre(q)==='falta'" [class.flag-ok]="cuadre(q)==='bien'">
-              @if (cuadre(q)==='falta') {
-                <span>Falta dinero: traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} y el saldo es {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
-              } @else if (cuadre(q)==='sobra') {
-                <span>Tengo de más: traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} y el saldo es {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
-              } @else {
-                <span>Todo bien</span><b aria-hidden="true">✓</b>
-              }
+              <div class="flag-linea">
+                @if (cuadre(q)==='falta') {
+                  <span>Falta dinero</span>
+                } @else if (cuadre(q)==='sobra') {
+                  <span>Tengo de más</span>
+                } @else {
+                  <span>Todo bien</span><b aria-hidden="true">✓</b>
+                }
+              </div>
+              <span class="flag-detalle">
+                Traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} · saldo total {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}
+                = ingreso {{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }} − gastos reales {{ gastosReales(q) | currency:'MXN':'symbol':'1.0-0' }}
+                − imprevistos {{ imprevistos(q) | currency:'MXN':'symbol':'1.0-0' }}
+              </span>
             </div>
 
             <!-- El dinero del bolsillo va al final: es el dato que se corrige
@@ -451,15 +458,21 @@ export class IngresoModalComponent {
     border-top:1px solid var(--border-subtle)}
   .money-total b{font-size:17px;font-variant-numeric:tabular-nums}
 
-  /* Indicador de cierre de la quincena. Es el aviso que faltaba:
-     avisa cuando lo gastado no calza con el dinero disponible. */
+  /* Indicador de cierre de la quincena. Es el letrero de la formula:
+     Falta dinero (rojo) / Tengo de mas (ambar) / Todo bien (verde).
+     Debajo van las cifras de la comparacion, para poder revisarla. */
   .flag{
-    display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+    display:flex;flex-direction:column;gap:2px;
     margin-top:var(--sp-3);padding:10px var(--sp-3);
     border-radius:var(--radius-sm);font-size:13px;font-weight:700;
     border:1px solid transparent;
   }
+  .flag-linea{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)}
+  .flag-linea span{font-weight:800}
   .flag b{font-variant-numeric:tabular-nums;font-weight:800}
+  /* Las cifras de la cuenta: chicas y sin negritas, que son el detalle, no el
+     aviso. Se ven en los tres casos, incluido "Todo bien". */
+  .flag-detalle{font-size:11px;font-weight:600;line-height:1.35;opacity:.95}
   .flag-sobra{background:var(--warn-bg);color:var(--warn);border-color:#ffd88a}
   .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:#f3b0b0}
   .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:#b6e3ca}
@@ -649,7 +662,7 @@ export class DashboardPage {
   /**
    * Letrero de la quincena. Es la formula de la hoja, tal cual:
    *   D3  = lo que traes = efectivo + vales + nomina (el bolsillo)
-   *   D12 = saldo total = ingreso total - gasto real
+   *   D12 = saldo total = ingreso total - gastos reales - gastos imprevistos
    *   =SI(D3<D12,"FALTA DINERO",SI(D3>D12,"TENGO DE MAS","TODO BIEN"))
    * Una sola funcion decide los tres casos, asi el mensaje y el color no se
    * pueden desfasar.
@@ -658,16 +671,26 @@ export class DashboardPage {
    */
   cuadre(q: any): 'falta' | 'sobra' | 'bien' {
     const D3 = this.ingreso(q);
-    const D12 = this.getIngresoTotal(q) - this.reales(q);
+    const D12 = this.saldoTotal(q);
     if (D3 < D12) return 'falta';
     if (D3 > D12) return 'sobra';
     return 'bien';
   }
-  /** D12 de la formula: el ingreso total menos lo que ya se gasto. */
+  /**
+   * D12 de la formula: saldo total = ingreso total - gastos reales - gastos
+   * imprevistos. O sea, cuanto dinero deberia haber en el bolsillo.
+   * "Gastos reales" son SOLO los gastos marcados como pagados: los imprevistos
+   * ya pagados no se cuentan aca porque se descuentan completos abajo, y si
+   * se restaran en los dos lados se descontarian dos veces.
+   */
   saldoTotal(q: any): number {
-    return this.getIngresoTotal(q) - this.reales(q);
+    return this.getIngresoTotal(q) - this.gastosReales(q) - this.imprevistos(q);
   }
-  /** Los variables (imprevistos) de la quincena: tambien salen del bolsillo. */
+  /** Los gastos reales: los gastos marcados como pagados, sin imprevistos. */
+  gastosReales(q: any): number {
+    return this.budget.getGastos(q).filter((g: any) => g.pagado).reduce((s: number, g: any) => s + (Number(g.previsto) || 0), 0);
+  }
+  /** Los variables (imprevistos) de la quincena: pagados o no, tambien salen del bolsillo. */
   imprevistos(q: any): number {
     return this.budget.getImprevistos(q).reduce((s, i: any) => s + (Number(i.importe) || 0), 0);
   }
