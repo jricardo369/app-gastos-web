@@ -161,7 +161,7 @@ export class IngresoModalComponent {
                 }
               </div>
               <span class="flag-detalle">
-                Traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} · saldo total {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}
+                Saldo total {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}
                 = ingreso {{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }} − gastos reales {{ gastosReales(q) | currency:'MXN':'symbol':'1.0-0' }}
                 − imprevistos {{ imprevistos(q) | currency:'MXN':'symbol':'1.0-0' }}
               </span>
