@@ -145,16 +145,16 @@ export class IngresoModalComponent {
             }
 
             <!-- Letrero de la quincena. Es la formula de la hoja:
-                 D3  = lo recibido = efectivo + vales + nomina (el bolsillo)
+                 D3  = lo que traes = efectivo + vales + nomina (el bolsillo)
                  D12 = saldo total = ingreso total - gasto real
-                 o sea, cuanto dinero DEBERIA haber. Si el bolsillo no le
-                 llega, avisa. Sin monto a proposito: la cifra aca se
-                 confundia con el saldo. -->
-            <div class="flag" [class.flag-sobra]="saldo(q) > 0" [class.flag-falta]="saldo(q) < 0" [class.flag-ok]="saldo(q) === 0">
-              @if (saldo(q) < 0) {
-                <span>Falta dinero: traés menos de lo que debería quedar</span>
-              } @else if (saldo(q) > 0) {
-                <span>Tengo de más: traés más de lo que debería quedar</span>
+                 =SI(D3<D12,"FALTA DINERO",SI(D3>D12,"TENGO DE MAS","TODO BIEN"))
+                 Se muestran las dos cifras para ver de una vez por que sale
+                 lo que sale. -->
+            <div class="flag" [class.flag-sobra]="cuadre(q)==='sobra'" [class.flag-falta]="cuadre(q)==='falta'" [class.flag-ok]="cuadre(q)==='bien'">
+              @if (cuadre(q)==='falta') {
+                <span>Falta dinero: traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} y el saldo es {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
+              } @else if (cuadre(q)==='sobra') {
+                <span>Tengo de más: traés {{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }} y el saldo es {{ saldoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</span>
               } @else {
                 <span>Todo bien</span><b aria-hidden="true">✓</b>
               }
@@ -624,16 +624,25 @@ export class DashboardPage {
     return this.ingresoTotalGlobal - this.previstoGlobal - this.imprevistosGlobal;
   }
   /**
-   * Letrero de la quincena. Es la formula de la hoja:
-   *   D3  = lo recibido = efectivo + vales + nomina (el bolsillo)
-   *   D12 = saldo total = ingreso total - gasto real (cuanto DEBERIA haber)
-   * Negativo (D3 < D12) = FALTA DINERO, positivo (D3 > D12) = TENGO DE MAS,
-   * cero = TODO BIEN.
+   * Letrero de la quincena. Es la formula de la hoja, tal cual:
+   *   D3  = lo que traes = efectivo + vales + nomina (el bolsillo)
+   *   D12 = saldo total = ingreso total - gasto real
+   *   =SI(D3<D12,"FALTA DINERO",SI(D3>D12,"TENGO DE MAS","TODO BIEN"))
+   * Una sola funcion decide los tres casos, asi el mensaje y el color no se
+   * pueden desfasar.
    * OJO con los nombres: `ingreso(q)` de este componente es el dinero del
    * bolsillo; el ingreso total sale de getIngresoTotal(q).
    */
-  saldo(q: any): number {
-    return this.ingreso(q) - (this.getIngresoTotal(q) - this.reales(q));
+  cuadre(q: any): 'falta' | 'sobra' | 'bien' {
+    const D3 = this.ingreso(q);
+    const D12 = this.getIngresoTotal(q) - this.reales(q);
+    if (D3 < D12) return 'falta';
+    if (D3 > D12) return 'sobra';
+    return 'bien';
+  }
+  /** D12 de la formula: el ingreso total menos lo que ya se gasto. */
+  saldoTotal(q: any): number {
+    return this.getIngresoTotal(q) - this.reales(q);
   }
   /** Los variables (imprevistos) de la quincena: tambien salen del bolsillo. */
   imprevistos(q: any): number {
