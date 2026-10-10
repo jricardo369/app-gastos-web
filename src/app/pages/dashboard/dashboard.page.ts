@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline } from 'ionicons/icons';
 import pkg from '../../../../package.json';
 
 /** Versión desde package.json: una sola fuente, no se desincroniza. */
@@ -161,27 +161,30 @@ export class IngresoModalComponent {
             </div>
 
             <!-- El dinero del bolsillo va al final: es el dato que se corrige
-                 de vez en cuando, no el que se consulta a diario. -->
+                 de vez en cuando, no el que se consulta a diario.
+                 Se edita en el lugar, igual que los ingresos: sin boton, se
+                 guarda solo al cambiar el valor o al salir del campo. -->
             <hr class="sep" />
-            @if(!editing[q]){
-              <div class="row"><span>Efectivo</span><b>{{efectivo(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="row"><span>Vales</span><b>{{vales(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <div class="row"><span>Nómina</span><b>{{nomina(q) | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-              <!-- Mismo boton solido con icono que usa el resto de las pestañas -->
-              <ion-button size="small" class="edit-btn" (click)="toggleEdit(q)">
-                <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar montos
-              </ion-button>
-            } @else {
-              <div class="edit-grid">
-                <label>Efectivo<ion-input type="number" [(ngModel)]="editVals[q].efectivo" class="edit-inp"></ion-input></label>
-                <label>Vales<ion-input type="number" [(ngModel)]="editVals[q].vales" class="edit-inp"></ion-input></label>
-                <label>Nómina<ion-input type="number" [(ngModel)]="editVals[q].nomina" class="edit-inp"></ion-input></label>
+            <div class="money-edit">
+              <div class="row">
+                <span>Efectivo</span>
+                <input class="cell-inp num" type="number" [(ngModel)]="editVals[q].efectivo" (change)="saveEdit(q)" (blur)="saveEdit(q)" aria-label="Monto de efectivo">
               </div>
-              <div class="edit-actions">
-                <ion-button size="small" fill="outline" color="medium" (click)="toggleEdit(q)">Cancelar</ion-button>
-                <ion-button size="small" (click)="saveEdit(q)">Guardar</ion-button>
+              <div class="row">
+                <span>Vales</span>
+                <input class="cell-inp num" type="number" [(ngModel)]="editVals[q].vales" (change)="saveEdit(q)" (blur)="saveEdit(q)" aria-label="Monto de vales">
               </div>
-            }
+              <div class="row">
+                <span>Nómina</span>
+                <input class="cell-inp num" type="number" [(ngModel)]="editVals[q].nomina" (change)="saveEdit(q)" (blur)="saveEdit(q)" aria-label="Monto de nómina">
+              </div>
+              <!-- Total de lo que hay en el bolsillo: la suma de los tres
+                   campos de arriba, que es la cifra que usa el letrero. -->
+              <div class="row money-total">
+                <span>Total</span>
+                <b>{{ ingreso(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+              </div>
+            </div>
           </div>
           }
         </div>
@@ -424,9 +427,29 @@ export class IngresoModalComponent {
   .head-left{display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:11px}
   .head-right{font-size:16px}
   .q-body{padding:var(--sp-3) var(--sp-4) var(--sp-4)}
-  .edit-btn{margin:var(--sp-2) 0 0}
 
   .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
+
+  /* Montos del bolsillo editables en el lugar, igual que los ingresos: sin
+     boton de editar, se guardan solos al cambiar el campo o al salir. El
+     input tiene forma de cifra (derecha, tabular-nums) para que no se note
+     que es un campo y no rompa la columna de numeros. */
+  .money-edit{display:flex;flex-direction:column;gap:2px}
+  .money-edit .cell-inp{
+    width:118px;text-align:right;font-size:15px;font-weight:700;
+    font-variant-numeric:tabular-nums;color:var(--text-strong);
+    background:var(--surface-input);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:7px 8px;font-family:inherit;
+  }
+  .money-edit .cell-inp:focus-visible{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface)}
+  /* Sin las flechitas del number: en un campo tan chico solo estorban */
+  .money-edit .cell-inp::-webkit-outer-spin-button,
+  .money-edit .cell-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .money-edit .cell-inp{appearance:textfield;-moz-appearance:textfield}
+  /* Total de lo que hay en el bolsillo: cierra la columna de numeros */
+  .money-total{margin-top:var(--sp-2);padding-top:var(--sp-2);
+    border-top:1px solid var(--border-subtle)}
+  .money-total b{font-size:17px;font-variant-numeric:tabular-nums}
 
   /* Indicador de cierre de la quincena. Es el aviso que faltaba:
      avisa cuando lo gastado no calza con el dinero disponible. */
@@ -440,12 +463,6 @@ export class IngresoModalComponent {
   .flag-sobra{background:var(--warn-bg);color:var(--warn);border-color:#ffd88a}
   .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:#f3b0b0}
   .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:#b6e3ca}
-
-  .edit-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin:var(--sp-3) 0}
-  @media(max-width:500px){.edit-grid{grid-template-columns:1fr}}
-  .edit-grid label{font-size:11px;color:var(--text-muted);font-weight:700;display:flex;flex-direction:column;gap:4px}
-  .edit-inp{--background:var(--surface-input);border-radius:var(--radius-sm);--padding-start:8px}
-  .edit-actions{display:flex;gap:var(--sp-2);justify-content:flex-end}
 
   /* Tablas: cifras alineadas a la derecha con tabular-nums */
   .card-title{
@@ -533,7 +550,7 @@ export class DashboardPage {
   toggleIngresos() { this.ingresosHidden = !this.ingresosHidden; }
   gastosCollapsed = true;
   get filteredQs(): string[] { return this.quincenaActual==='TODO' ? ['Q1','Q2'] : [this.quincenaActual]; }
-  editing: Record<string, boolean> = { Q1: false, Q2: false };
+  /** Copia de los montos del bolsillo, para los inputs editables. */
   editVals: Record<string, any> = { Q1: { efectivo: 0, vales: 0, nomina: 0 }, Q2: { efectivo: 0, vales: 0, nomina: 0 } };
   newIngConcepto: Record<string, string> = { Q1: '', Q2: '' };
   newIngMonto: Record<string, any> = { Q1: null, Q2: null };
@@ -541,7 +558,7 @@ export class DashboardPage {
   private manualIngToggle = new Set<string>();
 
   constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, createOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
+    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.applyAutoCollapse();
@@ -554,6 +571,12 @@ export class DashboardPage {
   ionViewWillEnter() { this.refresh(); }
   refresh() {
     this.presupuesto = this.budget.getPresupuesto();
+    // Los inputs editables leen de aca, asi que se recargan con lo guardado:
+    // si no, mostrarian 0 hasta tocar el campo.
+    this.editVals = {
+      Q1: { efectivo: Number(this.efectivo('Q1')) || 0, vales: Number(this.vales('Q1')) || 0, nomina: Number(this.nomina('Q1')) || 0 },
+      Q2: { efectivo: Number(this.efectivo('Q2')) || 0, vales: Number(this.vales('Q2')) || 0, nomina: Number(this.nomina('Q2')) || 0 },
+    };
     const cats = this.budget.categorias;
     this.rows = cats.map(c => {
       const q1 = this.budget.getGastos('Q1').filter(g => g.categoriaId === c.id).reduce((s, g) => s + g.previsto, 0);
@@ -697,17 +720,13 @@ export class DashboardPage {
       if (!this.manualIngToggle.has('Q2')) this.collapsedIng['Q2'] = this.quincenaActual === 'Q1';
     }
   }
-  toggleEdit(q: string) {
-    const cur = this.editing[q];
-    if (!cur) {
-      this.editVals[q] = { efectivo: this.efectivo(q), vales: this.vales(q), nomina: this.nomina(q) };
-    }
-    this.editing[q] = !cur;
-  }
+  /**
+   * Guarda los montos del bolsillo. Se llama solo al cambiar un campo o al
+   * salir de el: no hay boton de guardar porque se edita en el lugar.
+   */
   saveEdit(q: any) {
     const v = this.editVals[q];
     this.budget.patchPresupuesto(q, { efectivo: Number(v.efectivo) || 0, vales: Number(v.vales) || 0, nomina: Number(v.nomina) || 0 });
-    this.editing[q] = false;
     this.refresh();
   }
   async openAddIngresoModal(q: any) {
