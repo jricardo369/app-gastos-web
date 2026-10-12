@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { StorageService } from './storage.service';
-import { Categoria, Gasto, Imprevisto, Presupuesto, IngresoEntry, Dinero, Quincena, FiltroQuincena, PagoTC, Deuda, Deudor, Movimiento } from '../models/budget.model';
+import { Categoria, Gasto, Imprevisto, Presupuesto, PresupuestoQuincena, IngresoEntry, Dinero, Quincena, FiltroQuincena, PagoTC, Deuda, Deudor, Movimiento, ConfigApp, RangoIngreso, TipoPago, TipoMembresia } from '../models/budget.model';
 
 const CATEGORIAS: Categoria[] = [
   { id: 'hogar', nombre: 'Hogar', color: '#a8a4ff' },
@@ -19,6 +19,7 @@ const CATEGORIAS: Categoria[] = [
 const DEFAULT_PRESUPUESTO: Presupuesto = {
   q1: { dinero: { efectivo: 13500, vales: 1345, nomina: 0 }, ingresos: [{ id: 'nomina', concepto: 'Nomina', monto: 13500 }, { id: 'vales', concepto: 'Vales', monto: 1345 }] },
   q2: { dinero: { efectivo: 13500, vales: 1345, nomina: 0 }, ingresos: [{ id: 'nomina', concepto: 'Nomina', monto: 13500 }, { id: 'vales', concepto: 'Vales', monto: 1345 }] },
+  men: { dinero: { efectivo: 27000, vales: 1345, nomina: 0 }, ingresos: [{ id: 'nomina', concepto: 'Nomina', monto: 27000 }, { id: 'vales', concepto: 'Vales', monto: 1345 }] },
 };
 
 /**
@@ -96,6 +97,201 @@ function seedGastos(): Gasto[] {
   return [...marcar(GASTOS_Q1, 'Q1'), ...marcar(GASTOS_Q2, 'Q2')];
 }
 
+/* ==========================================================================
+   Gastos de ejemplo por rango de ingreso y por tipo de pago.
+
+   GASTOS_Q1 / GASTOS_Q2 (los de siempre) son del rango 20-40. Los demas se
+   armaron con la misma estructura y montos ajustados al rango: lo que cambia
+   es el tama�o de cada bolsa, no las categorias.
+
+   - '8-15'  -> la mitad de lo que trae el rango alto
+   - '15-20' -> tres cuartos
+   - '20-40' -> los juegos originales
+   Cada rango existe partido en dos quincenas (Q1/Q2) y como un solo bloque
+   mensual (MEN).
+   ========================================================================== */
+
+/** Rango 8-15, quincena 1. */
+const GASTOS_Q1_8_15: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 350, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 350, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 150, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida quincena', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 90, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 900, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 900, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 500, pagado: false, tipo: 'fijo' },
+];
+
+/** Rango 8-15, quincena 2. */
+const GASTOS_Q2_8_15: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 350, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 150, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida quincena', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 90, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 500, pagado: false, tipo: 'fijo' },
+];
+
+/** Rango 15-20, quincena 1. */
+const GASTOS_Q1_15_20: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 550, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 550, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 250, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 120, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 1100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 600, pagado: false, tipo: 'fijo' },
+];
+
+/** Rango 15-20, quincena 2. */
+const GASTOS_Q2_15_20: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 550, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 550, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 120, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Ale', previsto: 450, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 600, pagado: false, tipo: 'fijo' },
+];
+
+/** Mensual 8-15: un solo bloque con lo de las dos quincenas sumado. */
+const GASTOS_MEN_8_15: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 1200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 300, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida del mes', previsto: 3200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 700, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 1800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 1600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 800, pagado: false, tipo: 'fijo' },
+];
+
+/** Mensual 15-20. */
+const GASTOS_MEN_15_20: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 2000, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida del mes', previsto: 3000, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 1000, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 240, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 2200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 2200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio', previsto: 1150, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 2400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 1200, pagado: false, tipo: 'fijo' },
+];
+
+/** Mensual 20-40: lo de Q1 y Q2 juntos, sin duplicar lo que solo se paga una vez. */
+const GASTOS_MEN_20_40: Omit<Gasto, 'id' | 'quincena'>[] = [
+  { categoriaId: 'hogar', descripcion: 'Gasolina', previsto: 2800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Aseo', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida P1', previsto: 3200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Com. fin sem.', previsto: 1000, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Luz', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Agua', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Gas', previsto: 100, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Mnt casa', previsto: 600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Papel y jabon', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Detergentes', previsto: 800, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Minoxidil y pastilla', previsto: 180, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'hogar', descripcion: 'Comida Gigi', previsto: 200, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ahorro', descripcion: 'Ahorro', previsto: 0, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Sofi', previsto: 2466, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'escuelas', descripcion: 'Colegiatura Rich', previsto: 2466, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio JR', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Sofi', previsto: 500, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'ejercicio', descripcion: 'Ejercicio Richi', previsto: 400, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'credito', descripcion: 'Pago TC', previsto: 3600, pagado: false, tipo: 'fijo' },
+  { categoriaId: 'adic', descripcion: 'Gastos varios', previsto: 1200, pagado: false, tipo: 'fijo' },
+];
+
+/** Los juegos de cada rango, partidos en dos quincenas. */
+const GASTOS_POR_RANGO: Record<RangoIngreso, { q1: Omit<Gasto, 'id' | 'quincena'>[]; q2: Omit<Gasto, 'id' | 'quincena'>[]; men: Omit<Gasto, 'id' | 'quincena'>[] }> = {
+  '8-15': { q1: GASTOS_Q1_8_15, q2: GASTOS_Q2_8_15, men: GASTOS_MEN_8_15 },
+  '15-20': { q1: GASTOS_Q1_15_20, q2: GASTOS_Q2_15_20, men: GASTOS_MEN_15_20 },
+  '20-40': { q1: GASTOS_Q1, q2: GASTOS_Q2, men: GASTOS_MEN_20_40 },
+};
+
+/**
+ * Lo que entra por quincena (o por mes) en cada rango: sirve para los datos de
+ * ejemplo de presupuesto e ingresos.
+ */
+const INGRESO_POR_RANGO: Record<RangoIngreso, { mes: number; vales: number }> = {
+  '8-15': { mes: 12000, vales: 900 },
+  '15-20': { mes: 18000, vales: 1200 },
+  '20-40': { mes: 27000, vales: 1345 },
+};
+
+/** Los gastos de ejemplo que corresponden a la config elegida. */
+function seedGastosConfig(cfg: ConfigApp): Gasto[] {
+  const marcar = (items: Omit<Gasto, 'id' | 'quincena'>[], q: Quincena): Gasto[] =>
+    items.map((g, i) => ({ ...g, quincena: q, id: `${q}-${i}-${g.descripcion}` }));
+  const juegos = GASTOS_POR_RANGO[cfg.rango];
+  return cfg.tipoPago === 'mensual'
+    ? marcar(juegos.men, 'MEN')
+    : [...marcar(juegos.q1, 'Q1'), ...marcar(juegos.q2, 'Q2')];
+}
+
+/** El presupuesto inicial (efectivo / vales / nomina + ingresos) de la config. */
+function seedPresupuesto(cfg: ConfigApp): Presupuesto {
+  const { mes, vales } = INGRESO_POR_RANGO[cfg.rango];
+  const bloque = (efectivo: number, valesMes: number): PresupuestoQuincena => ({
+    dinero: { efectivo, vales: valesMes, nomina: 0 },
+    ingresos: [
+      { id: 'nomina', concepto: 'Nomina', monto: efectivo },
+      { id: 'vales', concepto: 'Vales', monto: valesMes },
+    ],
+  });
+  // El periodo que no se usa queda VACIO de verdad: antes le quedaban los vales.
+  const vacio: PresupuestoQuincena = { dinero: { efectivo: 0, vales: 0, nomina: 0 }, ingresos: [] };
+  // En mensual, Q1 y Q2 quedan vacios: el dinero vive todo en MEN. Y al reves.
+  return cfg.tipoPago === 'mensual'
+    ? { q1: vacio, q2: { ...vacio, dinero: { ...vacio.dinero }, ingresos: [] }, men: bloque(mes, vales) }
+    : { q1: bloque(Math.round(mes / 2), vales), q2: bloque(Math.round(mes / 2), vales), men: vacio };
+}
+
+const DEFAULT_CONFIG: ConfigApp = { rango: '20-40', tipoPago: 'quincenas', membresia: 'mensual' };
+
+
 const DEFAULT_PAGOS_TC: PagoTC[] = [
   { id: '1', fechaCompra: '2025-11-22', desc: 'TV', monto: 1270, mensualidad: 12, mensualidadPagada: 9, montoTotal: 15240, pagado: false },
   { id: '2', fechaCompra: '2025-11-22', desc: 'SEGURO TV', monto: 239, mensualidad: 12, mensualidadPagada: 9, montoTotal: 2868, pagado: false },
@@ -124,12 +320,16 @@ const DEFAULT_MOVIMIENTOS: Movimiento[] = [
  * vuelva a leer los defaults. Si se agrega una clave nueva, sumarla aqui.
  */
 const KEYS_PERSISTIDAS = [
-  'presupuesto', 'gastos', 'imprevistos', 'pagosTC',
+  'presupuesto', 'gastos', 'imprevistos', 'pagosTC', 'config',
   'deudas', 'deudores', 'deudoresLista', 'movimientos', 'movConfig', 'quincenaActual',
 ] as const;
 
 function migratePresupuesto(raw: any): Presupuesto {
-  if (raw?.q1?.dinero && raw?.q1?.ingresos) return raw as Presupuesto;
+  const base: Presupuesto = { q1: { dinero: { efectivo: 13500, vales: 1345, nomina: 0 }, ingresos: [] }, q2: { dinero: { efectivo: 13500, vales: 1345, nomina: 0 }, ingresos: [] }, men: { dinero: { efectivo: 0, vales: 0, nomina: 0 }, ingresos: [] } };
+  if (raw?.q1?.dinero && raw?.q1?.ingresos && raw?.q2?.dinero) {
+    // Lo guardado ya tiene el formato nuevo: solo se completa `men` si falta.
+    return { ...base, ...raw, men: raw.men ?? base.men };
+  }
   const toDinero = (q: any): Dinero => {
     if (q?.dinero) return q.dinero;
     if (q?.efectivo !== undefined || q?.vales !== undefined || q?.nomina !== undefined) {
@@ -147,8 +347,18 @@ function migratePresupuesto(raw: any): Presupuesto {
     if (list.length === 0) return [{ id: 'nomina', concepto: 'Nomina', monto: 13500 }, { id: 'vales', concepto: 'Vales', monto: 1345 }];
     return list;
   };
-  return { q1: { dinero: toDinero(raw?.q1), ingresos: toIngresos(raw?.q1) }, q2: { dinero: toDinero(raw?.q2), ingresos: toIngresos(raw?.q2) } };
+  return { q1: { dinero: toDinero(raw?.q1), ingresos: toIngresos(raw?.q1) }, q2: { dinero: toDinero(raw?.q2), ingresos: toIngresos(raw?.q2) }, men: { dinero: toDinero(raw?.men), ingresos: toIngresos(raw?.men) } };
 }
+
+/** Valida una config guardada: si cambian las opciones, cae en el default. */
+function migrateConfig(raw: any): ConfigApp {
+  const c = raw ?? {};
+  const rango: RangoIngreso = ['8-15', '15-20', '20-40'].includes(c.rango) ? c.rango : DEFAULT_CONFIG.rango;
+  const tipoPago: TipoPago = c.tipoPago === 'mensual' || c.tipoPago === 'quincenas' ? c.tipoPago : DEFAULT_CONFIG.tipoPago;
+  const membresia: TipoMembresia = c.membresia === 'anual' ? 'anual' : 'mensual';
+  return { rango, tipoPago, membresia };
+}
+
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
@@ -176,6 +386,9 @@ export class BudgetService {
   private _movConfig$ = new BehaviorSubject<{fechaCorte:number, fechaPago:number, ppngi:number}>({fechaCorte:13, fechaPago:6, ppngi:1280});
   movConfig$ = this._movConfig$.asObservable();
 
+  private _config$ = new BehaviorSubject<ConfigApp>(DEFAULT_CONFIG);
+  config$ = this._config$.asObservable();
+
   private _quincenaActual$ = new BehaviorSubject<FiltroQuincena>('TODO');
   quincenaActual$!: any;
   getQuincenaActual(): FiltroQuincena { return this._quincenaActual$.value; }
@@ -184,12 +397,14 @@ export class BudgetService {
   constructor(private storage: StorageService) {
     this._quincenaActual$ = new BehaviorSubject<FiltroQuincena>(this.storage.get<FiltroQuincena>('quincenaActual', 'TODO'));
     this.quincenaActual$ = this._quincenaActual$.asObservable();
-    const raw = this.storage.get<any>('presupuesto', DEFAULT_PRESUPUESTO);
-    const migrated = migratePresupuesto(raw);
+    const cfg = migrateConfig(this.storage.get<any>('config', DEFAULT_CONFIG));
+    this._config$.next(cfg);
+    const raw = this.storage.get<any>('presupuesto', null);
+    const migrated = raw ? migratePresupuesto(raw) : seedPresupuesto(cfg);
     if (JSON.stringify(raw) !== JSON.stringify(migrated)) this.storage.set('presupuesto', migrated);
     this._presupuesto$.next(migrated);
     const gastos = this.storage.get<Gasto[] | null>('gastos', null);
-    if (gastos) this._gastos$.next(gastos); else { const s = seedGastos(); this._gastos$.next(s); this.persistGastos(s); }
+    if (gastos) this._gastos$.next(gastos); else { const s = seedGastosConfig(cfg); this._gastos$.next(s); this.persistGastos(s); }
     this._imprevistos$.next(this.storage.get<Imprevisto[]>('imprevistos', []));
     const rawPagos = this.storage.get<any[]>('pagosTC', DEFAULT_PAGOS_TC);
     const migratedPagos: PagoTC[] = rawPagos.map((p: any) => {
@@ -212,21 +427,31 @@ export class BudgetService {
   private persistGastos(v: Gasto[]) { this.storage.set('gastos', v); }
   private persistImprevistos(v: Imprevisto[]) { this.storage.set('imprevistos', v); }
   private persistPresupuesto(p: Presupuesto) {
-    const clone: Presupuesto = { q1: { dinero: { ...p.q1.dinero }, ingresos: p.q1.ingresos.map(i => ({ ...i })) }, q2: { dinero: { ...p.q2.dinero }, ingresos: p.q2.ingresos.map(i => ({ ...i })) } };
+    const bloque = (b: PresupuestoQuincena) => ({ dinero: { ...b.dinero }, ingresos: b.ingresos.map((i: IngresoEntry) => ({ ...i })) });
+    const clone: Presupuesto = { q1: bloque(p.q1), q2: bloque(p.q2), men: bloque(p.men) };
     this.storage.set('presupuesto', clone); this._presupuesto$.next(clone);
   }
 
+  /** 'Q1' | 'Q2' | 'MEN' -> la clave del presupuesto. Un solo lugar. */
+  private clave(q: Quincena): 'q1' | 'q2' | 'men' { return q === 'Q1' ? 'q1' : q === 'Q2' ? 'q2' : 'men'; }
+  /** Los periodos que existen segun la config: dos quincenas o el mes. */
+  periodos(): Quincena[] { return this._config$.value.tipoPago === 'mensual' ? ['MEN'] : ['Q1', 'Q2']; }
+
   getPresupuesto(): Presupuesto { return this._presupuesto$.value; }
-  getIngresos(q: Quincena): IngresoEntry[] { return q === 'Q1' ? this._presupuesto$.value.q1.ingresos : this._presupuesto$.value.q2.ingresos; }
+  getConfig(): ConfigApp { return this._config$.value; }
+  /** Membresia elegida: se muestra en el perfil. */
+  getMembresia(): TipoMembresia { return this._config$.value.membresia; }
+
+  getIngresos(q: Quincena): IngresoEntry[] { return this.getPresupuesto()[this.clave(q)].ingresos; }
   getIngresoTotal(q: Quincena): number { return this.getIngresos(q).reduce((s, e) => s + (Number(e.monto) || 0), 0); }
-  getDinero(q: Quincena): Dinero { return q === 'Q1' ? this._presupuesto$.value.q1.dinero : this._presupuesto$.value.q2.dinero; }
+  getDinero(q: Quincena): Dinero { return this.getPresupuesto()[this.clave(q)].dinero; }
   getDineroTotal(q: Quincena): number { const d = this.getDinero(q); return (Number(d.efectivo) || 0) + (Number(d.vales) || 0) + (Number(d.nomina) || 0); }
   getMontoByConcepto(q: Quincena, concepto: string): number { const f = this.getIngresos(q).find(e => e.concepto.toLowerCase() === concepto.toLowerCase()); return f ? f.monto : 0; }
 
   updatePresupuesto(p: Presupuesto) { this.persistPresupuesto(p); }
   patchDinero(q: Quincena, patch: Partial<Dinero>) {
     const cur = this.getPresupuesto();
-    const target = q === 'Q1' ? cur.q1.dinero : cur.q2.dinero;
+    const target = cur[this.clave(q)].dinero;
     Object.assign(target, { efectivo: patch.efectivo !== undefined ? Number(patch.efectivo) || 0 : target.efectivo, vales: patch.vales !== undefined ? Number(patch.vales) || 0 : target.vales, nomina: patch.nomina !== undefined ? Number(patch.nomina) || 0 : target.nomina });
     this.persistPresupuesto(cur);
   }
@@ -234,19 +459,19 @@ export class BudgetService {
 
   addIngreso(q: Quincena, concepto: string, monto: number) {
     const cur = this.getPresupuesto();
-    const target = q === 'Q1' ? cur.q1 : cur.q2;
+    const target = cur[this.clave(q)];
     target.ingresos.push({ id: Date.now().toString(), concepto: concepto.trim() || 'Ingreso', monto: Number(monto) || 0 });
     this.persistPresupuesto(cur);
   }
   updateIngreso(q: Quincena, id: string, patch: Partial<IngresoEntry>) {
     const cur = this.getPresupuesto();
-    const target = q === 'Q1' ? cur.q1 : cur.q2;
+    const target = cur[this.clave(q)];
     const idx = target.ingresos.findIndex(e => e.id === id);
     if (idx >= 0) { target.ingresos[idx] = { ...target.ingresos[idx], ...patch, monto: patch.monto !== undefined ? Number(patch.monto) || 0 : target.ingresos[idx].monto }; this.persistPresupuesto(cur); }
   }
   removeIngreso(q: Quincena, id: string) {
     const cur = this.getPresupuesto();
-    const target = q === 'Q1' ? cur.q1 : cur.q2;
+    const target = cur[this.clave(q)];
     target.ingresos = target.ingresos.filter(e => e.id !== id);
     this.persistPresupuesto(cur);
   }
@@ -310,8 +535,42 @@ export class BudgetService {
     if (typeof window !== 'undefined') window.location.reload();
   }
 
-  /** Los defaults de gastos, ya con id. Para restablecer solo los gastos. */
-  gastosPorDefecto(): Gasto[] { return seedGastos(); }
+  /**
+   * Restablece con la config que se eligio en el wizard: borra lo capturado a
+   * mano y carga los datos de ejemplo del rango y del tipo de pago elegidos.
+   * No recarga la pagina: actualiza los observables para que se vea al toque.
+   */
+  resetConConfig(cfg: ConfigApp) {
+    const limpio = migrateConfig(cfg);
+    this.storage.set('config', limpio);
+    this._config$.next(limpio);
+    // Borra lo del usuario y siembra lo del rango elegido.
+    for (const key of ['gastos', 'imprevistos', 'deudas', 'deudores', 'deudoresLista', 'movimientos'] as const) this.storage.remove(key);
+    this._gastos$.next(seedGastosConfig(limpio)); this.persistGastos(this._gastos$.value);
+    this._imprevistos$.next([]); this.persistImprevistos([]);
+    this._pagosTC$.next(DEFAULT_PAGOS_TC.map(p => ({ ...p }))); this.storage.set('pagosTC', this._pagosTC$.value);
+    this._deudas$.next([]); this.storage.set('deudas', []);
+    this._deudores$.next([{ id: '1', nombre: 'Miguel An...', monto: 360, faltaPago: true }]); this.storage.set('deudores', this._deudores$.value);
+    this._deudoresLista$.next([]); this.storage.set('deudoresLista', []);
+    this._movimientos$.next(DEFAULT_MOVIMIENTOS.map(m => ({ ...m }))); this.storage.set('movimientos', this._movimientos$.value);
+    this._movConfig$.next({ fechaCorte: 13, fechaPago: 6, ppngi: 1280 }); this.storage.set('movConfig', this._movConfig$.value);
+    this.persistPresupuesto(seedPresupuesto(limpio));
+    // El periodo activo vuelve al general: si queda en Q2 y ahora es mensual,
+    // el dashboard no tendria con que comparar.
+    this.setQuincenaActual('TODO');
+  }
+
+  /** Los defaults de gastos de la config actual, ya con id. */
+  gastosPorDefecto(): Gasto[] { return seedGastosConfig(this._config$.value); }
+
+  /**
+   * Resumen de los datos de ejemplo de una config, sin aplicarla: sirve para
+   * previsualizar en el wizard cuantos gastos y de cuanto son.
+   */
+  resumenPorConfig(cfg: ConfigApp): { gastos: number; previstos: number } {
+    const gastos = seedGastosConfig(migrateConfig(cfg));
+    return { gastos: gastos.length, previstos: gastos.reduce((s, g) => s + g.previsto, 0) };
+  }
 
   resumenQuincena(q: Quincena) {
     const gastos = this.getGastos(q);

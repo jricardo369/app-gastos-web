@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, AlertController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, ModalController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
 import { addIcons } from 'ionicons';
 import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline } from 'ionicons/icons';
+import { ResetWizardComponent } from './reset-wizard.component';
+import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/budget.model';
 
 @Component({
   selector: 'app-perfil',
@@ -37,8 +39,8 @@ import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOut
       </div>
 
       <!-- 2. Suscripcion: ficticia, mensual y vigente.
-            El estado va con color semantico (verde = al dia) porque informa,
-            no decora. El resto de la tarjeta es neutro. -->
+             El estado va con color semantico (verde = al dia) porque informa,
+             no decora. El resto de la tarjeta es neutro. -->
       <div class="section-title">Suscripción</div>
       <div class="card sub">
         <div class="sub-head">
@@ -60,8 +62,8 @@ import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOut
       </div>
 
       <!-- 3. Resumen del mes: los mismos numeros que ve el dashboard, pero
-            respondiendo una sola pregunta: "cuanto llevo del mes".
-            Arriba el monto gastado contra lo previsto; abajo el desglose. -->
+             respondiendo una sola pregunta: "cuanto llevo del mes".
+             Arriba el monto gastado contra lo previsto; abajo el desglose. -->
       <div class="section-title">Resumen de gastos · {{ mesActual }}</div>
       <div class="card resumen">
         <div class="resumen-head">
@@ -99,12 +101,26 @@ import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOut
       </div>
 
       <!-- 4. Zona destructiva. Va al final y sola: si estuviera arriba
-            competiria con el resumen y se toca por error. -->
+             competiria con el resumen y se toca por error. -->
       <div class="section-title">Datos</div>
+
+      <!-- Como estan hoy los datos: rango de ingreso, tipo de pago y membresia.
+             Es lo que se eligio la ultima vez que se restablecio. -->
+      <div class="card config">
+        <div class="config-head">
+          <span class="lbl">Tu configuración</span>
+          <span class="badge"><ion-icon name="checkmark-circle-outline"></ion-icon> {{ etiquetaMembresia }}</span>
+        </div>
+        <div class="row"><span>Rango de ingreso</span><b>{{ etiquetaRango }}</b></div>
+        <div class="row"><span>Tipo de pago</span><b>{{ etiquetaPago }}</b></div>
+        <div class="row"><span>Membresía</span><b>{{ etiquetaMembresia }}</b></div>
+        <p class="config-hint">Para cambiarla, restablecé los datos: te va a preguntar de nuevo.</p>
+      </div>
+
       <div class="card danger">
         <span class="lbl">Restablecer datos</span>
-        <p class="danger-txt">Borra todo lo que cargaste a mano y vuelve la data de ejemplo: gastos por quincena, presupuesto, deudas y movimientos. No se puede deshacer.</p>
-        <ion-button expand="block" color="danger" fill="outline" (click)="confirmReset()">
+        <p class="danger-txt">Te pregunta el rango de ingreso y cómo te pagan, y carga los datos de ejemplo de esa combinación. Borra lo que cargaste a mano. No se puede deshacer.</p>
+        <ion-button expand="block" color="danger" fill="outline" (click)="abrirWizard()">
           <ion-icon slot="start" name="refresh-outline"></ion-icon> Restablecer datos
         </ion-button>
       </div>
@@ -143,6 +159,14 @@ import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOut
   .sub-precio{display:flex;align-items:baseline;gap:6px;margin-top:var(--sp-3)}
   .sub-precio b{font-size:26px;letter-spacing:-.02em}
 
+  /* Configuracion actual: rango, tipo de pago y membresia. Es lo que se
+     eligio al restablecer, y explica por que los datos de ejemplo son estos. */
+  .config-head{display:flex;justify-content:space-between;align-items:flex-start;
+    gap:var(--sp-3);flex-wrap:wrap;margin-bottom:var(--sp-2)}
+  .config .row{padding:9px 0}
+  .config-hint{margin:var(--sp-3) 0 0;font-size:12px;color:var(--text-muted);
+    line-height:1.4}
+
   .resumen-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
   .gastado{font-size:26px;letter-spacing:-.02em}
   .gastado.vacio{color:var(--text-faint)}
@@ -167,18 +191,25 @@ import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOut
   `]
 })
 export class PerfilPage {
-  /** Datos de suscripcion ficticios: mensual y vigente. */
-  suscripcion = {
-    plan: 'Premium',
-    precio: 99,
-    periodo: 'mes',
+  /**
+   * La suscripcion que se muestra sale de la membresia elegida en el wizard:
+   * asi el perfil siempre dice la verdad sobre lo que se selecciono.
+   */
+  suscripcionBase = {
     estado: 'Vigente',
     metodo: 'Visa •••• 4242',
     desde: '12 sep 2025',
     ciclosPagados: 13,
   };
+  get suscripcion() {
+    return this.config.membresia === 'anual'
+      ? { ...this.suscripcionBase, plan: 'Premium', precio: 990, periodo: 'año' }
+      : { ...this.suscripcionBase, plan: 'Premium', precio: 99, periodo: 'mes' };
+  }
   miembroDesde = 'sep 2025';
   topCategorias: { id: string; nombre: string; color: string; total: number; pct: number }[] = [];
+  /** Rango, tipo de pago y membresia elegidos al restablecer. */
+  config: ConfigApp = this.budget.getConfig();
 
   gastadoMes = 0;
   previstoMes = 0;
@@ -186,11 +217,12 @@ export class PerfilPage {
   sobranteMes = 0;
   pctMes = 0;
 
-  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private alertCtrl: AlertController) {
+  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
     addIcons({ chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline });
     this.budget.gastos$.subscribe(() => this.refresh());
     this.budget.imprevistos$.subscribe(() => this.refresh());
     this.budget.presupuesto$.subscribe(() => this.refresh());
+    this.budget.config$.subscribe(() => this.refresh());
     this.refresh();
   }
   ionViewWillEnter() { this.refresh(); }
@@ -211,7 +243,9 @@ export class PerfilPage {
   }
 
   private refresh() {
-    const qs = ['Q1', 'Q2'] as const;
+    // Los periodos reales: dos quincenas o el mes, segun la config.
+    const qs = this.budget.periodos();
+    this.config = this.budget.getConfig();
     this.gastadoMes = qs.reduce((s, q) => s + this.budget.resumenQuincena(q).reales, 0);
     this.previstoMes = qs.reduce((s, q) => s + this.budget.resumenQuincena(q).previstos, 0);
     this.ingresosMes = qs.reduce((s, q) => s + this.budget.getIngresoTotal(q), 0);
@@ -229,25 +263,19 @@ export class PerfilPage {
 
   back() { this.router.navigateByUrl('/tabs/dashboard'); }
 
+  get etiquetaRango(): string { return RANGOS.find(r => r.id === this.config.rango)?.etiqueta ?? ''; }
+  get etiquetaPago(): string { return TIPOS_PAGO.find(t => t.id === this.config.tipoPago)?.etiqueta ?? ''; }
+  get etiquetaMembresia(): string { return MEMBRESIAS.find(m => m.id === this.config.membresia)?.etiqueta ?? ''; }
+
   /**
-   * Mismo restablecer que tenia el dashboard, ahora dentro del perfil.
-   * Es destructivo: por eso pide confirmacion y explica que se pierde.
+   * Abre el wizard de restablecer: ahi se elige rango de ingreso y tipo de
+   * pago (dos quincenas o mensual). Si se confirma, se aplican los datos de
+   * ejemplo de esa combinacion.
    */
-  async confirmReset() {
-    const alert = await this.alertCtrl.create({
-      header: '¿Restablecer los datos?',
-      message: 'Se borra todo lo que cargaste a mano y vuelve la data de ejemplo (gastos por quincena, presupuesto, deudas, movimientos). No se puede deshacer.',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Restablecer',
-          role: 'destructive',
-          handler: () => {
-            this.budget.resetTodo();
-          },
-        },
-      ],
-    });
-    await alert.present();
+  async abrirWizard() {
+    const modal = await this.modalCtrl.create({ component: ResetWizardComponent, breakpoints: [0, 0.9], initialBreakpoint: 0.9, handle: true, cssClass: 'wz-90' });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm' && data) { this.budget.resetConConfig(data); this.refresh(); }
   }
 }

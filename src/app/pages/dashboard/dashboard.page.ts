@@ -1,10 +1,11 @@
 ﻿import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonItem, IonButtons, ModalController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonButtons, ModalController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
+import { FiltroQuincena } from '../../core/models/budget.model';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline } from 'ionicons/icons';
 import pkg from '../../../../package.json';
@@ -36,7 +37,7 @@ export class IngresoModalComponent {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonInput, FormsModule, CurrencyPipe],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, FormsModule, CurrencyPipe],
   template: `
   <ion-header class="hdr">
     <ion-toolbar>
@@ -61,17 +62,21 @@ export class IngresoModalComponent {
   <ion-content class="bg">
     <div class="container">
 
-      <!-- 1. Selector de quincena: decide que muestra todo lo de abajo -->
+      <!-- 1. Selector de periodo: decide que muestra todo lo de abajo.
+            En modo mensual no hay quincenas que elegir, asi que solo queda
+            "Todo el mes". -->
       <div class="seg" role="group" aria-label="Periodo">
         <button type="button" class="seg-btn" [class.on]="quincenaActual==='TODO'" [attr.aria-pressed]="quincenaActual==='TODO'" (click)="setActual('TODO')">Todo el mes</button>
-        <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q1'" [attr.aria-pressed]="quincenaActual==='Q1'" (click)="setActual('Q1')">Quincena 1</button>
-        <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
+        @if (!esMensual) {
+          <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q1'" [attr.aria-pressed]="quincenaActual==='Q1'" (click)="setActual('Q1')">Quincena 1</button>
+          <button type="button" class="seg-btn" [class.on]="quincenaActual==='Q2'" [attr.aria-pressed]="quincenaActual==='Q2'" (click)="setActual('Q2')">Quincena 2</button>
+        }
       </div>
 
       <!-- 2. Resumen del periodo: cuanto recibis, cuanto pensabas gastar,
             cuanto gastaste de verdad y cuanto te queda. Los cuatro numeros
             salen del periodo elegido arriba: en "Todo el mes" es la suma de
-            Q1+Q2, en una quincena es solo esa. -->
+            Q1+Q2 (o el mes completo), en una quincena es solo esa. -->
       <div class="card resumen" [class.res-cerca]="saldoCercaDeCero" [class.res-neg]="sobranteGlobal < 0">
         <div class="res-hero">
           <span class="lbl res-estado">
@@ -228,7 +233,18 @@ export class IngresoModalComponent {
           <span class="money">{{ (totalQ1+totalQ2) | currency:'MXN':'symbol':'1.0-0' }}</span>
         </button>
         @if(!gastosCollapsed){
-          @if(quincenaActual==='TODO'){
+          @if(esMensual){
+            <!-- Modo mensual: una sola columna, el mes completo -->
+            <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Mes</span></div>
+            @for (r of rows; track r.cat.id) { @if(r.total>0){
+              <div class="tbl th-3">
+                <span class="cat"><i [style.background]="r.cat.color" aria-hidden="true"></i>{{r.cat.nombre}}</span>
+                <span class="num">{{r.total | currency:'MXN':'symbol':'1.0-0'}}</span>
+                <span class="num bold">{{r.total | currency:'MXN':'symbol':'1.0-0'}}</span>
+              </div>
+            } }
+            <div class="tbl total th-3"><span>Total</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
+          } @else if(quincenaActual==='TODO'){
             <div class="tbl head"><span>Categoría</span><span class="num">Q1</span><span class="num">Q2</span><span class="num">Total</span></div>
             @for (r of rows; track r.cat.id) {
               <div class="tbl">
@@ -555,16 +571,21 @@ export class DashboardPage {
   pagosPendientesTotal = 0;
   rows: any[] = [];
   totalQ1 = 0; totalQ2 = 0;
-  quincenaActual: 'Q1'|'Q2'|'TODO' = 'TODO';
-  collapsed: Record<string, boolean> = { Q1: false, Q2: false };
-  collapsedIng: Record<string, boolean> = { Q1: false, Q2: false };
+  quincenaActual: FiltroQuincena = 'TODO';
+  collapsed: Record<string, boolean> = { Q1: false, Q2: false, MEN: false };
+  collapsedIng: Record<string, boolean> = { Q1: false, Q2: false, MEN: false };
   /** La seccion de ingresos arranca oculta: solo se entra a cargar o corregir. */
   ingresosHidden = true;
   toggleIngresos() { this.ingresosHidden = !this.ingresosHidden; }
   gastosCollapsed = true;
-  get filteredQs(): string[] { return this.quincenaActual==='TODO' ? ['Q1','Q2'] : [this.quincenaActual]; }
+  /** En modo mensual no hay quincenas: los periodos son el mes completo. */
+  get esMensual(): boolean { return this.budget.getConfig().tipoPago === 'mensual'; }
+  get filteredQs(): string[] {
+    if (this.quincenaActual !== 'TODO') return [this.quincenaActual];
+    return this.budget.periodos();
+  }
   /** Copia de los montos del bolsillo, para los inputs editables. */
-  editVals: Record<string, any> = { Q1: { efectivo: 0, vales: 0, nomina: 0 }, Q2: { efectivo: 0, vales: 0, nomina: 0 } };
+  editVals: Record<string, any> = {};
   newIngConcepto: Record<string, string> = { Q1: '', Q2: '' };
   newIngMonto: Record<string, any> = { Q1: null, Q2: null };
   private manualToggle = new Set<string>();
@@ -574,28 +595,45 @@ export class DashboardPage {
     addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
+    this.periodoValido();
     this.applyAutoCollapse();
     this.refresh();
     this.budget.gastos$.subscribe(() => this.refresh());
     this.budget.imprevistos$.subscribe(() => this.refresh());
     this.budget.presupuesto$.subscribe(p => { this.presupuesto = p; this.refresh(); });
+    this.budget.config$.subscribe(() => { this.periodoValido(); this.applyAutoCollapse(); this.refresh(); });
     this.budget.quincenaActual$.subscribe((q: any) => { this.quincenaActual = q; this.applyAutoCollapse(); });
+  }
+  /**
+   * Si el periodo elegido ya no existe (por ejemplo quedo en "Quincena 2" y se
+   * restablecio con tipo de pago mensual), se vuelve a "Todo el mes".
+   */
+  private periodoValido() {
+    if (this.quincenaActual !== 'TODO' && !this.budget.periodos().includes(this.quincenaActual as any)) {
+      this.quincenaActual = 'TODO';
+      this.budget.setQuincenaActual('TODO');
+    }
   }
   ionViewWillEnter() { this.refresh(); }
   refresh() {
     this.presupuesto = this.budget.getPresupuesto();
     // Los inputs editables leen de aca, asi que se recargan con lo guardado:
-    // si no, mostrarian 0 hasta tocar el campo.
-    this.editVals = {
-      Q1: { efectivo: Number(this.efectivo('Q1')) || 0, vales: Number(this.vales('Q1')) || 0, nomina: Number(this.nomina('Q1')) || 0 },
-      Q2: { efectivo: Number(this.efectivo('Q2')) || 0, vales: Number(this.vales('Q2')) || 0, nomina: Number(this.nomina('Q2')) || 0 },
-    };
+    // si no, mostrarian 0 hasta tocar el campo. Segun el tipo de pago hay dos
+    // quincenas o un solo bloque mensual.
+    const montos: Record<string, any> = {};
+    for (const q of this.budget.periodos()) {
+      montos[q] = { efectivo: Number(this.efectivo(q)) || 0, vales: Number(this.vales(q)) || 0, nomina: Number(this.nomina(q)) || 0 };
+    }
+    this.editVals = montos;
     const cats = this.budget.categorias;
+    // `total` suma todos los gastos del mes de esa categoria: en modo mensual
+    // es la unica columna, en quincenas sirve para el "Total mes".
     this.rows = cats.map(c => {
       const q1 = this.budget.getGastos('Q1').filter(g => g.categoriaId === c.id).reduce((s, g) => s + g.previsto, 0);
       const q2 = this.budget.getGastos('Q2').filter(g => g.categoriaId === c.id).reduce((s, g) => s + g.previsto, 0);
-      return { cat: c, q1, q2 };
-    }).filter(r => r.q1 || r.q2);
+      const men = this.budget.getGastos('MEN').filter(g => g.categoriaId === c.id).reduce((s, g) => s + g.previsto, 0);
+      return { cat: c, q1, q2, men, total: this.esMensual ? men : q1 + q2 };
+    }).filter(r => r.total);
     this.totalQ1 = this.rows.reduce((s, r) => s + r.q1, 0);
     this.totalQ2 = this.rows.reduce((s, r) => s + r.q2, 0);
     this.pagosTC = this.budget.getPagosTC();
@@ -628,9 +666,11 @@ export class DashboardPage {
   isIngCollapsed(q: string) { return !!this.collapsedIng[q]; }
   go(url: string) { this.router.navigateByUrl(url); }
 
-  /** "Q1" -> "Quincena 1". Evita repetir el ternario en cada template. */
+  /** "Q1" -> "Quincena 1", "Q2" -> "Quincena 2", "MEN" -> "Todo el mes". */
   etiquetaQuincena(q: string): string {
-    return q === 'Q1' ? 'Quincena 1' : 'Quincena 2';
+    if (q === 'Q1') return 'Quincena 1';
+    if (q === 'Q2') return 'Quincena 2';
+    return 'Todo el mes';
   }
 
   /**
@@ -696,8 +736,11 @@ export class DashboardPage {
   }
   /** "Te sobra el mes" / "Te sobra la Quincena 1", o "No te alcanza" si es negativo. */
   get etiquetaPeriodoPrevisto(): string {
-    const periodo = this.quincenaActual === 'TODO' ? 'el mes' : `la ${this.etiquetaQuincena(this.quincenaActual)}`;
-    return this.sobranteGlobal < 0 ? `No te alcanza ${periodo}` : `Te sobra ${periodo}`;
+    const periodo = this.quincenaActual === 'TODO'
+      ? 'el mes'
+      : this.etiquetaQuincena(this.quincenaActual) === 'Todo el mes' ? 'el mes' : `${this.etiquetaQuincena(this.quincenaActual)}`;
+    const articulo = periodo === 'el mes' ? periodo : `la ${periodo}`;
+    return this.sobranteGlobal < 0 ? `No te alcanza ${articulo}` : `Te sobra ${articulo}`;
   }
   /**
    * Cerca de cero: el saldo es menor al 5% del ingreso, o es exactamente
@@ -727,21 +770,27 @@ export class DashboardPage {
   get posMarca(): number { return Math.min(99, Math.max(1, this.pctPlaneado)); }
   toggleCollapse(q: string) { this.collapsed[q] = !this.collapsed[q]; if (this.collapsed[q]) this.manualToggle.add(q); else this.manualToggle.delete(q); }
   toggleIngCollapse(q: string) { this.collapsedIng[q] = !this.collapsedIng[q]; if (this.collapsedIng[q]) this.manualIngToggle.add(q); else this.manualIngToggle.delete(q); }
-  setActual(q: 'Q1'|'Q2'|'TODO') { this.budget.setQuincenaActual(q as any); this.manualToggle.clear(); this.manualIngToggle.clear(); this.applyAutoCollapse(); }
+  setActual(q: FiltroQuincena) { this.budget.setQuincenaActual(q); this.manualToggle.clear(); this.manualIngToggle.clear(); this.applyAutoCollapse(); }
+  /**
+   * Colapso automatico: con "Todo el mes" se ven todos los periodos; al elegir
+   * uno, el otro se cierra para que no compita. En modo mensual solo hay uno,
+   * asi que nunca se cierra.
+   */
   private applyAutoCollapse() {
-    if (this.quincenaActual === 'TODO') { this.collapsed = { Q1: false, Q2: false }; this.collapsedIng = { Q1: false, Q2: false }; return; }
-    if (this.manualToggle.size === 0) {
-      this.collapsed = { Q1: this.quincenaActual === 'Q2', Q2: this.quincenaActual === 'Q1' };
-    } else {
-      if (!this.manualToggle.has('Q1')) this.collapsed['Q1'] = this.quincenaActual === 'Q2';
-      if (!this.manualToggle.has('Q2')) this.collapsed['Q2'] = this.quincenaActual === 'Q1';
+    const periodos = this.budget.periodos();
+    const abiertos: Record<string, boolean> = {}; const abiertosIng: Record<string, boolean> = {};
+    for (const q of periodos) {
+      const otro = this.quincenaActual === 'TODO' ? false : this.quincenaActual !== q;
+      abiertos[q] = otro; abiertosIng[q] = otro;
     }
-    if (this.manualIngToggle.size === 0) {
-      this.collapsedIng = { Q1: this.quincenaActual === 'Q2', Q2: this.quincenaActual === 'Q1' };
-    } else {
-      if (!this.manualIngToggle.has('Q1')) this.collapsedIng['Q1'] = this.quincenaActual === 'Q2';
-      if (!this.manualIngToggle.has('Q2')) this.collapsedIng['Q2'] = this.quincenaActual === 'Q1';
+    // Lo que el usuario abrio o cerro a mano se respeta.
+    for (const q of periodos) {
+      if (this.quincenaActual !== 'TODO') {
+        if (this.manualToggle.has(q)) abiertos[q] = !!this.collapsed[q];
+        if (this.manualIngToggle.has(q)) abiertosIng[q] = !!this.collapsedIng[q];
+      }
     }
+    this.collapsed = abiertos; this.collapsedIng = abiertosIng;
   }
   /**
    * Guarda los montos del bolsillo. Se llama solo al cambiar un campo o al

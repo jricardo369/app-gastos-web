@@ -139,17 +139,16 @@ export class ImprevistoModalComponent {
   <ion-content class="bg">
     <div class="container">
 
-      <!-- 1. Periodo. Cada opción muestra cuántos gastos de esa quincena
-           ya están pagados, para poder comparar sin cambiar de pestaña. -->
+      <!-- 1. Periodo. Cada opción muestra cuántos gastos de ese periodo
+            ya están pagados, para poder comparar sin cambiar de pestaña.
+            En modo mensual solo existe el mes, así que no se ofrece elegir. -->
       <div class="seg" role="group" aria-label="Periodo">
-        <button type="button" class="seg-btn" [class.on]="tab==='Q1'" [attr.aria-pressed]="tab==='Q1'" (click)="tab='Q1'">
-          <span>Quincena 1</span>
-          <span class="seg-num">{{ pagados('Q1') }}/{{ total('Q1') }} pagados</span>
-        </button>
-        <button type="button" class="seg-btn" [class.on]="tab==='Q2'" [attr.aria-pressed]="tab==='Q2'" (click)="tab='Q2'">
-          <span>Quincena 2</span>
-          <span class="seg-num">{{ pagados('Q2') }}/{{ total('Q2') }} pagados</span>
-        </button>
+        @for (q of periodos; track q) {
+          <button type="button" class="seg-btn" [class.on]="tab===q" [attr.aria-pressed]="tab===q" (click)="tab=q">
+            <span>{{ etiqueta(q) }}</span>
+            <span class="seg-num">{{ pagados(q) }}/{{ total(q) }} pagados</span>
+          </button>
+        }
       </div>
 
       @for (q of [tab]; track q) {
@@ -159,7 +158,7 @@ export class ImprevistoModalComponent {
         <section class="usage">
           <div class="usage-top">
             <div class="usage-main">
-              <span class="lbl">{{ q === 'Q1' ? 'Quincena 1' : 'Quincena 2' }} · pagado de lo previsto</span>
+              <span class="lbl">{{ etiqueta(q) }} · pagado de lo previsto</span>
               <strong class="usage-pct">{{ pct(q) }}%</strong>
             </div>
             <div class="usage-side">
@@ -168,7 +167,7 @@ export class ImprevistoModalComponent {
             </div>
           </div>
           <div class="progress" role="progressbar" [attr.aria-valuenow]="pct(q)" aria-valuemin="0" aria-valuemax="100"
-               [attr.aria-label]="'Avance de pagos de la ' + (q === 'Q1' ? 'quincena 1' : 'quincena 2')">
+                [attr.aria-label]="'Avance de pagos de ' + etiqueta(q)">
             <div [style.width.%]="pct(q)"></div>
           </div>
           <div class="usage-stats">
@@ -214,7 +213,7 @@ export class ImprevistoModalComponent {
             @if (gastos(q).length === 0) {
               <div class="empty">
                 <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
-                <p>Todavía no hay gastos previstos en esta quincena</p>
+                <p>Todavía no hay gastos previstos en {{ esMensual ? 'el mes' : 'esta quincena' }}</p>
                 <ion-button size="small" fill="outline" (click)="openAddGastoModal(q)">Agregar gasto</ion-button>
               </div>
             }
@@ -424,15 +423,32 @@ export class ImprevistoModalComponent {
   `]
 })
 export class GastosPage {
-  tab: Quincena = 'Q1';
-  previstosCollapsed: Record<string, boolean> = { Q1: true, Q2: true };
-  realesCollapsed: Record<string, boolean> = { Q1: true, Q2: true };
+  /**
+   * Periodo activo: una quincena, o el mes completo en modo mensual.
+   * Arranca en el primero que exista, no siempre en Q1: si el tipo de pago es
+   * mensual, 'Q1' no tiene ningun gasto y la lista apareceria vacia.
+   */
+  tab: Quincena = this.budget.periodos()[0];
+  /** En modo mensual solo hay un bloque, el mes. */
+  get esMensual(): boolean { return this.budget.getConfig().tipoPago === 'mensual'; }
+  /** Los periodos que existen segun la config. */
+  get periodos(): Quincena[] { return this.budget.periodos(); }
+  /** Si el tipo de pago cambio, el tab puede apuntar a un periodo que ya no existe. */
+  private corregirTab() {
+    if (!this.periodos.includes(this.tab)) this.tab = this.periodos[0];
+  }
+  ionViewWillEnter() { this.corregirTab(); }
+  previstosCollapsed: Record<string, boolean> = { Q1: true, Q2: true, MEN: true };
+  realesCollapsed: Record<string, boolean> = { Q1: true, Q2: true, MEN: true };
   isPrevistosCollapsed(q: string){ return !!this.previstosCollapsed[q]; }
   togglePrevistos(q: string){ this.previstosCollapsed[q] = !this.previstosCollapsed[q]; }
   isRealesCollapsed(q: string){ return !!this.realesCollapsed[q]; }
   toggleReales(q: string){ this.realesCollapsed[q] = !this.realesCollapsed[q]; }
   constructor(public budget: BudgetService, private modalCtrl: ModalController, private alertCtrl: AlertController){
     addIcons({ chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline, trashOutline, walletOutline, alertCircleOutline, calendarOutline });
+    // Al restablecer con otro tipo de pago se corrige el periodo activo sin
+    // depender de entrar y salir de la pantalla.
+    this.budget.config$.subscribe(() => this.corregirTab());
   }
   gastos(q: Quincena) { return this.budget.getGastos(q); }
   imprevistos(q: Quincena) { return this.budget.getImprevistos(q); }
@@ -447,6 +463,12 @@ export class GastosPage {
   pagados(q: Quincena) { return this.budget.getGastos(q).filter(g => g.pagado).length; }
   /** Los que faltan por pagar: es la lista de pendientes real. */
   pendientes(q: Quincena) { return this.total(q) - this.pagados(q); }
+  /** "Q1" -> "Quincena 1", "MEN" -> "Todo el mes". */
+  etiqueta(q: Quincena): string {
+    if (q === 'Q1') return 'Quincena 1';
+    if (q === 'Q2') return 'Quincena 2';
+    return 'Todo el mes';
+  }
   breakdown(q: Quincena) { return [...this.budget.breakdownCategoria(q)].sort((a, b) => b.total - a.total); }
   /** Cuanto representa un monto dentro del total de la quincena. */
   share(monto: number, q: Quincena) { const p = this.previstos(q); return p ? Math.round((monto / p) * 100) : 0; }
