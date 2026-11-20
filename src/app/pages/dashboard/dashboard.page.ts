@@ -1,4 +1,4 @@
-﻿import { Component, Input } from '@angular/core';
+﻿import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonButtons, ModalController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
@@ -591,14 +591,14 @@ export class DashboardPage {
   private manualToggle = new Set<string>();
   private manualIngToggle = new Set<string>();
 
-  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
+  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController, private cdr: ChangeDetectorRef) {
     addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.periodoValido();
     this.applyAutoCollapse();
     this.refresh();
-    this.budget.gastos$.subscribe(() => this.refresh());
+    this.budget.gastos$.subscribe(() => { this.refresh(); this.cdr.markForCheck(); });
     this.budget.imprevistos$.subscribe(() => this.refresh());
     this.budget.presupuesto$.subscribe(p => { this.presupuesto = p; this.refresh(); });
     this.budget.config$.subscribe(() => { this.periodoValido(); this.applyAutoCollapse(); this.refresh(); });
@@ -614,7 +614,7 @@ export class DashboardPage {
       this.budget.setQuincenaActual('TODO');
     }
   }
-  ionViewWillEnter() { this.refresh(); }
+  ionViewWillEnter() { this.refresh(); this.cdr.markForCheck(); }
   refresh() {
     this.presupuesto = this.budget.getPresupuesto();
     // Los inputs editables leen de aca, asi que se recargan con lo guardado:
