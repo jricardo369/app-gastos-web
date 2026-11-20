@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonSelect, IonSelectOption, IonText, ModalController, IonButtons, AlertController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
@@ -465,11 +465,13 @@ export class GastosPage {
   togglePrevistos(q: string){ this.previstosCollapsed[q] = !this.previstosCollapsed[q]; }
   isRealesCollapsed(q: string){ return !!this.realesCollapsed[q]; }
   toggleReales(q: string){ this.realesCollapsed[q] = !this.realesCollapsed[q]; }
-  constructor(public budget: BudgetService, private modalCtrl: ModalController, private alertCtrl: AlertController){
+  constructor(public budget: BudgetService, private modalCtrl: ModalController, private alertCtrl: AlertController, private cdr: ChangeDetectorRef){
     addIcons({ chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline, trashOutline, walletOutline, alertCircleOutline, calendarOutline });
     // Al restablecer con otro tipo de pago se corrige el periodo activo sin
     // depender de entrar y salir de la pantalla.
     this.budget.config$.subscribe(() => this.corregirTab());
+    // Refresca la lista cuando cambia un gasto (incluido el gastado parcial).
+    this.budget.gastos$.subscribe(() => this.cdr.markForCheck());
   }
   gastos(q: Quincena) { return this.budget.getGastos(q); }
   imprevistos(q: Quincena) { return this.budget.getImprevistos(q); }

@@ -726,9 +726,9 @@ export class DashboardPage {
   saldoTotal(q: any): number {
     return this.getIngresoTotal(q) - this.gastosReales(q) - this.imprevistos(q);
   }
-  /** Los gastos reales: los gastos marcados como pagados, sin imprevistos. */
+  /** Los gastos reales: lo gastado hasta ahora (importeReal), sin imprevistos. */
   gastosReales(q: any): number {
-    return this.budget.getGastos(q).filter((g: any) => g.pagado).reduce((s: number, g: any) => s + (Number(g.previsto) || 0), 0);
+    return this.budget.getGastos(q).reduce((s: number, g: any) => s + (Number(g.importeReal) || 0), 0);
   }
   /** Los variables (imprevistos) de la quincena: pagados o no, tambien salen del bolsillo. */
   imprevistos(q: any): number {
