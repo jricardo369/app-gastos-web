@@ -477,10 +477,35 @@ export class BudgetService {
   }
 
   getGastos(q?: Quincena): Gasto[] { const all = this._gastos$.value; return q ? all.filter(g => g.quincena === q) : all; }
-  toggleGasto(id: string) { const next = this._gastos$.value.map(g => g.id === id ? { ...g, pagado: !g.pagado } : g); this._gastos$.next(next); this.persistGastos(next); }
-  addGasto(g: Omit<Gasto, 'id'>) { const gasto: Gasto = { ...g, id: Date.now().toString() }; const next = [...this._gastos$.value, gasto]; this._gastos$.next(next); this.persistGastos(next); }
+  toggleGasto(id: string) {
+    const next = this._gastos$.value.map(g => {
+      if (g.id !== id) return g;
+      const gastado = Number(g.importeReal) || 0;
+      // Al marcar: gastado completo. Al desmarcar: se reinicia el gastado.
+      const nuevo = gastado >= g.previsto ? 0 : g.previsto;
+      return { ...g, importeReal: nuevo, pagado: nuevo >= g.previsto };
+    });
+    this._gastos$.next(next); this.persistGastos(next);
+  }
+  addGasto(g: Omit<Gasto, 'id'>) {
+    const gastado = Number(g.importeReal) || 0;
+    const gasto: Gasto = { ...g, id: Date.now().toString(), importeReal: gastado, pagado: g.pagado ?? (gastado >= g.previsto) };
+    const next = [...this._gastos$.value, gasto];
+    this._gastos$.next(next); this.persistGastos(next);
+  }
   removeGasto(id: string) { const next = this._gastos$.value.filter(g => g.id !== id); this._gastos$.next(next); this.persistGastos(next); }
-  updateGasto(id: string, patch: Partial<Gasto>) { const next = this._gastos$.value.map(g => g.id === id ? { ...g, ...patch } : g); this._gastos$.next(next); this.persistGastos(next); }
+  updateGasto(id: string, patch: Partial<Gasto>) {
+    const next = this._gastos$.value.map(g => {
+      if (g.id !== id) return g;
+      const updated = { ...g, ...patch };
+      if (patch.importeReal !== undefined || patch.previsto !== undefined) {
+        const gastado = Number(updated.importeReal) || 0;
+        updated.pagado = gastado >= (Number(updated.previsto) || 0);
+      }
+      return updated;
+    });
+    this._gastos$.next(next); this.persistGastos(next);
+  }
 
   getImprevistos(q?: Quincena): Imprevisto[] { const all = this._imprevistos$.value; return q ? all.filter(i => i.quincena === q) : all; }
   addImprevisto(i: Omit<Imprevisto, 'id'>) { const imp: Imprevisto = { ...i, id: Date.now().toString() }; const next = [...this._imprevistos$.value, imp]; this._imprevistos$.next(next); this.persistImprevistos(next); }
@@ -575,7 +600,7 @@ export class BudgetService {
   resumenQuincena(q: Quincena) {
     const gastos = this.getGastos(q);
     const previstos = gastos.reduce((s, g) => s + g.previsto, 0);
-    const reales = gastos.filter(g => g.pagado).reduce((s, g) => s + g.previsto, 0) + this.getImprevistos(q).filter(i => i.pagado).reduce((s, i) => s + i.importe, 0);
+    const reales = gastos.reduce((s, g) => s + (Number(g.importeReal) || 0), 0) + this.getImprevistos(q).filter(i => i.pagado).reduce((s, i) => s + i.importe, 0);
     const imprevistos = this.getImprevistos(q).reduce((s, i) => s + i.importe, 0);
     const ingreso = this.getDineroTotal(q);
     const sobrante = ingreso - previstos;

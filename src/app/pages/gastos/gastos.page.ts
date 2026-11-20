@@ -30,12 +30,20 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
       }
     </div>
 
-    <div class="field">
-      <ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input>
-      @if (isEdit && cambioPrevisto) {
-        <span class="antes">Antes: {{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</span>
-      }
-    </div>
+      <div class="field">
+        <ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input>
+        @if (isEdit && cambioPrevisto) {
+          <span class="antes">Antes: {{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</span>
+        }
+      </div>
+
+      <div class="field">
+        <ion-input label="Gastado ($)" labelPlacement="stacked" type="number" [(ngModel)]="importeReal" placeholder="0"></ion-input>
+        @if (isEdit && cambioImporteReal) {
+          <span class="antes">Antes: {{ originalImporteReal | currency:'MXN':'symbol':'1.0-0' }}</span>
+        }
+        <span class="hint">Cuánto llevas gastado de este gasto. Al llegar al previsto se marca pagado.</span>
+      </div>
 
     <!-- Resumen de todo lo que va a cambiar, para verlo antes de guardar -->
     @if (isEdit && hayCambios) {
@@ -43,6 +51,7 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
         <span class="lbl">Vas a cambiar</span>
         @if (cambioDescripcion) { <div><span>Descripción</span><s>{{ originalDescripcion }}</s> <b>{{ descripcion }}</b></div> }
         @if (cambioPrevisto) { <div><span>Monto</span><s>{{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</s> <b>{{ previsto | currency:'MXN':'symbol':'1.0-0' }}</b></div> }
+        @if (cambioImporteReal) { <div><span>Gastado</span><s>{{ originalImporteReal | currency:'MXN':'symbol':'1.0-0' }}</s> <b>{{ importeReal | currency:'MXN':'symbol':'1.0-0' }}</b></div> }
         @if (cambioCategoria) { <div><span>Categoría</span><s>{{ nombreCategoria(originalCategoriaId) }}</s> <b>{{ nombreCategoria(categoriaId) }}</b></div> }
       </div>
     }
@@ -71,12 +80,14 @@ export class GastoModalComponent {
   @Input() categoriaId: string = 'hogar';
   @Input() descripcion: string = '';
   @Input() previsto: any = null;
+  @Input() importeReal: any = null;
   /** En modo edicion devuelve update:true para que la pagina no duplique el gasto. */
   @Input() isEdit: boolean = false;
   /** Valores con los que abrio el modal, para poder mostrar el "antes". */
   @Input() originalCategoriaId: string = '';
   @Input() originalDescripcion: string = '';
   @Input() originalPrevisto: any = null;
+  @Input() originalImporteReal: any = null;
   error = '';
 
   private readonly CAT_NOMBRES: Record<string, string> = {
@@ -87,8 +98,9 @@ export class GastoModalComponent {
 
   get cambioDescripcion(): boolean { return this.descripcion.trim() !== this.originalDescripcion; }
   get cambioPrevisto(): boolean { return Number(this.previsto) !== Number(this.originalPrevisto); }
+  get cambioImporteReal(): boolean { return Number(this.importeReal || 0) !== Number(this.originalImporteReal || 0); }
   get cambioCategoria(): boolean { return this.categoriaId !== this.originalCategoriaId; }
-  get hayCambios(): boolean { return this.cambioDescripcion || this.cambioPrevisto || this.cambioCategoria; }
+  get hayCambios(): boolean { return this.cambioDescripcion || this.cambioPrevisto || this.cambioCategoria || this.cambioImporteReal; }
 
   nombreCategoria(id: string): string { return this.CAT_NOMBRES[id] || id || '-'; }
 
@@ -97,12 +109,14 @@ export class GastoModalComponent {
   save(){
     if (!this.descripcion?.trim()) { this.error = 'Poné una descripción'; return; }
     if (this.previsto === null || this.previsto === '' || Number(this.previsto) < 0) { this.error = 'Poné un monto válido'; return; }
+    if (this.importeReal !== null && this.importeReal !== '' && Number(this.importeReal) < 0) { this.error = 'Poné un gastado válido'; return; }
     if (this.isEdit && !this.hayCambios) { this.error = 'No cambiaste nada'; return; }
     this.modalCtrl.dismiss({
       update: this.isEdit,
       categoriaId: this.categoriaId,
       descripcion: this.descripcion.trim(),
       previsto: Number(this.previsto),
+      importeReal: this.importeReal === null || this.importeReal === '' ? 0 : Number(this.importeReal),
     });
   }
 }
@@ -203,7 +217,12 @@ export class ImprevistoModalComponent {
                   <span class="li-title">{{ g.descripcion }}</span>
                   <span class="li-cat"><span class="dot" [style.background]="catColor(g.categoriaId)"></span>{{ catName(g.categoriaId) }}</span>
                 </div>
-                <span class="li-amount" [class.ok]="g.pagado">{{ g.previsto | currency:'MXN':'symbol':'1.0-0' }}</span>
+                 <span class="li-amount" [class.ok]="g.pagado">
+                   @if ((g.importeReal || 0) > 0 && (g.importeReal || 0) < g.previsto) {
+                     <span class="gastado">{{ g.importeReal | currency:'MXN':'symbol':'1.0-0' }} / </span>
+                   }
+                   {{ g.previsto | currency:'MXN':'symbol':'1.0-0' }}
+                 </span>
                 <ion-icon class="li-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
                 <button type="button" class="del" (click)="confirmDeleteGasto(g); $event.stopPropagation()" [attr.aria-label]="'Eliminar ' + g.descripcion">
                   <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
@@ -381,6 +400,8 @@ export class ImprevistoModalComponent {
   .li-amount{font-size:14px;font-weight:800;color:var(--text-strong);white-space:nowrap;
     font-variant-numeric:tabular-nums}
   .li-amount.ok{color:var(--ok)}
+  .li-amount .gastado{color:var(--warn);font-weight:700}
+  .hint{display:block;font-size:11px;color:var(--text-faint);padding:2px 16px 0}
   /* Flecha: indica que la fila se puede editar */
   .li-chev{flex:none;font-size:16px;color:var(--text-faint)}
   .del{display:flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;
@@ -472,7 +493,7 @@ export class GastosPage {
   breakdown(q: Quincena) { return [...this.budget.breakdownCategoria(q)].sort((a, b) => b.total - a.total); }
   /** Cuanto representa un monto dentro del total de la quincena. */
   share(monto: number, q: Quincena) { const p = this.previstos(q); return p ? Math.round((monto / p) * 100) : 0; }
-  realesCat(q: Quincena, catId: string) { return this.budget.getGastos(q).filter(g => g.categoriaId === catId && g.pagado).reduce((s, g) => s + g.previsto, 0); }
+  realesCat(q: Quincena, catId: string) { return this.budget.getGastos(q).filter(g => g.categoriaId === catId).reduce((s, g) => s + (Number(g.importeReal) || 0), 0); }
   catName(id: string) { return this.budget.categorias.find(c => c.id === id)?.nombre || id; }
   catColor(id: string) { return this.budget.categorias.find(c => c.id === id)?.color || '#ddd'; }
   toggleGasto(id: string) { this.budget.toggleGasto(id); }
@@ -481,7 +502,7 @@ export class GastosPage {
     const modal = await this.modalCtrl.create({ component: GastoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
-    if (data) this.budget.addGasto({ quincena: q, categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, pagado: false, tipo: 'fijo' });
+    if (data) this.budget.addGasto({ quincena: q, categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, importeReal: data.importeReal, pagado: false, tipo: 'fijo' });
   }
   /** Edita un gasto existente. Antes no habia forma: solo agregar y borrar. */
   async openEditGastoModal(g: Gasto) {
@@ -489,21 +510,23 @@ export class GastosPage {
       component: GastoModalComponent,
       componentProps: {
         isEdit: true,
-        categoriaId: g.categoriaId,
-        descripcion: g.descripcion,
-        previsto: g.previsto,
-        // Se pasa el estado original aparte para que el modal pueda mostrar
-        // el "antes" de cada campo y el resumen de lo que va a cambiar.
-        originalCategoriaId: g.categoriaId,
-        originalDescripcion: g.descripcion,
-        originalPrevisto: g.previsto,
-      },
+         categoriaId: g.categoriaId,
+         descripcion: g.descripcion,
+         previsto: g.previsto,
+         importeReal: g.importeReal ?? 0,
+         // Se pasa el estado original aparte para que el modal pueda mostrar
+         // el "antes" de cada campo y el resumen de lo que va a cambiar.
+         originalCategoriaId: g.categoriaId,
+         originalDescripcion: g.descripcion,
+         originalPrevisto: g.previsto,
+         originalImporteReal: g.importeReal ?? 0,
+       },
       breakpoints: [0, 0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70',
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (!data) return;
-    this.budget.updateGasto(g.id, { categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto });
+    this.budget.updateGasto(g.id, { categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, importeReal: data.importeReal });
   }
   async openAddImpModal(q: Quincena) {
     const modal = await this.modalCtrl.create({ component: ImprevistoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
