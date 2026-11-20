@@ -329,229 +329,201 @@ export class IngresoModalComponent {
     </div>
   </ion-content>
   `,
-  styles: [`
-  .hdr ion-toolbar{--background:#fff}
-  .title-wrap{display:flex;flex-direction:column;line-height:1}
-  .title-wrap small{font-size:11px;color:var(--text-muted);font-weight:400}
-  .bg{--background:#eef2f7}
-  .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
+   styles: [`
+   .hdr ion-toolbar{--background:#fff;border-bottom:1px solid var(--border-subtle)}
+   .title-wrap{display:flex;flex-direction:column;line-height:1.2}
+   .title-wrap span{font-size:17px;font-weight:700;letter-spacing:-.01em;color:var(--text-strong)}
+   .title-wrap small{font-size:11px;color:var(--text-muted);font-weight:500}
+   .bg{--background:#f4f6f9}
+   .container{padding:var(--sp-4);max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-4)}
 
-  .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
-    border:1px solid var(--border);overflow:hidden}
-  .panel-title{display:flex;flex-direction:column;gap:1px;min-width:0}
-  .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint)}
-  .pad-card{padding:var(--sp-4)}
-  ion-button{margin:0;min-height:34px}
+   .card{background:var(--surface);border-radius:20px;box-shadow:0 10px 25px -5px rgba(15,58,93,.05), 0 8px 10px -6px rgba(15,58,93,.03);
+     border:1px solid rgba(230,234,240,0.8);overflow:hidden;transition:transform .2s ease, box-shadow .2s ease}
+   .panel-title{display:flex;flex-direction:column;gap:2px;min-width:0}
+   .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint);letter-spacing:.01em}
+   .pad-card{padding:var(--sp-5)}
+   ion-button{margin:0;min-height:36px;font-weight:700;border-radius:var(--radius-pill)}
 
-  /* Segmento de periodo: botones reales, no labels con checkbox.
-     El checkbox escondido obligaba a adivinar si estaba activo. */
-  .seg{display:flex;gap:var(--sp-1);background:var(--surface-sunken);padding:4px;
-    border-radius:var(--radius-pill);border:1px solid var(--border-subtle)}
-  .seg-btn{
-    flex:1;border:none;background:transparent;cursor:pointer;
-    font-family:'Nunito', sans-serif;font-size:13px;font-weight:700;
-    color:var(--text-muted);padding:8px 10px;border-radius:var(--radius-pill);
-    min-height:44px;transition:background .15s ease,color .15s ease;
-  }
-  .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
-  .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+   /* Segmento de periodo moderno tipo pill */
+   .seg{display:flex;gap:6px;background:var(--surface-sunken);padding:5px;
+     border-radius:var(--radius-pill);border:1px solid var(--border)}
+   .seg-btn{
+     flex:1;border:none;background:transparent;cursor:pointer;
+     font-family:'Nunito', sans-serif;font-size:13px;font-weight:700;
+     color:var(--text-muted);padding:9px 12px;border-radius:var(--radius-pill);
+     min-height:42px;transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+   }
+   .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:0 4px 12px rgba(15,58,93,.08);transform:translateY(-1px)}
+   .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* Estado general: el aviso vive en cada quincena, no aca. */
+   /* Resumen del periodo (Hero Card) */
+   .resumen{padding:var(--sp-5);background:linear-gradient(135deg, var(--surface) 0%, #fbfcfe 100%)}
+   .res-hero{display:flex;flex-direction:column;gap:4px}
+   .res-estado{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-size:12px;font-weight:800;background:var(--ok-bg);padding:4px 10px;border-radius:var(--radius-pill);width:fit-content}
+   .res-estado ion-icon{font-size:16px}
+   .res-monto{display:block;margin-top:var(--sp-2);font-size:36px;line-height:1.05;
+     letter-spacing:-.03em;color:var(--text-strong);font-weight:800}
+   .res-cerca .res-monto{color:var(--warn)}
+   .res-cerca .res-estado{color:var(--warn);background:var(--warn-bg)}
+   .res-neg .res-monto{color:var(--bad)}
+   .res-neg .res-estado{color:var(--bad);background:var(--bad-bg)}
 
-  /* Resumen del periodo: cuanto recibis, lo previsto, lo real y lo que queda.
-     El monto grande es la respuesta; el medidor y las tres cifras la sostienen.
-     El color solo refuerza: el texto ("Te sobra" / "No te alcanza") ya dice el estado. */
-  .resumen{padding:var(--sp-4)}
-  .res-hero{display:flex;flex-direction:column;gap:2px}
-  .res-estado{display:inline-flex;align-items:center;gap:5px;color:var(--ok)}
-  .res-estado ion-icon{font-size:15px}
-  .res-monto{display:block;margin-top:var(--sp-1);font-size:28px;line-height:1.05;
-    letter-spacing:-.02em;color:var(--text-strong)}
-  .res-cerca .res-monto,.res-cerca .res-estado{color:var(--warn)}
-  .res-neg .res-monto,.res-neg .res-estado{color:var(--bad)}
+   /* Medidor moderno */
+   .med{position:relative;margin-top:var(--sp-5)}
+   .med-track{height:12px;background:var(--surface-sunken);border-radius:var(--radius-pill);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.06)}
+   .med-fill{height:100%;background:var(--positive);border-radius:var(--radius-pill);
+     transition:width .4s cubic-bezier(0.4, 0, 0.2, 1)}
+   .med.pasado .med-fill{background:var(--warn)}
+   .med.excedido .med-fill{background:var(--bad)}
+   .med-mark{position:absolute;top:-2px;left:0;width:3px;height:16px;border-radius:1.5px;
+     background:var(--text-strong);transform:translateX(-1.5px);box-shadow:0 0 4px rgba(0,0,0,.2)}
+   .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
+     flex-wrap:wrap;margin-top:8px;font-size:12px}
+   .med-pie .count{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--text-body)}
+   .med-tick{width:3px;height:12px;background:var(--text-strong);border-radius:1.5px;
+     display:inline-block;flex:none}
 
-  /* Medidor: barra de lo gastado contra lo recibido, con la marca de lo previsto */
-  .med{position:relative;margin-top:var(--sp-4)}
-  .med-track{height:10px;background:var(--surface-sunken);border-radius:var(--radius-pill);overflow:hidden}
-  .med-fill{height:100%;background:var(--positive);border-radius:var(--radius-pill);
-    transition:width .25s ease}
-  /* Te pasaste de lo planeado (ambar) o de lo que recibiste (rojo). El numero
-     de abajo dice lo mismo, asi que el color no es el unico aviso. */
-  .med.pasado .med-fill{background:var(--warn)}
-  .med.excedido .med-fill{background:var(--bad)}
-  .med-mark{position:absolute;top:0;left:0;width:2px;height:10px;border-radius:1px;
-    background:var(--text-strong);transform:translateX(-1px)}
-  .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);
-    flex-wrap:wrap;margin-top:6px}
-  .med-pie .count{display:inline-flex;align-items:center;gap:5px;font-weight:600}
-  .med-tick{width:2px;height:10px;background:var(--text-strong);border-radius:1px;
-    display:inline-block;flex:none}
+   /* Cifras inferiores del resumen */
+   .res-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--border-subtle)}
+   .res-stats .stat{display:flex;flex-direction:column;gap:3px;min-width:0;padding:var(--sp-2);background:var(--surface-sunken);border-radius:var(--radius);border:1px solid var(--border-subtle);transition:transform .15s ease}
+   .res-stats .stat:hover{transform:translateY(-1px)}
+   .res-stats .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+   .res-stats .money{font-size:15px;font-weight:800}
 
-  /* Las cuatro cifras que forman el monto grande, en el mismo orden en que se
-     calcula: lo que entra − lo previsto − los variables. Siempre en horizontal:
-     cuatro columnas iguales con separadores finos, sin cajas, para que quepan
-     hasta en una pantalla de 320px sin apretar los numeros. */
-  .res-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-4)}
-  .res-stats .stat{display:flex;flex-direction:column;gap:2px;min-width:0;padding:0 var(--sp-2)}
-  .res-stats .stat:first-child{padding-left:0}
-  .res-stats .stat:last-child{padding-right:0}
-  .res-stats .stat + .stat{border-left:1px solid var(--border-subtle)}
-  .res-stats .lbl{line-height:1.2}
-  .res-stats .money{font-size:16px}
-  /* En pantallas muy angostas se afina el tamano, no se apilan: seguiria
-     siendo horizontal, que es lo que se compara de un vistazo. */
-  @media(max-width:400px){
-    .res-stats{gap:var(--sp-1)}
-    .res-stats .stat{padding:0 var(--sp-1)}
-    .res-stats .money{font-size:14px}
-  }
-  @media(max-width:340px){
-    .res-stats .money{font-size:12px}
-    .res-stats .lbl{font-size:10px}
-  }
+   @media(max-width:600px){
+     .res-stats{grid-template-columns:repeat(2,1fr)}
+   }
 
-  /* El porcentaje del previsto se muestra dentro de cada quincena, asi que
-     aca solo queda el texto auxiliar que acompaña a la barra. */
-  .usage-rest{color:var(--text-muted);font-size:12px}
+   .usage-rest{color:var(--text-muted);font-size:12px;font-weight:600}
 
-  /* Titulos de seccion: misma etiqueta que usan las tarjetas de las otras pestañas */
-  .section-title{font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
-    letter-spacing:.02em;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
+   .section-title{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;
+     letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase;padding:0 4px;margin-top:var(--sp-2)}
 
-  /* Resumenes de una linea (deudas / deudores). Clickeable = navegable. */
-  .sum{
-    position:relative;display:flex;flex-direction:column;gap:var(--sp-2);
-    padding:var(--sp-4) calc(var(--sp-4) + 24px) var(--sp-4) var(--sp-4);
-    cursor:pointer;background:var(--surface);border:1px solid var(--border);
-    border-radius:var(--radius-lg);box-shadow:var(--shadow);text-align:left;
-    font-family:inherit;transition:background .15s ease;
-  }
-  .sum b{font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-  .sum:hover{background:var(--surface-sunken)}
-  .sum:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  /* Flecha: indica que lleva a otra pestaña */
-  .sum-chev{position:absolute;top:50%;right:var(--sp-4);transform:translateY(-50%);
-    font-size:16px;color:var(--text-faint)}
+   /* Tarjetas de cuentas pendientes */
+   .sum{
+     position:relative;display:flex;flex-direction:column;gap:var(--sp-2);
+     padding:var(--sp-4) calc(var(--sp-4) + 28px) var(--sp-4) var(--sp-4);
+     cursor:pointer;background:var(--surface);border:1px solid var(--border);
+     border-radius:20px;box-shadow:0 4px 14px rgba(15,58,93,.04);text-align:left;
+     font-family:inherit;transition:all .2s ease;
+   }
+   .sum b{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-weight:800}
+   .sum:hover{background:var(--surface-sunken);transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,58,93,.08)}
+   .sum:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+   .sum-chev{position:absolute;top:50%;right:var(--sp-4);transform:translateY(-50%);
+     font-size:18px;color:var(--text-muted);transition:transform .15s ease}
+   .sum:hover .sum-chev{transform:translateY(-50%) translateX(2px);color:var(--accent)}
 
-  .ing-section{display:flex;flex-direction:column;gap:var(--sp-2)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3)}
-  @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+   .ing-section{display:flex;flex-direction:column;gap:var(--sp-2)}
+   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+   @media(max-width:700px){.grid2{grid-template-columns:1fr}}
 
-  /* Encabezados de tarjeta: sin fondo de color, sin mayusculas.
-     El peso y el tamano dan la jerarquia; el color se reserva para el estado. */
-  .q-head{
-    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    min-height:56px;padding:var(--sp-3) var(--sp-4);cursor:pointer;border:none;
-    border-bottom:1px solid var(--border-subtle);
-    background:var(--surface);font-family:inherit;text-align:left;
-  }
-  .card.collapsed .q-head{border-bottom:none}
-  .q-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-  .head-left{display:flex;gap:6px;align-items:center;color:var(--text-muted);font-size:11px}
-  .head-right{font-size:16px}
-  .q-body{padding:var(--sp-3) var(--sp-4) var(--sp-4)}
+   /* Cabeceras de tarjetas de quincena */
+   .q-head{
+     width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+     min-height:60px;padding:var(--sp-3) var(--sp-5);cursor:pointer;border:none;
+     border-bottom:1px solid var(--border-subtle);
+     background:var(--surface);font-family:inherit;text-align:left;transition:background .15s ease;
+   }
+   .q-head:hover{background:var(--surface-sunken)}
+   .card.collapsed .q-head{border-bottom:none}
+   .q-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+   .head-left{display:flex;gap:8px;align-items:center;color:var(--text-muted);font-size:12px;font-weight:700}
+   .head-right{font-size:17px;font-weight:800}
+   .q-body{padding:var(--sp-4) var(--sp-5) var(--sp-5);display:flex;flex-direction:column;gap:var(--sp-2)}
 
-  .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-3) 0}
+   .sep{border:none;border-top:1px solid var(--border-subtle);margin:var(--sp-4) 0}
 
-  /* Montos del bolsillo editables en el lugar, igual que los ingresos: sin
-     boton de editar, se guardan solos al cambiar el campo o al salir. El
-     input tiene forma de cifra (derecha, tabular-nums) para que no se note
-     que es un campo y no rompa la columna de numeros. */
-  .money-edit{display:flex;flex-direction:column;gap:2px}
-  .money-edit .cell-inp{
-    width:118px;text-align:right;font-size:15px;font-weight:700;
-    font-variant-numeric:tabular-nums;color:var(--text-strong);
-    background:var(--surface-input);border:1px solid var(--border);
-    border-radius:var(--radius-sm);padding:7px 8px;font-family:inherit;
-  }
-  .money-edit .cell-inp:focus-visible{outline:2px solid var(--accent);outline-offset:1px;background:var(--surface)}
-  /* Sin las flechitas del number: en un campo tan chico solo estorban */
-  .money-edit .cell-inp::-webkit-outer-spin-button,
-  .money-edit .cell-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .money-edit .cell-inp{appearance:textfield;-moz-appearance:textfield}
-  /* Total de lo que hay en el bolsillo: cierra la columna de numeros */
-  .money-total{margin-top:var(--sp-2);padding-top:var(--sp-2);
-    border-top:1px solid var(--border-subtle)}
-  .money-total b{font-size:17px;font-variant-numeric:tabular-nums}
+   .money-edit{display:flex;flex-direction:column;gap:4px}
+   .money-edit .cell-inp{
+     width:130px;text-align:right;font-size:15px;font-weight:800;
+     font-variant-numeric:tabular-nums;color:var(--text-strong);
+     background:var(--surface-input);border:1px solid var(--border);
+     border-radius:var(--radius-sm);padding:8px 10px;font-family:inherit;
+     transition:border-color .15s ease, box-shadow .15s ease;
+   }
+   .money-edit .cell-inp:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,122,176,.15);background:var(--surface)}
+   .money-edit .cell-inp::-webkit-outer-spin-button,
+   .money-edit .cell-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+   .money-edit .cell-inp{appearance:textfield;-moz-appearance:textfield}
+   .money-total{margin-top:var(--sp-2);padding-top:var(--sp-3);
+     border-top:2px dashed var(--border)}
+   .money-total b{font-size:18px;font-variant-numeric:tabular-nums;font-weight:800}
 
-  /* Indicador de cierre de la quincena. Es el letrero de la formula:
-     Falta dinero (rojo) / Tengo de mas (ambar) / Todo bien (verde).
-     Debajo van las cifras de la comparacion, para poder revisarla. */
-  .flag{
-    display:flex;flex-direction:column;gap:2px;
-    margin-top:var(--sp-3);padding:10px var(--sp-3);
-    border-radius:var(--radius-sm);font-size:13px;font-weight:700;
-    border:1px solid transparent;
-  }
-  .flag-linea{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)}
-  .flag-linea span{font-weight:800}
-  .flag b{font-variant-numeric:tabular-nums;font-weight:800}
-  /* Las cifras de la cuenta: chicas y sin negritas, que son el detalle, no el
-     aviso. Se ven en los tres casos, incluido "Todo bien". */
-  .flag-detalle{font-size:11px;font-weight:600;line-height:1.35;opacity:.95}
-  .flag-sobra{background:var(--warn-bg);color:var(--warn);border-color:#ffd88a}
-  .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:#f3b0b0}
-  .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:#b6e3ca}
+   /* Banners / flags de cierre */
+   .flag{
+     display:flex;flex-direction:column;gap:4px;
+     margin-top:var(--sp-4);padding:12px var(--sp-4);
+     border-radius:14px;font-size:13px;font-weight:700;
+     border:1px solid transparent;box-shadow:0 2px 8px rgba(0,0,0,.02);
+   }
+   .flag-linea{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)}
+   .flag-linea span{font-weight:800;font-size:14px}
+   .flag b{font-variant-numeric:tabular-nums;font-weight:800}
+   .flag-detalle{font-size:11px;font-weight:600;line-height:1.4;opacity:.9}
+   .flag-sobra{background:var(--warn-bg);color:var(--warn);border-color:rgba(255,216,138,.6)}
+   .flag-falta{background:var(--bad-bg);color:var(--bad);border-color:rgba(243,176,176,.6)}
+   .flag-ok{background:var(--ok-bg);color:var(--ok);border-color:rgba(182,227,202,.6)}
 
-  /* Tablas: cifras alineadas a la derecha con tabular-nums */
-  .card-title{
-    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
-    text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
-    font-size:14px;font-weight:700;color:var(--text-strong);margin:0 0 var(--sp-3);padding:0;
-  }
-  .card-title > span:first-child{display:flex;align-items:center;gap:6px}
-  .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:var(--sp-2);padding:8px 0;
-    border-bottom:1px solid var(--border-subtle);font-size:13px;align-items:center}
-  .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
-  .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
-  .tbl.head{font-size:11px;font-weight:700;color:var(--text-muted);background:var(--surface-sunken);
-    border-radius:var(--radius-sm);padding:8px;border-bottom:none}
-  .tbl.total{font-weight:700;background:var(--surface-sunken);border-radius:var(--radius-sm);
-    border-bottom:none;margin-top:var(--sp-2)}
-  .cat{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
-  .cat i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
-  .bold{font-weight:800}
+   /* Tablas de categorías */
+   .card-title{
+     width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
+     text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
+     font-size:15px;font-weight:800;color:var(--text-strong);margin:0 0 var(--sp-4);padding:0;
+   }
+   .card-title > span:first-child{display:flex;align-items:center;gap:8px}
+   .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+   .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:var(--sp-2);padding:10px 4px;
+     border-bottom:1px solid var(--border-subtle);font-size:13px;align-items:center}
+   .tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+   .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
+   .tbl.head{font-size:11px;font-weight:800;color:var(--text-muted);background:var(--surface-sunken);
+     border-radius:var(--radius-sm);padding:10px 8px;border-bottom:none;letter-spacing:.02em}
+   .tbl.total{font-weight:800;background:var(--surface-sunken);border-radius:var(--radius-sm);
+     border-bottom:none;margin-top:var(--sp-3);padding:12px 8px}
+   .cat{display:flex;align-items:center;gap:var(--sp-3);min-width:0;font-weight:600;color:var(--text-body)}
+   .cat i{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+   .bold{font-weight:800}
 
-  /* Secciones desplegables: cabecera con la misma forma que las tarjetas */
-  .ing-toggle{
-    width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    min-height:56px;padding:var(--sp-3) var(--sp-4);cursor:pointer;
-    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-    box-shadow:var(--shadow);font-family:inherit;text-align:left;color:var(--text-strong);
-  }
-  .ing-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .t-left{display:flex;align-items:center;gap:6px}
+   .ing-toggle{
+     width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+     min-height:58px;padding:var(--sp-3) var(--sp-5);cursor:pointer;
+     background:var(--surface);border:1px solid var(--border);border-radius:20px;
+     box-shadow:0 4px 14px rgba(15,58,93,.04);font-family:inherit;text-align:left;color:var(--text-strong);
+     font-weight:700;transition:all .2s ease;
+   }
+   .ing-toggle:hover{background:var(--surface-sunken);transform:translateY(-1px)}
+   .ing-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+   .t-left{display:flex;align-items:center;gap:8px}
 
-  .ing-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
-    width:100%;min-height:56px;text-align:left;background:none;border:none;
-    padding:var(--sp-3) var(--sp-4);cursor:pointer;font-family:inherit;
-    font-size:14px;color:var(--text-strong);border-bottom:1px solid var(--border-subtle)}
-  .ing-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-  .ing-body{padding:var(--sp-3)}
-  .ing-list{display:grid;grid-template-columns:1fr 96px 36px;gap:var(--sp-2);
-    align-items:center;min-height:44px;padding:2px 0}
-  .cell-inp{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
-    padding:8px;font-size:13px;background:var(--surface);font-family:inherit;color:var(--text-body)}
-  .cell-inp.num{text-align:right;font-variant-numeric:tabular-nums}
-  /* Boton de borrar: icono y area de toque, como en el resto de las pestañas */
-  .icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;
-    border:none;background:transparent;color:var(--text-faint);cursor:pointer;
-    border-radius:var(--radius-sm);transition:background .15s ease,color .15s ease}
-  .icon-btn ion-icon{font-size:16px}
-  .icon-btn:hover{background:var(--bad-bg);color:var(--bad)}
-  .icon-btn:focus-visible{outline:2px solid var(--bad);outline-offset:1px}
-  .add-ing{display:flex;justify-content:flex-end;margin-top:var(--sp-2)}
+   .ing-head{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-3);
+     width:100%;min-height:54px;text-align:left;background:none;border:none;
+     padding:var(--sp-3) var(--sp-4);cursor:pointer;font-family:inherit;
+     font-size:14px;color:var(--text-strong);border-bottom:1px solid var(--border-subtle);font-weight:700}
+   .ing-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+   .ing-body{padding:var(--sp-4);display:flex;flex-direction:column;gap:var(--sp-2)}
+   .ing-list{display:grid;grid-template-columns:1fr 100px 36px;gap:var(--sp-2);
+     align-items:center;min-height:46px;padding:2px 0}
+   .cell-inp{width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);
+     padding:9px 10px;font-size:13px;background:var(--surface);font-family:inherit;color:var(--text-body);font-weight:600}
+   .cell-inp.num{text-align:right;font-variant-numeric:tabular-nums}
+   .cell-inp:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,122,176,.15)}
+   .icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;
+     border:none;background:transparent;color:var(--text-faint);cursor:pointer;
+     border-radius:var(--radius-sm);transition:background .15s ease,color .15s ease}
+   .icon-btn ion-icon{font-size:16px}
+   .icon-btn:hover{background:var(--bad-bg);color:var(--bad)}
+   .icon-btn:focus-visible{outline:2px solid var(--bad);outline-offset:1px}
+   .add-ing{display:flex;justify-content:flex-end;margin-top:var(--sp-3)}
 
-  /* Estado vacio, igual que en las otras pestañas */
-  .empty{padding:var(--sp-4);text-align:center;color:var(--text-faint);font-size:13px;
-    background:var(--surface-sunken);border-radius:var(--radius-sm)}
-  .empty.sm{padding:var(--sp-3);background:transparent}
+   .empty{padding:var(--sp-4);text-align:center;color:var(--text-faint);font-size:13px;
+     background:var(--surface-sunken);border-radius:var(--radius);font-weight:600}
+   .empty.sm{padding:var(--sp-3);background:transparent}
 
-  @media (prefers-reduced-motion: reduce){
-    .seg-btn,.sum,.icon-btn,.med-fill{transition:none}
-  }
-  `]
+   @media (prefers-reduced-motion: reduce){
+     .seg-btn,.sum,.icon-btn,.med-fill,.card,.ing-toggle{transition:none}
+   }
+   `]
 })
 export class DashboardPage {
   today = new Date().toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
