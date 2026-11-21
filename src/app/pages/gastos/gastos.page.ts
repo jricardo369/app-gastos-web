@@ -501,7 +501,7 @@ export class GastosPage {
   toggleGasto(id: string) { this.budget.toggleGasto(id); }
   removeGasto(id: string) { this.budget.removeGasto(id); }
   async openAddGastoModal(q: Quincena) {
-    const modal = await this.modalCtrl.create({ component: GastoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: GastoModalComponent, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data) this.budget.addGasto({ quincena: q, categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, importeReal: data.importeReal, pagado: false, tipo: 'fijo' });
@@ -510,20 +510,20 @@ export class GastosPage {
   async openEditGastoModal(g: Gasto) {
     const modal = await this.modalCtrl.create({
       component: GastoModalComponent,
+      cssClass: 'dialog-modal',
       componentProps: {
         isEdit: true,
-         categoriaId: g.categoriaId,
-         descripcion: g.descripcion,
-         previsto: g.previsto,
-         importeReal: g.importeReal ?? 0,
-         // Se pasa el estado original aparte para que el modal pueda mostrar
-         // el "antes" de cada campo y el resumen de lo que va a cambiar.
-         originalCategoriaId: g.categoriaId,
-         originalDescripcion: g.descripcion,
-         originalPrevisto: g.previsto,
-         originalImporteReal: g.importeReal ?? 0,
-       },
-      breakpoints: [0, 0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70',
+        categoriaId: g.categoriaId,
+        descripcion: g.descripcion,
+        previsto: g.previsto,
+        importeReal: g.importeReal ?? 0,
+        // Se pasa el estado original aparte para que el modal pueda mostrar
+        // el "antes" de cada campo y el resumen de lo que va a cambiar.
+        originalCategoriaId: g.categoriaId,
+        originalDescripcion: g.descripcion,
+        originalPrevisto: g.previsto,
+        originalImporteReal: g.importeReal ?? 0,
+      },
     });
     await modal.present();
     const { data } = await modal.onWillDismiss();
@@ -531,7 +531,7 @@ export class GastosPage {
     this.budget.updateGasto(g.id, { categoriaId: data.categoriaId, descripcion: data.descripcion, previsto: data.previsto, importeReal: data.importeReal });
   }
   async openAddImpModal(q: Quincena) {
-    const modal = await this.modalCtrl.create({ component: ImprevistoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: ImprevistoModalComponent, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data) this.budget.addImprevisto({ quincena: q, fecha: data.fecha, importe: data.importe, descripcion: data.descripcion, pagado: false });

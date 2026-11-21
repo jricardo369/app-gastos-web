@@ -135,3 +135,7 @@ h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wra
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:999px}
 .tc-70{--width:70%;--height:70%;--border-radius:16px}
 @media(max-width:600px){.tc-70{--width:92%;--height:70%}}
+
+.dialog-modal{--width:min(560px, calc(100% - 32px));--height:auto;--max-height:min(85vh, 720px);--border-radius:20px;--box-shadow:0 20px 48px rgba(15,58,93,.18);align-items:center;justify-content:center}
+.dialog-modal::part(content){border:1px solid var(--border)}
+@media(max-width:600px){.dialog-modal{--width:calc(100% - 24px);--max-height:88vh;--border-radius:16px}}
