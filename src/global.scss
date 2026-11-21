@@ -136,7 +136,7 @@ h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wra
 .tc-70{--width:70%;--height:70%;--border-radius:16px}
 @media(max-width:600px){.tc-70{--width:92%;--height:70%}}
 
-.dialog-modal{--width:min(560px, calc(100% - 32px));--height:min(720px, 85vh);--max-height:85vh;--border-radius:20px;--box-shadow:0 24px 56px rgba(15,58,93,.22), 0 8px 20px rgba(15,58,93,.10);align-items:center;justify-content:center;--backdrop-opacity:0.28}
-.dialog-modal::part(backdrop){background:rgba(15,23,42,.35)}
-.dialog-modal::part(content){border:1px solid var(--border);height:100%;max-height:100%;overflow:hidden;border-radius:20px}
-@media(max-width:600px){.dialog-modal{--width:calc(100% - 24px);--height:min(680px, 88vh);--max-height:88vh;--border-radius:16px;--box-shadow:0 16px 40px rgba(15,58,93,.2), 0 6px 16px rgba(15,58,93,.1)}}
+.dialog-modal{--width:min(520px, calc(100% - 32px));--height:min(560px, 72vh);--max-height:72vh;--border-radius:18px;--box-shadow:0 28px 60px rgba(15,23,42,.28), 0 10px 24px rgba(15,23,42,.12);align-items:center;justify-content:center;--backdrop-opacity:0.32}
+.dialog-modal::part(backdrop){background:rgba(15,23,42,.45)}
+.dialog-modal::part(content){border:1px solid rgba(226,232,240,.9);height:100%;max-height:100%;overflow:hidden;border-radius:18px}
+@media(max-width:600px){.dialog-modal{--width:calc(100% - 32px);--height:min(560px, 74vh);--max-height:74vh;--border-radius:16px}}
