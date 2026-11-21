@@ -64,7 +64,8 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
   `,
   styles: [`
   .err{display:block;margin:10px 0 0;font-size:13px}
-  .field{margin-bottom:6px}
+  .field{margin-bottom:10px}
+  .hint{display:block;font-size:11px;color:var(--text-muted);padding:4px 16px 0;line-height:1.35}
   .antes{display:block;font-size:11px;color:var(--text-faint);padding:2px 16px 0;text-decoration:line-through}
   /* Resumen de cambios: tachado el valor viejo, en negrita el nuevo */
   .diff{background:var(--surface-sunken);border:1px solid var(--border);border-radius:12px;
