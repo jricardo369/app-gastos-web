@@ -165,6 +165,16 @@ h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wra
   letter-spacing:.08em;color:var(--c-primary);text-transform:uppercase;padding:0 4px;
 }
 
+/* Tarjeta hero azul claro, como en "Me deben" */
+.head-card{background:var(--c-primary-bg)!important;border-color:#cfe8ff!important;padding:var(--sp-5)!important;display:flex;flex-direction:column;gap:var(--sp-1)}
+.head-card .lbl{color:#3f6ea8}
+.head-card .money.big{font-size:34px;line-height:1.1;letter-spacing:-.03em;color:var(--c-primary);font-family:var(--font-display);font-weight:900}
+.head-card .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-2)}
+.head-card .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);background:#fff;border:1px solid #e3f0ff;border-radius:var(--radius);box-shadow:0 3px 10px rgba(15,58,93,.04)}
+.head-card .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+.head-card .money.warn{color:var(--warn)}
+.head-card .money.ok{color:var(--ok)}
+
 /* Boton de accion principal (agregar/guardar): pill azul solido, igual en toda la app */
 ion-button.btn-add, .btn-add{
   --background:var(--c-primary);

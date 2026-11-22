@@ -56,21 +56,19 @@ export class MovModalComponent {
   <ion-content class="bg">
     <div class="container">
 
-      <!-- Configuracion: 3 datos, con la misma cabecera que las otras tarjetas -->
-      <div class="card">
-        <header class="head">
-          <div class="panel-title">
-            <span class="lbl">Configuración de la tarjeta</span>
-            <span class="count">Corte y pago</span>
-          </div>
-          <ion-button size="small" class="btn-add" (click)="editConfig()">
-            <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar
-          </ion-button>
-        </header>
+      <!-- Configuracion: tarjeta hero como "Me deben" -->
+      <div class="card head-card">
+        <span class="lbl">Saldo de la tarjeta</span>
+        <b class="money big">{{ saldoFinal | currency:'MXN':'symbol':'1.0-0' }}</b>
         <div class="stats">
           <div class="stat"><span class="lbl">Corte</span><b class="money">día {{cfg.fechaCorte}}</b></div>
           <div class="stat"><span class="lbl">Pago</span><b class="money">día {{cfg.fechaPago}}</b></div>
           <div class="stat"><span class="lbl">PPNGI</span><b class="money">{{cfg.ppngi | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:flex-end">
+          <ion-button size="small" class="btn-add" (click)="editConfig()">
+            <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar configuración
+          </ion-button>
         </div>
       </div>
 

@@ -61,10 +61,20 @@ export class TcModalComponent {
     <div class="container">
 
       <!-- Deudas generales -->
+      <div class="card head-card">
+        <span class="lbl">Deudas generales</span>
+        <b class="money big">{{ totalLa | currency:'MXN':'symbol':'1.0-0' }}</b>
+        <div class="stats">
+          <div class="stat"><span class="lbl">Activas</span><b class="money">{{ deudasActivas.length }}</b></div>
+          <div class="stat"><span class="lbl">Mensual</span><b class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="stat"><span class="lbl">Liquidadas</span><b class="money ok">{{ historialMarina.length }}</b></div>
+        </div>
+      </div>
+
       <div class="card">
         <header class="head">
           <div class="panel-title">
-            <span class="lbl">Deudas generales</span>
+            <span class="lbl">Detalle de deudas</span>
             <span class="count">{{ deudasActivas.length }} activas</span>
           </div>
           <ion-button size="small" class="btn-add" (click)="openAddMarinaModal()">
@@ -106,11 +116,7 @@ export class TcModalComponent {
             </div>
           }
         </div>
-        <div class="totals">
-          <div class="tot"><span class="lbl">Mensual</span><b class="money">{{deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div class="tot"><span class="lbl">Saldo</span><b class="money">{{totalLa | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          <div class="tot"><span class="lbl">Liquidadas</span><b class="money ok">{{historialMarina.length}}</b></div>
-        </div>
+
         <div class="card-foot">
           <ion-button size="small" fill="clear" (click)="historialMarinaVisible=!historialMarinaVisible">
             <ion-icon slot="start" [name]="historialMarinaVisible ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
