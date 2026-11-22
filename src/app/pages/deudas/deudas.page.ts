@@ -353,7 +353,7 @@ export class DeudasPage {
     await alert.present();
   }
   async openAddTCModal() {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, titulo: 'Nuevo pago de tarjeta' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, titulo: 'Nuevo pago de tarjeta' }, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data && data.desc) {
@@ -362,7 +362,7 @@ export class DeudasPage {
     }
   }
   async editTC(p: any) {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: p.fechaCompra, desc: p.desc, monto: p.monto, mensualidad: p.mensualidad, pagadas: p.mensualidadPagada, isEdit: true, titulo: 'Editar pago de tarjeta' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: p.fechaCompra, desc: p.desc, monto: p.monto, mensualidad: p.mensualidad, pagadas: p.mensualidadPagada, isEdit: true, titulo: 'Editar pago de tarjeta' }, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data?.remove) { this.budget.removePagoTC(p.id); this.refresh(); return; }
@@ -372,7 +372,7 @@ export class DeudasPage {
     }
   }
   async openAddMarinaModal() {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, showTipo: true, tipo: '', titulo: 'Nueva deuda' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { isEdit: false, showTipo: true, tipo: '', titulo: 'Nueva deuda' }, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data && data.desc) {
@@ -381,7 +381,7 @@ export class DeudasPage {
     }
   }
   async editMarina(d: any) {
-    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: d.fechaInicio, desc: d.nombre, monto: d.mensualidad, mensualidad: d.pagos||1, pagadas: d.pagados||0, tipo: d.tipo||'', showTipo: true, isEdit: true, titulo: 'Editar deuda' }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: TcModalComponent, componentProps: { fecha: d.fechaInicio, desc: d.nombre, monto: d.mensualidad, mensualidad: d.pagos||1, pagadas: d.pagados||0, tipo: d.tipo||'', showTipo: true, isEdit: true, titulo: 'Editar deuda' }, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data?.remove) { this.budget.removeDeuda(d.id); this.refresh(); return; }
