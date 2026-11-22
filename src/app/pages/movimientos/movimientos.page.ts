@@ -21,7 +21,7 @@ import { addOutline, cashOutline, eyeOutline, createOutline, chevronForwardOutli
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">
       @if(isEdit){ <ion-button color="danger" fill="outline" (click)="remove()" style="flex:1">Eliminar</ion-button> }
-      <ion-button (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
+      <ion-button class="btn-add" (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
     </div>
   </ion-content>
   `,
@@ -63,7 +63,7 @@ export class MovModalComponent {
             <span class="lbl">Configuración de la tarjeta</span>
             <span class="count">Corte y pago</span>
           </div>
-          <ion-button size="small" (click)="editConfig()">
+          <ion-button size="small" class="btn-add" (click)="editConfig()">
             <ion-icon slot="start" name="create-outline" aria-hidden="true"></ion-icon>Editar
           </ion-button>
         </header>
@@ -80,7 +80,7 @@ export class MovModalComponent {
             <span class="lbl">Movimientos</span>
             <span class="count">{{ rows.length }} registros</span>
           </div>
-          <ion-button size="small" (click)="openAdd()">
+          <ion-button size="small" class="btn-add" (click)="openAdd()">
             <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
           </ion-button>
         </header>
@@ -104,7 +104,7 @@ export class MovModalComponent {
             <div class="empty">
               <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
               <p>Sin movimientos</p>
-              <ion-button size="small" fill="outline" (click)="openAdd()">Agregar movimiento</ion-button>
+              <ion-button size="small" class="btn-add" (click)="openAdd()">Agregar movimiento</ion-button>
             </div>
           }
         </div>

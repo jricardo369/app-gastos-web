@@ -22,7 +22,7 @@ const APP_VERSION = pkg['version'];
   <ion-content class="ion-padding">
     <ion-item><ion-input label="Concepto" labelPlacement="stacked" [(ngModel)]="concepto" placeholder="Ej. Nómina"></ion-input></ion-item>
     <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
-    <ion-button expand="block" style="margin-top:20px" (click)="save()">Agregar</ion-button>
+    <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()">Agregar</ion-button>
   </ion-content>
   `,
 })
@@ -316,7 +316,7 @@ export class IngresoModalComponent {
                   <div class="empty sm">Sin ingresos cargados</div>
                 }
                 <div class="add-ing">
-                  <ion-button size="small" (click)="openAddIngresoModal(q)">
+                  <ion-button size="small" class="btn-add" (click)="openAddIngresoModal(q)">
                     <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
                   </ion-button>
                 </div>
@@ -514,7 +514,6 @@ export class IngresoModalComponent {
    .icon-btn:hover{background:#fee2e2;color:#dc2626}
    .icon-btn:focus-visible{outline:2px solid #dc2626;outline-offset:1px}
    .add-ing{display:flex;justify-content:flex-end;margin-top:4px}
-   .add-ing ion-button{--background:var(--c-primary);--color:#fff;--box-shadow:0 8px 18px rgba(0,100,250,.25)}
 
    .empty{padding:16px;text-align:center;color:#6b84a3;font-size:13px;background:#f4f9ff;border-radius:14px;font-weight:600;border:1px dashed #bfd7f5}
    .empty.sm{padding:12px;background:transparent;border:none}

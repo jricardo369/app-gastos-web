@@ -21,7 +21,7 @@ import { cashOutline, checkmarkCircle, addOutline, chevronDownOutline, chevronUp
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">
       @if(isEdit){ <ion-button color="danger" fill="outline" (click)="remove()" style="flex:1">Eliminar</ion-button> }
-      <ion-button (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
+      <ion-button class="btn-add" (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
     </div>
   </ion-content>
   `,
@@ -71,7 +71,7 @@ export class DeudorSimpleModal {
             <span class="lbl">Pendientes</span>
             <span class="count">{{ activos.length }} por cobrar</span>
           </div>
-          <ion-button size="small" (click)="openAdd()">
+          <ion-button size="small" class="btn-add" (click)="openAdd()">
             <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
           </ion-button>
         </header>
@@ -98,7 +98,7 @@ export class DeudorSimpleModal {
             <div class="empty">
               <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
               <p>Nadie te debe nada</p>
-              <ion-button size="small" fill="outline" (click)="openAdd()">Agregar deudor</ion-button>
+              <ion-button size="small" class="btn-add" (click)="openAdd()">Agregar deudor</ion-button>
             </div>
           }
         </div>

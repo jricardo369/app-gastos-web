@@ -23,7 +23,7 @@ import { checkmarkCircle, cashOutline, addOutline, chevronDownOutline, chevronUp
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">
       @if(isEdit){ <ion-button color="danger" fill="outline" (click)="remove()" style="flex:1">Eliminar</ion-button> }
-      <ion-button (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
+      <ion-button class="btn-add" (click)="save()" style="flex:1">{{isEdit?'Guardar':'Agregar'}}</ion-button>
     </div>
   </ion-content>
   `,
@@ -67,7 +67,7 @@ export class TcModalComponent {
             <span class="lbl">Deudas generales</span>
             <span class="count">{{ deudasActivas.length }} activas</span>
           </div>
-          <ion-button size="small" (click)="openAddMarinaModal()">
+          <ion-button size="small" class="btn-add" (click)="openAddMarinaModal()">
             <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
           </ion-button>
         </header>
@@ -102,7 +102,7 @@ export class TcModalComponent {
             <div class="empty">
               <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
               <p>Sin deudas registradas</p>
-              <ion-button size="small" fill="outline" (click)="openAddMarinaModal()">Agregar deuda</ion-button>
+              <ion-button size="small" class="btn-add" (click)="openAddMarinaModal()">Agregar deuda</ion-button>
             </div>
           }
         </div>
@@ -141,7 +141,7 @@ export class TcModalComponent {
             <span class="lbl">Pagos de tarjeta</span>
             <span class="count">{{ pagosActivos.length }} activos</span>
           </div>
-          <ion-button size="small" (click)="openAddTCModal()">
+          <ion-button size="small" class="btn-add" (click)="openAddTCModal()">
             <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
           </ion-button>
         </header>
@@ -175,7 +175,7 @@ export class TcModalComponent {
             <div class="empty">
               <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
               <p>Sin pagos de tarjeta registrados</p>
-              <ion-button size="small" fill="outline" (click)="openAddTCModal()">Agregar pago</ion-button>
+              <ion-button size="small" class="btn-add" (click)="openAddTCModal()">Agregar pago</ion-button>
             </div>
           }
         </div>

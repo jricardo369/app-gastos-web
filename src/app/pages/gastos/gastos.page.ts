@@ -57,7 +57,7 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
     }
 
     @if(error){ <ion-text color="danger" class="err">{{error}}</ion-text> }
-    <ion-button expand="block" style="margin-top:20px" (click)="save()" [disabled]="isEdit && !hayCambios">
+    <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()" [disabled]="isEdit && !hayCambios">
       {{ isEdit ? (hayCambios ? 'Guardar cambios' : 'Sin cambios') : 'Agregar' }}
     </ion-button>
   </ion-content>
@@ -132,7 +132,7 @@ export class GastoModalComponent {
     <ion-item><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></ion-item>
     <ion-item><ion-input label="Importe ($)" labelPlacement="stacked" type="number" [(ngModel)]="importe"></ion-input></ion-item>
     <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Reparación"></ion-input></ion-item>
-    <ion-button expand="block" style="margin-top:20px" (click)="save()">Agregar</ion-button>
+    <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()">Agregar</ion-button>
   </ion-content>
   `,
 })
@@ -234,7 +234,7 @@ export class ImprevistoModalComponent {
               <div class="empty">
                 <ion-icon name="wallet-outline" aria-hidden="true"></ion-icon>
                 <p>Todavía no hay gastos previstos en {{ esMensual ? 'el mes' : 'esta quincena' }}</p>
-                <ion-button size="small" fill="outline" (click)="openAddGastoModal(q)">Agregar gasto</ion-button>
+                <ion-button size="small" class="btn-add" (click)="openAddGastoModal(q)">Agregar gasto</ion-button>
               </div>
             }
           </div>
@@ -421,7 +421,6 @@ export class ImprevistoModalComponent {
   .empty ion-button{margin:var(--sp-1) 0 0;min-height:36px}
 
   .add-row{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3);margin-top:4px}
-  .btn-add{margin:0;min-height:38px;font-weight:800;--border-radius:999px;--background:var(--c-primary);--color:#fff;--box-shadow:0 8px 18px rgba(0,100,250,.25)}
 
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
     border:1px solid var(--border);overflow:hidden}
