@@ -335,7 +335,7 @@ export class IngresoModalComponent {
    .title-wrap span{font-size:18px;font-weight:800;letter-spacing:-.02em;color:#0f172a}
    .title-wrap small{font-size:11px;color:#64748b;font-weight:500}
    .bg{--background:#eef2f7}
-   .container{padding:var(--sp-5);max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-4)}
+   .container{padding:var(--sp-3);max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-4)}
 
    /* Tarjetas estilo Stark Minimal (Bordes limpios, fondo blanco puro, elevación cero/sutil) */
    .card{background:#ffffff;border-radius:18px;box-shadow:0 1px 3px rgba(0,0,0,.02), 0 1px 2px rgba(0,0,0,.04);
