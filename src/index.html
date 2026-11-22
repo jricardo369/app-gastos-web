@@ -14,7 +14,7 @@
 
   <!-- Acceso directo en la pantalla de inicio (PWA) -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0f3a5d" />
+  <meta name="theme-color" content="#0064fa" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Gastos" />
@@ -47,12 +47,12 @@
        Fondo navy igual al theme-color y al icono: asi la franja de estado no
        queda de otro color mientras carga. -->
   <style>
-    html, body { background: #0f3a5d; }
+    html, body { background: #0064fa; }
     body { margin: 0; }
     #splash {
       position: fixed; inset: 0; z-index: 9999;
       display: flex; align-items: center; justify-content: center;
-      background: #0f3a5d; transition: opacity .3s ease;
+      background: #0064fa; transition: opacity .3s ease;
       /* Respeta el notch y la barra de gestos: el logo queda centrado en la
          zona utilizable, no debajo de ellas. */
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -79,7 +79,7 @@
     }
     .splash-bar span {
       display: block; height: 100%; width: 38%; border-radius: 999px;
-      background: #0fb27a; animation: splash-slide 1.15s ease-in-out infinite;
+      background: #91beff; animation: splash-slide 1.15s ease-in-out infinite;
     }
     @keyframes splash-slide { 0% { transform: translateX(-105%); } 100% { transform: translateX(265%); } }
     .splash-sub {
@@ -102,10 +102,10 @@
     <div class="splash-box">
       <!-- El mismo logo del icono, en SVG inline: no gasta ningun request más -->
       <svg class="splash-logo" width="104" height="104" viewBox="0 0 104 104" fill="none" aria-hidden="true">
-        <circle cx="73" cy="31" r="31" fill="#1d7ab0" />
+        <circle cx="73" cy="31" r="31" fill="#91beff" />
         <rect x="9" y="31" width="78" height="52" rx="17" fill="#ffffff" />
-        <path d="M48 43v30" stroke="#0f3a5d" stroke-width="4.5" stroke-linecap="round" />
-        <path d="M55 48c-3-3-11-2-11 3 0 5 11 5 11 10 0 5-8 5-11 3" stroke="#0f3a5d"
+        <path d="M48 43v30" stroke="#0064fa" stroke-width="4.5" stroke-linecap="round" />
+        <path d="M55 48c-3-3-11-2-11 3 0 5 11 5 11 10 0 5-8 5-11 3" stroke="#0064fa"
               stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
       <h1 class="splash-title">Control de Gastos</h1>
