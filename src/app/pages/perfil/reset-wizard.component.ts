@@ -126,8 +126,7 @@ import { ConfigApp, RangoIngreso, TipoPago, TipoMembresia } from '../../core/mod
   </ion-content>
   `,
   styles: [`
-  .hdr ion-toolbar{--background:#fff}
-  .bg{--background:#eef2f7}
+  .bg{--background:var(--app-bg)}
   .container{padding:var(--sp-4) var(--sp-3) 0;
     max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-4)}
 
@@ -194,7 +193,7 @@ import { ConfigApp, RangoIngreso, TipoPago, TipoMembresia } from '../../core/mod
   .acciones{
     position:sticky;bottom:0;margin-top:auto;
     display:flex;flex-direction:column;gap:var(--sp-2);
-    background:var(--ion-background-color,#eef2f7);
+    background:var(--ion-background-color,var(--app-bg));
     padding:var(--sp-3) 0 calc(var(--sp-4) + env(safe-area-inset-bottom));
   }
   .btn-primario,.btn-peligro{

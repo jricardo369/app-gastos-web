@@ -128,20 +128,21 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
   </ion-content>
   `,
   styles: [`
-  .hdr ion-toolbar{--background:#fff}
-  .bg{--background:#eef2f7}
+  .bg{--background:var(--app-bg)}
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
 
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);padding:var(--sp-4)}
-  .section-title{font-family:'Comfortaa',cursive;font-size:13px;color:var(--text-muted);padding:0 2px;margin-top:var(--sp-2)}
+  .section-title{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;letter-spacing:.08em;
+    color:var(--c-primary);text-transform:uppercase;padding:0 4px;margin-top:var(--sp-2)}
   .section-sub{display:block;font-size:12px;font-weight:700;color:var(--text-muted);margin:var(--sp-4) 0 var(--sp-2)}
 
   .perfil{display:flex;align-items:center;gap:var(--sp-4)}
   .avatar{
     width:56px;height:56px;flex:none;border-radius:var(--radius-pill);
-    background:var(--info-bg);color:var(--info);
+    background:var(--c-primary);color:#fff;
     display:flex;align-items:center;justify-content:center;
     font-family:'Comfortaa',cursive;font-size:22px;font-weight:700;
+    box-shadow:0 6px 16px rgba(0,100,250,.28);
   }
   .perfil-info{display:flex;flex-direction:column;gap:2px;min-width:0}
   .nombre{font-family:'Comfortaa',cursive;font-size:18px;color:var(--text-strong)}
@@ -157,7 +158,7 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
   }
   .badge ion-icon{font-size:15px}
   .sub-precio{display:flex;align-items:baseline;gap:6px;margin-top:var(--sp-3)}
-  .sub-precio b{font-size:26px;letter-spacing:-.02em}
+  .sub-precio b{font-size:26px;letter-spacing:-.02em;font-family:var(--font-display);color:var(--c-primary-dark)}
 
   /* Configuracion actual: rango, tipo de pago y membresia. Es lo que se
      eligio al restablecer, y explica por que los datos de ejemplo son estos. */

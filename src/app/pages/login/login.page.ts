@@ -24,10 +24,11 @@ import { IonContent, IonButton, IonInput, IonText } from '@ionic/angular';
   </ion-content>
   `,
   styles: [`
-  .login-bg{--background:#eef2f7}
+  .login-bg{--background:var(--app-bg)}
   .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
   .card{background:var(--surface);border-radius:24px;padding:32px 24px;width:100%;
-    max-width:380px;box-shadow:var(--shadow);text-align:center;border:1px solid var(--border)}
+    max-width:380px;box-shadow:var(--shadow);text-align:center;border:1px solid var(--border);
+    border-top:4px solid var(--c-primary)}
   .logo{width:56px;height:56px;border-radius:14px;display:block;margin:0 auto 14px}
   h1{margin:0;font-size:22px;font-weight:800;color:var(--text-strong)}
   p{margin:6px 0 24px;color:var(--text-muted);font-size:13px;line-height:1.4}

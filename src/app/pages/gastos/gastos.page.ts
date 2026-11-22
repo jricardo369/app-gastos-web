@@ -321,43 +321,44 @@ export class ImprevistoModalComponent {
   </ion-content>
   `,
   styles: [`
-  .bg{--background:#eef2f7}
+  .bg{--background:var(--app-bg)}
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
 
   /* ------------------------------------------------------------------
      Periodo. Ademas del nombre, cada opcion dice cuantos gastos de esa
      quincena ya estan pagados: se compara sin tener que cambiar de una.
      ------------------------------------------------------------------ */
-  .seg{display:flex;gap:var(--sp-1);background:var(--surface-sunken);padding:4px;border-radius:var(--radius-pill);border:1px solid var(--border-subtle)}
+  .seg{display:flex;gap:8px;background:transparent;padding:0;border:none;box-shadow:none}
   .seg-btn{
     flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;
-    min-height:44px;padding:8px 10px;border:none;background:transparent;cursor:pointer;
-    font-family:'Nunito', sans-serif;font-size:13px;font-weight:700;color:var(--text-muted);
-    border-radius:var(--radius-pill);
+    min-height:48px;padding:8px 10px;border:1px solid #dbe7f5;background:#fff;cursor:pointer;
+    font-family:'Nunito', sans-serif;font-size:13px;font-weight:800;color:#47607f;
+    border-radius:var(--radius-pill);box-shadow:0 3px 10px rgba(15,58,93,.04);transition:all .18s ease;
   }
-  .seg-btn.on{background:var(--surface);color:var(--text-strong);box-shadow:var(--shadow)}
-  .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .seg-btn.on{background:var(--c-primary);color:#fff;border-color:var(--c-primary);box-shadow:0 8px 20px rgba(0,100,250,.3)}
+  .seg-btn:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
   .seg-num{font-family:'Nunito', sans-serif;font-size:10px;font-weight:700;letter-spacing:.02em;
     color:var(--text-faint);font-variant-numeric:tabular-nums}
-  .seg-btn.on .seg-num{color:var(--text-muted)}
+  .seg-btn.on .seg-num{color:rgba(255,255,255,.82)}
 
   /* ------------------------------------------------------------------
-     Cuanto va. Una sola cifra grande manda, la barra la acompaña y las
-     tres cajas de abajo dan el detalle sin tener que sumar de memoria.
+     Cuanto va. Tarjeta azul claro con la cifra grande en azul, igual
+     que el resumen del dashboard.
      ------------------------------------------------------------------ */
-  .usage{background:var(--surface);border-radius:var(--radius-lg);padding:var(--sp-4);
-    box-shadow:var(--shadow);border:1px solid var(--border)}
+  .usage{background:var(--c-primary-bg);border-radius:var(--radius-lg);padding:var(--sp-4);
+    box-shadow:var(--shadow);border:1px solid #cfe8ff}
   .usage-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-3)}
   .usage-main{min-width:0}
-  .usage-pct{display:block;margin-top:2px;font-size:34px;line-height:1.05;font-weight:800;
-    color:var(--text-strong);font-variant-numeric:tabular-nums}
+  .usage .lbl{color:#3f6ea8}
+  .usage-pct{display:block;margin-top:2px;font-size:34px;line-height:1.05;font-weight:900;
+    color:var(--c-primary);font-variant-numeric:tabular-nums;font-family:var(--font-display)}
   .usage-side{text-align:right;flex:none}
   .usage-side .money{display:block;margin-top:2px;font-size:15px}
   .faltante{color:var(--warn)}
-  .usage .progress{margin-top:var(--sp-4)}
+  .usage .progress{margin-top:var(--sp-4);background:#fff}
   .usage-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
   .usage-stats > div{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
+    background:#fff;border:1px solid #e3f0ff;border-radius:var(--radius);box-shadow:0 3px 10px rgba(15,58,93,.04)}
   .usage-stats b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
   /* Verde = ya pagado, ambar = todavia falta. Solo informacion, nunca adorno. */
   .money.ok{color:var(--ok)}
@@ -426,10 +427,13 @@ export class ImprevistoModalComponent {
     border:1px solid var(--border);overflow:hidden}
   .pad-card{padding:var(--sp-4)}
   .card-title{width:100%;display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);
-    text-align:left;background:none;border:none;padding:0;margin:0 0 var(--sp-3);
-    font-family:inherit;font-size:14px;font-weight:700;color:var(--text-strong);cursor:pointer}
-  .card-title > span:first-child{display:flex;align-items:center;gap:6px}
-  .card-title:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    text-align:left;background:#f7fbff;border:1px solid #e3f0ff;border-radius:16px;
+    padding:12px 14px;margin:0 0 var(--sp-3);
+    font-family:inherit;font-size:14px;font-weight:800;color:var(--text-strong);cursor:pointer}
+  .card-title > span:first-child{display:flex;align-items:center;gap:6px;color:var(--c-primary-dark)}
+  .card-title ion-icon{color:var(--c-primary)}
+  .card-title .money{color:var(--c-primary)}
+  .card-title:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
 
   /* Reparto por categoria. Cada fila trae su barra para ver de un vistazo
      a donde se va el dinero, no solo numeros sueltos. */

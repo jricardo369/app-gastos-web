@@ -3,4 +3,28 @@
 
 :root {
   --font-display: 'Varela Round', 'Nunito', system-ui, -apple-system, sans-serif;
+
+  /* ==========================================================================
+     Paleta de marca
+     --------------------------------------------------------------------------
+     Una sola fuente para toda la app. Las paginas no deben inventar colores:
+     usan estos tokens o los alias semanticos de global.scss.
+     ========================================================================== */
+  --c-primary:#0064fa;        /* azul de cabecera, botones y acentos */
+  --c-primary-dark:#0047b3;   /* texto azul sobre fondos claros */
+  --c-primary-soft:#91beff;   /* detalles suaves */
+  --c-primary-bg:#e1f5ff;     /* hero / fondos azul claro */
+
+  --c-green:#5aa55a;          /* positivo, pagado, ingresos */
+  --c-green-dark:#0f4b2d;     /* texto verde sobre fondos claros */
+  --c-green-bg:#eef8ee;       /* fondos verdes claros */
+
+  --app-bg:#f2f7fc;           /* fondo general de la app */
+  --c-text:#0f172a;           /* texto principal */
+  --c-muted:#6b7f99;          /* etiquetas y texto secundario */
+  --c-border:#e8eef7;         /* bordes de tarjetas */
+  --c-border-soft:#f1f5fa;    /* divisores de listas */
+
+  --c-shadow:0 6px 20px rgba(15,58,93,.07);
+  --c-shadow-lg:0 12px 30px rgba(15,58,93,.11);
 }

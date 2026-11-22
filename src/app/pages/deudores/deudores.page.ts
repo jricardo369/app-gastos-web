@@ -128,16 +128,20 @@ export class DeudorSimpleModal {
   </ion-content>
   `,
   styles: [`
-  .bg{--background:#eef2f7}
+  .bg{--background:var(--app-bg)}
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
 
-  /* El total no es un encabezado de color: es la cifra de la pantalla */
-  .head-card{display:flex;flex-direction:column;gap:var(--sp-1);padding:var(--sp-4)}
-  .money.big{font-size:30px;line-height:1.1;letter-spacing:-.02em}
+  /* El total no es un encabezado de color: es la cifra de la pantalla.
+     Misma tarjeta azul claro que el resumen del dashboard. */
+  .head-card{display:flex;flex-direction:column;gap:var(--sp-1);padding:var(--sp-5);
+    background:var(--c-primary-bg);border-color:#cfe8ff}
+  .head-card .lbl{color:#3f6ea8}
+  .money.big{font-size:34px;line-height:1.1;letter-spacing:-.03em;color:var(--c-primary);
+    font-family:var(--font-display);font-weight:900}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-2)}
   .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
+    background:#fff;border:1px solid #e3f0ff;border-radius:var(--radius);box-shadow:0 3px 10px rgba(15,58,93,.04)}
   .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
   .money.warn{color:var(--warn)}
   .money.ok{color:var(--ok)}

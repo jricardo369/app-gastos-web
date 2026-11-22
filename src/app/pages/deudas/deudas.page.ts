@@ -211,7 +211,7 @@ export class TcModalComponent {
   </ion-content>
   `,
   styles: [`
-  .bg{--background:#eef2f7}
+  .bg{--background:var(--app-bg)}
   .container{padding:var(--sp-3);max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:var(--sp-3)}
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden}
 
