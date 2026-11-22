@@ -774,7 +774,7 @@ export class DashboardPage {
     this.refresh();
   }
   async openAddIngresoModal(q: any) {
-    const modal = await this.modalCtrl.create({ component: IngresoModalComponent, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: IngresoModalComponent, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if (data && data.concepto) { this.budget.addIngreso(q, data.concepto, Number(data.monto)); this.refresh(); }
