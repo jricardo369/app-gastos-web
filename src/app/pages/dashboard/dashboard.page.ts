@@ -332,7 +332,7 @@ export class IngresoModalComponent {
   `,
     styles: [`
    /* Cabecera azul solida, como la referencia */
-   .hdr ion-toolbar{--background:var(--c-primary);--color:#fff;--border-width:0;box-shadow:0 6px 18px rgba(0,100,250,.22);padding:8px 4px}
+   .hdr ion-toolbar{--background:var(--c-primary);--color:#fff;--border-width:0;box-shadow:0 6px 18px rgba(0,100,250,.22);padding-top:calc(var(--ion-safe-area-top,0px) + 8px);padding-right:4px;padding-bottom:8px;padding-left:4px}
    .hdr ion-button{--color:#fff;--background-hover:rgba(255,255,255,.14);--background-activated:rgba(255,255,255,.22)}
    .hdr ion-icon{font-size:24px;color:#fff}
    .title-wrap{display:flex;flex-direction:column;line-height:1.2}
