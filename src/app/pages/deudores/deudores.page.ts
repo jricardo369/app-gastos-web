@@ -233,7 +233,7 @@ export class DeudoresPage {
     this.total = this.activos.reduce((s,d)=>s+d.saldo,0);
   }
   async openAdd(){
-    const modal = await this.modalCtrl.create({ component: DeudorSimpleModal, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: DeudorSimpleModal, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if(data && data.desc){
@@ -242,7 +242,7 @@ export class DeudoresPage {
     }
   }
   async edit(d:any){
-    const modal = await this.modalCtrl.create({ component: DeudorSimpleModal, componentProps: { fecha: d.fechaInicio, fechaVenc: d.fechaFin, desc: d.nombre, monto: d.saldo, isEdit: true }, breakpoints: [0,0.7], initialBreakpoint: 0.7, handle: true, cssClass: 'tc-70' });
+    const modal = await this.modalCtrl.create({ component: DeudorSimpleModal, componentProps: { fecha: d.fechaInicio, fechaVenc: d.fechaFin, desc: d.nombre, monto: d.saldo, isEdit: true }, cssClass: 'dialog-modal' });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if(data?.remove){ this.budget.removeDeudorLista(d.id); this.refresh(); return; }
