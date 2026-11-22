@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonButtons, IonIcon, IonText, ModalController, AlertController, ToastController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
@@ -300,11 +300,16 @@ export class DeudasPage {
   deudasActivas: any[] = [];
   historialMarina: any[] = [];
   newDeuda: any = { nombre: '', mensualidad: null, saldo: null };
-  constructor(private budget: BudgetService, private modalCtrl: ModalController, private alertCtrl2: AlertController, private toastCtrl: ToastController) {
+  constructor(private budget: BudgetService, private modalCtrl: ModalController, private alertCtrl2: AlertController, private toastCtrl: ToastController, private cdr: ChangeDetectorRef) {
     addIcons({ checkmarkCircle, cashOutline, addOutline, chevronDownOutline, chevronUpOutline, chevronForwardOutline, walletOutline, cardOutline });
     this.refresh();
-    this.budget.deudas$.subscribe(() => this.refresh());
-    this.budget.pagosTC$.subscribe(() => this.refresh());
+    this.budget.deudas$.subscribe(() => { this.refresh(); this.cdr.markForCheck(); });
+    this.budget.pagosTC$.subscribe(() => { this.refresh(); this.cdr.markForCheck(); });
+  }
+
+  ionViewWillEnter() {
+    this.refresh();
+    this.cdr.markForCheck();
   }
   /** Las fechas vienen en ISO (2026-10-09): se muestran en formato local
       legible en vez de la cadena cruda, que ademas es ambigua. */
