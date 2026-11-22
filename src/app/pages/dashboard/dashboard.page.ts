@@ -364,7 +364,7 @@ export class IngresoModalComponent {
    .res-estado{display:inline-flex;align-items:center;gap:6px;color:#059669;font-size:12px;font-weight:800;background:#ecfdf5;padding:4px 10px;border-radius:var(--radius-pill);width:fit-content}
    .res-estado ion-icon{font-size:15px}
    .res-monto{display:block;margin-top:var(--sp-2);font-size:40px;line-height:1;
-     letter-spacing:-.03em;color:#0f172a;font-weight:900}
+     letter-spacing:-.03em;color:#0f172a;font-weight:900;font-family:var(--font-display)}
    .res-cerca .res-monto{color:#d97706}
    .res-cerca .res-estado{color:#d97706;background:#fffbeb}
    .res-neg .res-monto{color:#dc2626}
