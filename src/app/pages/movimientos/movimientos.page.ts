@@ -220,7 +220,7 @@ export class MovimientosPage {
     this.saldoFinal = this.rows.length ? this.rows[this.rows.length-1].saldo : 19800;
   }
   async openAdd(){
-    const modal = await this.modalCtrl.create({ component: MovModalComponent, breakpoints:[0,0.7], initialBreakpoint:0.7, handle:true, cssClass:'tc-70' });
+    const modal = await this.modalCtrl.create({ component: MovModalComponent });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if(data && data.descripcion){
@@ -230,7 +230,7 @@ export class MovimientosPage {
   async edit(m:any){
     const tipo = (Number(m.abonos)||0) > 0 ? 'abono' : 'compras';
     const monto = tipo==='abono' ? m.abonos : m.compras;
-    const modal = await this.modalCtrl.create({ component: MovModalComponent, componentProps:{ fecha:m.fecha, descripcion:m.descripcion, tipo, monto, isEdit:true }, breakpoints:[0,0.7], initialBreakpoint:0.7, handle:true, cssClass:'tc-70' });
+    const modal = await this.modalCtrl.create({ component: MovModalComponent, componentProps:{ fecha:m.fecha, descripcion:m.descripcion, tipo, monto, isEdit:true } });
     await modal.present();
     const { data } = await modal.onWillDismiss();
     if(data?.remove){ this.budget.removeMovimiento(m.id); return; }
