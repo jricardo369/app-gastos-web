@@ -344,7 +344,7 @@ export class IngresoModalComponent {
    .title-wrap{display:flex;flex-direction:column;line-height:1.2}
    .title-wrap span{font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--c-text)}
    .title-wrap small{font-size:11px;color:#5f7392;font-weight:600}
-   .bg{--background:linear-gradient(180deg,#e1f5ff 0%,#e9f6f1 150px,#f6f9fc 100%)}
+   .bg{--background:#eef6fb}
    .container{padding:16px;max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 
    .card{background:#fff;border-radius:24px;box-shadow:var(--c-shadow);
@@ -368,8 +368,6 @@ export class IngresoModalComponent {
 
    /* Resumen hero */
    .resumen{padding:24px;background:#fff;border:1px solid #e8eff7;position:relative;overflow:hidden}
-   .resumen::before{content:'';position:absolute;top:-50px;right:-50px;width:170px;height:170px;border-radius:50%;
-     background:radial-gradient(circle,#e1f5ff 0%,rgba(225,245,255,0) 70%);pointer-events:none}
    .res-hero{display:flex;flex-direction:column;gap:4px;position:relative}
    .res-estado{display:inline-flex;align-items:center;gap:6px;color:var(--c-green-dark);font-size:12px;font-weight:800;background:var(--c-green-bg);padding:6px 12px;border-radius:999px;width:fit-content}
    .res-estado ion-icon{font-size:15px}
@@ -383,9 +381,9 @@ export class IngresoModalComponent {
    /* Medidor */
    .med{position:relative;margin-top:20px}
    .med-track{height:10px;background:#e8f1fb;border-radius:999px;overflow:hidden}
-   .med-fill{height:100%;background:linear-gradient(90deg,var(--c-green),#8fd08f);border-radius:999px;transition:width .35s ease}
-   .med.pasado .med-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24)}
-   .med.excedido .med-fill{background:linear-gradient(90deg,#ef4444,#f87171)}
+   .med-fill{height:100%;background:var(--c-green);border-radius:999px;transition:width .35s ease}
+   .med.pasado .med-fill{background:#f59e0b}
+   .med.excedido .med-fill{background:#ef4444}
    .med-mark{position:absolute;top:-3px;left:0;width:3px;height:16px;border-radius:2px;background:var(--c-primary);transform:translateX(-1.5px);box-shadow:0 0 0 2px #fff}
    .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12px}
    .med-pie .count{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#35507a}
@@ -419,10 +417,10 @@ export class IngresoModalComponent {
    .sum:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(15,58,93,.11)}
    .sum:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
    .sum-chev{position:absolute;top:50%;right:20px;transform:translateY(-50%);font-size:18px;color:#6b93c7}
-   .sum-deuda{background:linear-gradient(150deg,#e1f5ff 0%,#f4fbff 55%,#fff 100%);border-color:#cfe6fb}
+   .sum-deuda{background:#eaf5ff;border-color:#cfe6fb}
    .sum-deuda .lbl{color:#0064fa}
    .sum-deuda b{color:#0047b3}
-   .sum-deudor{background:linear-gradient(150deg,#eef8ee 0%,#f7fdf7 55%,#fff 100%);border-color:#cfe8cf}
+   .sum-deudor{background:#eef8ee;border-color:#cfe8cf}
    .sum-deudor .lbl{color:var(--c-green-dark)}
    .sum-deudor b{color:var(--c-green-dark)}
    .sum .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted)}
@@ -434,7 +432,7 @@ export class IngresoModalComponent {
    .q-head{
      width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;
      min-height:60px;padding:16px 20px;cursor:pointer;border:none;
-     border-bottom:1px solid #e3eefa;background:linear-gradient(90deg,#e1f5ff 0%,#f6fbff 100%);
+     border-bottom:1px solid #e3eefa;background:#eaf5ff;
      font-family:inherit;text-align:left;transition:background .15s ease;
    }
    .q-head:hover{background:#eaf6ff}
@@ -474,12 +472,12 @@ export class IngresoModalComponent {
      text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;
      font-size:15px;font-weight:900;color:var(--c-text);margin:0;padding:14px 16px;border-radius:16px;
    }
-   .pad-card .card-title{margin:-4px 0 16px;background:linear-gradient(90deg,#eef8ee 0%,#f8fdf8 100%);border:1px solid #d8ecd8}
+   .pad-card .card-title{margin:-4px 0 16px;background:#eef8ee;border:1px solid #d8ecd8}
    .card-title > span:first-child{display:flex;align-items:center;gap:8px;color:var(--c-green-dark)}
    .card-title ion-icon{color:var(--c-green-dark)}
    .card-title .money{color:var(--c-green-dark);font-weight:900}
    /* Gastos por categoría: tema azul para separarlo de Ingresos (verde) */
-   .gastos-card .card-title{background:linear-gradient(90deg,#e1f5ff 0%,#f6fbff 100%);border-color:#d5e7fb}
+   .gastos-card .card-title{background:#eaf5ff;border-color:#d5e7fb}
    .gastos-card .card-title > span:first-child{color:#0047b3}
    .gastos-card .card-title ion-icon{color:#0064fa}
    .gastos-card .card-title .money{color:#0064fa}
@@ -487,7 +485,7 @@ export class IngresoModalComponent {
    .gastos-card .tbl.total{background:#d6ecff;color:#003f9e;border-color:#a9cff5}
    /* Ingresos: tema verde */
    .ing-card-wrap{border-color:#cfe8cf;box-shadow:0 10px 30px rgba(90,165,90,.08)}
-   .ing-card-wrap .card-title{background:linear-gradient(90deg,#eef8ee 0%,#f8fdf8 100%);border-color:#d8ecd8}
+   .ing-card-wrap .card-title{background:#eef8ee;border-color:#d8ecd8}
    .card-title:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
    .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:8px;padding:11px 10px;
      border-bottom:1px solid #f0f4f9;font-size:13px;align-items:center;border-radius:10px}
