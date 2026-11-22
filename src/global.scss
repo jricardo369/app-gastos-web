@@ -110,11 +110,13 @@ ion-tab-bar{--background:#ffffff;border-top:1px solid var(--border);--color:var(
 ion-content{--background:var(--app-bg)}
 *{font-family:'Nunito', system-ui, -apple-system, Segoe UI, Roboto, sans-serif}
 
-/* Comfortaa solo para titulos. Los numeros SIEMPRE en Nunito: las cifras
-   tabulares se alinean y se comparan mucho mejor en una sans-serif. */
+/* Comfortaa solo para titulos. Los montos usan Varela Round para mantener
+   el estilo redondeado de la marca. */
 h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wrap span{font-family:'Comfortaa', cursive}
 .amount,.price,.row b,.tbl span,.tbl2 span,.ing-list span,.deuda-row,.totals b,.saldo-card b,.q-body b,.chip,
-.num,.money,.tbl .num,.tbl2 .num{font-family:'Nunito', sans-serif;font-variant-numeric:tabular-nums}
+.num,.money,.tbl .num,.tbl2 .num,.li-amount,.li-saldo,.move,.stat b,.tot b,.sum b,.head-right,
+.usage-stats b,.money-total b,.flag b,.cell-inp.num,.money-edit .cell-inp,.seg-num,.res-monto,
+.usage-pct,.money.big,.gastado,.sub-precio b{font-family:var(--font-display), 'Nunito', sans-serif;font-variant-numeric:tabular-nums}
 
 /* ==========================================================================
    Componentes compartidos
@@ -129,8 +131,8 @@ h1,h2,h3,h4,ion-title,.card-title,.ing-head,.q-head,.head,.panel-head,.title-wra
   color:var(--text-muted); text-transform:none;
 }
 
-/* Cifra destacada. tabular-nums para que las columnas de dinero alineen. */
-.money{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-strong)}
+/* Cifra destacada. Varela Round para montos, tabular-nums para alinear. */
+.money{font-family:var(--font-display), 'Nunito', sans-serif;font-variant-numeric:tabular-nums;font-weight:700;color:var(--text-strong)}
 
 /* Estados vacios: antes "Sin deudas registradas" colgado sin contexto. */
 .empty{
