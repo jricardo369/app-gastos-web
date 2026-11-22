@@ -279,52 +279,53 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 8. Ingresos: oculta por defecto. Solo se entra a tocar cuando hay que
-           cargar o corregir algo, asi que arranca cerrada y se abre con un
-           clic en el encabezado. -->
-      <div class="ing-section">
-        <button class="ing-toggle" (click)="toggleIngresos()"
-                [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
-          <span class="t-left">
+      <!-- 8. Ingresos: oculta por defecto en una sola tarjeta unificada -->
+      <div class="card pad-card" [class.collapsed]="ingresosHidden">
+        <button class="card-title" (click)="toggleIngresos()" [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
+          <span>
             <ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
-            <span class="lbl">Ingresos</span>
+            Ingresos
           </span>
           @if (ingresosHidden) { <span class="count">tocar para cargar o editar</span> }
+          @else { <span class="money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</span> }
         </button>
-        <div class="grid2" id="ingresosPanel" [hidden]="ingresosHidden">
-          @for (q of filteredQs; track q) {
-          <div class="card ing-card" [class.collapsed]="isIngCollapsed(q)">
-            <button class="ing-head" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
-              <span class="head-left">
-                <ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
-                <span class="lbl">{{ etiquetaQuincena(q) }}</span>
-              </span>
-              <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
-            </button>
-            @if(!isIngCollapsed(q)){
-            <div class="ing-body">
-              @for (ing of getIngresos(q); track ing.id) {
-                <div class="ing-list">
-                  <input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso">
-                  <input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso">
-                  <button type="button" class="icon-btn" (click)="removeIngreso(q, ing.id)" [attr.aria-label]="'Eliminar el ingreso ' + ing.concepto">
-                    <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
-                  </button>
+        @if(!ingresosHidden){
+          <div class="sep"></div>
+          <div class="grid2" id="ingresosPanel">
+            @for (q of filteredQs; track q) {
+            <div class="card ing-card" [class.collapsed]="isIngCollapsed(q)">
+              <button class="ing-head" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
+                <span class="head-left">
+                  <ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
+                  <span class="lbl">{{ etiquetaQuincena(q) }}</span>
+                </span>
+                <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
+              </button>
+              @if(!isIngCollapsed(q)){
+              <div class="ing-body">
+                @for (ing of getIngresos(q); track ing.id) {
+                  <div class="ing-list">
+                    <input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso">
+                    <input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso">
+                    <button type="button" class="icon-btn" (click)="removeIngreso(q, ing.id)" [attr.aria-label]="'Eliminar el ingreso ' + ing.concepto">
+                      <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
+                    </button>
+                  </div>
+                }
+                @if (getIngresos(q).length === 0) {
+                  <div class="empty sm">Sin ingresos cargados</div>
+                }
+                <div class="add-ing">
+                  <ion-button size="small" (click)="openAddIngresoModal(q)">
+                    <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
+                  </ion-button>
                 </div>
-              }
-              @if (getIngresos(q).length === 0) {
-                <div class="empty sm">Sin ingresos cargados</div>
-              }
-              <div class="add-ing">
-                <ion-button size="small" (click)="openAddIngresoModal(q)">
-                  <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
-                </ion-button>
               </div>
+              }
             </div>
             }
           </div>
-          }
-        </div>
+        }
       </div>
     </div>
   </ion-content>
