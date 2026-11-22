@@ -199,7 +199,7 @@ export class ImprevistoModalComponent {
               <span class="lbl">Gastos previstos</span>
               <span class="count">{{ pendientes(q) }} por pagar</span>
             </div>
-            <ion-button size="small" (click)="openAddGastoModal(q)">
+            <ion-button size="small" class="btn-add" (click)="openAddGastoModal(q)">
               <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
             </ion-button>
           </div>
@@ -270,7 +270,7 @@ export class ImprevistoModalComponent {
             }
           </div>
           <div class="add-row">
-            <ion-button size="small" fill="clear" (click)="openAddImpModal(q)">
+            <ion-button size="small" class="btn-add" (click)="openAddImpModal(q)">
               <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar imprevisto
             </ion-button>
           </div>
@@ -420,8 +420,8 @@ export class ImprevistoModalComponent {
   .empty p{margin:0;font-size:13px;color:var(--text-faint)}
   .empty ion-button{margin:var(--sp-1) 0 0;min-height:36px}
 
-  .add-row{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3)}
-  .add-row ion-button{margin:0;min-height:36px}
+  .add-row{display:flex;justify-content:flex-end;padding:var(--sp-2) var(--sp-3);margin-top:4px}
+  .btn-add{margin:0;min-height:38px;font-weight:800;--border-radius:999px;--background:var(--c-primary);--color:#fff;--box-shadow:0 8px 18px rgba(0,100,250,.25)}
 
   .card{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow);
     border:1px solid var(--border);overflow:hidden}
