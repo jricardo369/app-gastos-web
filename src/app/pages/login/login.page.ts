@@ -40,7 +40,7 @@ import { IonContent, IonHeader, IonToolbar, IonTitle, IonButton, IonInput, IonTe
   .head-card .count{color:#3f6ea8;font-size:13px;font-weight:700}
   .logo-wrap{display:flex;justify-content:center;margin-bottom:18px}
   .logo{width:64px;height:64px;border-radius:16px;display:block;box-shadow:0 6px 16px rgba(0,100,250,.18)}
-  .inp{--background:#fff;--border-color:#dbe7f5;--border-radius:12px;--highlight-color-focused:var(--c-primary);--padding-start:12px;--padding-end:12px;margin-bottom:12px}
+  .inp{--background:#fff;--border-color:#dbe7f5;--border-radius:12px;--border-width:1px;--highlight-color-focused:var(--c-primary);--color:var(--c-text);--placeholder-color:#7b8ea8;margin-bottom:14px;min-height:56px}
   .btn-add{height:46px;margin-top:6px}
   .err{display:block;margin:8px 0;font-size:13px}
   .hint{margin:16px 0 0;color:var(--text-faint);font-size:11px;text-align:center}
