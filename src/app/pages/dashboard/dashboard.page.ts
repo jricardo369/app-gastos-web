@@ -227,12 +227,16 @@ export class IngresoModalComponent {
       </div>
 
       <!-- 7. Gastos por categoria -->
-      <div class="card pad-card gastos-card" [class.collapsed]="gastosCollapsed">
-        <button class="card-title" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
-          <span><ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon> Gastos por categoría</span>
-          <span class="money">{{ (totalQ1+totalQ2) | currency:'MXN':'symbol':'1.0-0' }}</span>
+      <div class="card q-card gastos-card" [class.collapsed]="gastosCollapsed">
+        <button class="q-head" (click)="gastosCollapsed=!gastosCollapsed" [attr.aria-expanded]="!gastosCollapsed">
+          <span class="head-left">
+            <ion-icon [name]="gastosCollapsed ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
+            <span class="lbl">Gastos por categoría</span>
+          </span>
+          <span class="head-right money">{{ (totalQ1+totalQ2) | currency:'MXN':'symbol':'1.0-0' }}</span>
         </button>
         @if(!gastosCollapsed){
+          <div class="q-body">
           @if(esMensual){
             <!-- Modo mensual: una sola columna, el mes completo -->
             <div class="tbl head th-3"><span>Categoría</span><span class="num">Previsto</span><span class="num">Mes</span></div>
@@ -276,20 +280,22 @@ export class IngresoModalComponent {
             } }
             <div class="tbl total th-3"><span>Total</span><span class="num">{{totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span><span class="num">{{totalQ1+totalQ2 | currency:'MXN':'symbol':'1.0-0'}}</span></div>
           }
+          </div>
         }
       </div>
 
       <!-- 8. Ingresos: oculta por defecto en una sola tarjeta unificada -->
-      <div class="card pad-card ing-card-wrap" [class.collapsed]="ingresosHidden">
-        <button class="card-title" (click)="toggleIngresos()" [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
-          <span>
+      <div class="card q-card ing-card-wrap" [class.collapsed]="ingresosHidden">
+        <button class="q-head" (click)="toggleIngresos()" [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
+          <span class="head-left">
             <ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
-            Ingresos
+            <span class="lbl">Ingresos</span>
           </span>
           @if (ingresosHidden) { <span class="count">tocar para cargar o editar</span> }
-          @else { <span class="money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</span> }
+          @else { <span class="head-right money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</span> }
         </button>
         @if(!ingresosHidden){
+          <div class="q-body">
           <div class="sep"></div>
           <div class="grid2" id="ingresosPanel">
             @for (q of filteredQs; track q) {
@@ -325,6 +331,7 @@ export class IngresoModalComponent {
             </div>
             }
           </div>
+          </div>
         }
       </div>
     </div>
@@ -346,7 +353,6 @@ export class IngresoModalComponent {
    .card:hover{box-shadow:0 12px 30px rgba(15,58,93,.1)}
    .panel-title{display:flex;flex-direction:column;gap:2px;min-width:0}
    .count{font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:var(--c-muted);letter-spacing:.01em}
-   .pad-card{padding:20px}
    ion-button{margin:0;min-height:38px;font-weight:800;--border-radius:999px}
 
    /* Segmento: pastillas separadas, activa azul solida */
@@ -458,28 +464,13 @@ export class IngresoModalComponent {
    .flag-falta{background:#fff1f2;color:#be123c;border-color:#fecdd3}
    .flag-ok{background:#edf8ee;color:var(--c-green-dark);border-color:#b7ddb7}
 
-   /* Titulos de tarjeta: blancos, con acento de color */
-   .card-title{
-     width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;
-     text-align:left;background:#fff;border:none;cursor:pointer;font-family:inherit;
-     font-size:15px;font-weight:900;color:var(--c-text);margin:0;padding:16px 18px;
-     border-bottom:1px solid #eef3f9;
-   }
-   .pad-card .card-title{margin:0 0 16px;border-radius:16px;background:#f7fbff;border:1px solid #e3f0ff}
-   .card-title > span:first-child{display:flex;align-items:center;gap:8px;color:var(--c-green-dark)}
-   .card-title ion-icon{color:var(--c-green-dark)}
-   .card-title .money{color:var(--c-green-dark);font-weight:900}
    /* Gastos por categoría: tema azul para separarlo de Ingresos (verde) */
-   .gastos-card .card-title{background:#fff;border-color:#eef3f9}
-   .gastos-card .card-title > span:first-child{color:var(--c-primary-dark)}
-   .gastos-card .card-title ion-icon{color:var(--c-primary)}
-   .gastos-card .card-title .money{color:var(--c-primary)}
+   .gastos-card .head-left .lbl{color:#DE5B2D}
    .gastos-card .tbl.head{background:var(--c-primary-bg);color:var(--c-primary-dark);border-color:#cfe8ff}
    .gastos-card .tbl.total{background:#d9ecff;color:#003f9e;border-color:#b7d9fb}
    /* Ingresos: tema verde */
    .ing-card-wrap{border-color:#e3efe3;box-shadow:0 6px 20px rgba(90,165,90,.07)}
-   .ing-card-wrap .card-title{background:#fff;border-color:#eef3f9}
-   .card-title:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
+   .ing-card-wrap .head-left .lbl{color:#07797A}
    .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:8px;padding:12px 10px;
      border-bottom:1px solid #f1f5fa;font-size:13px;align-items:center;border-radius:12px}
    .tbl:hover:not(.head):not(.total){background:#f8fbff}
@@ -489,13 +480,8 @@ export class IngresoModalComponent {
      border-radius:12px;padding:11px 10px;border:1px solid #d8ecd8;letter-spacing:.02em;text-transform:uppercase}
    .tbl.total{font-weight:900;background:var(--c-primary-bg);border-radius:12px;
      border:1px solid #cfe8ff;margin-top:12px;padding:12px 10px;color:var(--c-primary-dark)}
-   .cat{display:flex;align-items:center;gap:12px;min-width:0;font-weight:700;color:#243b53}
-   .cat i{width:34px;height:34px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 2px 8px rgba(15,58,93,.14),0 0 0 3px #fff}
-   @media(max-width:420px){
-     .tbl{font-size:12px;gap:6px}
-     .cat{gap:9px}
-     .cat i{width:28px;height:28px}
-   }
+    .cat{display:flex;align-items:center;gap:8px;min-width:0;font-weight:700;color:#243b53}
+    .cat i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 1px 3px rgba(15,58,93,.1)}
    .bold{font-weight:900;color:var(--c-primary-dark)}
 
    /* Ingresos panel */
