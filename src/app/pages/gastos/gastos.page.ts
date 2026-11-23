@@ -1,6 +1,6 @@
 import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonSelect, IonSelectOption, IonText, ModalController, IonButtons, AlertController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonSelect, IonSelectOption, IonText, ModalController, IonButtons, AlertController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { Gasto, Imprevisto, Quincena } from '../../core/models/budget.model';
@@ -31,7 +31,7 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
     </div>
 
       <div class="field">
-        <ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto"></ion-input>
+        <ion-input label="Previsto ($)" labelPlacement="stacked" type="number" [(ngModel)]="previsto" placeholder="0"></ion-input>
         @if (isEdit && cambioPrevisto) {
           <span class="antes">Antes: {{ originalPrevisto | currency:'MXN':'symbol':'1.0-0' }}</span>
         }
@@ -64,7 +64,6 @@ import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline
   `,
   styles: [`
   .err{display:block;margin:10px 0 0;font-size:13px}
-  .field{margin-bottom:10px}
   .hint{display:block;font-size:11px;color:var(--text-muted);padding:4px 16px 0;line-height:1.35}
   .antes{display:block;font-size:11px;color:var(--text-faint);padding:2px 16px 0;text-decoration:line-through}
   /* Resumen de cambios: tachado el valor viejo, en negrita el nuevo */
@@ -125,13 +124,13 @@ export class GastoModalComponent {
 @Component({
   selector: 'app-imprevisto-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonButtons, FormsModule],
   template: `
   <ion-header><ion-toolbar><ion-title>Nuevo imprevisto</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></ion-item>
-    <ion-item><ion-input label="Importe ($)" labelPlacement="stacked" type="number" [(ngModel)]="importe"></ion-input></ion-item>
-    <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Reparación"></ion-input></ion-item>
+    <div class="field"><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></div>
+    <div class="field"><ion-input label="Importe ($)" labelPlacement="stacked" type="number" [(ngModel)]="importe" placeholder="0"></ion-input></div>
+    <div class="field"><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej. Reparación"></ion-input></div>
     <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()">Agregar</ion-button>
   </ion-content>
   `,

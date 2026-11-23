@@ -1,6 +1,6 @@
 import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonButtons, IonIcon, IonText, ModalController, AlertController, ToastController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonButtons, IonIcon, IonText, ModalController, AlertController, ToastController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
@@ -9,16 +9,16 @@ import { checkmarkCircle, cashOutline, addOutline, chevronDownOutline, chevronUp
 @Component({
   selector: 'app-tc-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, IonText, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonButtons, IonText, FormsModule],
   template: `
   <ion-header><ion-toolbar><ion-title>{{ titulo }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></ion-item>
-    @if(showTipo){ <ion-item><ion-input label="Tipo" labelPlacement="stacked" [(ngModel)]="tipo" placeholder="Ej. General"></ion-input></ion-item> }
-    <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="desc" placeholder="Ej. TV"></ion-input></ion-item>
-    <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
-    <ion-item><ion-input label="Mensualidades (total)" labelPlacement="stacked" type="number" [(ngModel)]="mensualidad"></ion-input></ion-item>
-    @if(isEdit){ <ion-item><ion-input label="Mensualidades pagadas" labelPlacement="stacked" type="number" [(ngModel)]="pagadas"></ion-input></ion-item> }
+    <ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input>
+    @if(showTipo){ <ion-input label="Tipo" labelPlacement="stacked" [(ngModel)]="tipo" placeholder="Ej. General"></ion-input> }
+    <ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="desc" placeholder="Ej. TV"></ion-input>
+    <ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input>
+    <ion-input label="Mensualidades (total)" labelPlacement="stacked" type="number" [(ngModel)]="mensualidad"></ion-input>
+    @if(isEdit){ <ion-input label="Mensualidades pagadas" labelPlacement="stacked" type="number" [(ngModel)]="pagadas"></ion-input> }
     <!-- Antes el guardar no hacia nada si faltaba algo: ahora se ve que falta. -->
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">

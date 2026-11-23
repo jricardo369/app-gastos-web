@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonIcon, IonText, ModalController, AlertController, ToastController, IonButtons } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonIcon, IonText, ModalController, AlertController, ToastController, IonButtons } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
@@ -9,14 +9,14 @@ import { cashOutline, checkmarkCircle, addOutline, chevronDownOutline, chevronUp
 @Component({
   selector: 'app-deudor-simple-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, IonText, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonButtons, IonText, FormsModule],
   template: `
   <ion-header><ion-toolbar><ion-title>{{ isEdit ? 'Editar deudor' : 'Nuevo deudor' }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-input label="Fecha alta" labelPlacement="stacked" type="date" [(ngModel)]="fecha" [disabled]="true"></ion-input></ion-item>
-    <ion-item><ion-input label="Fecha vencimiento" labelPlacement="stacked" type="date" [(ngModel)]="fechaVenc"></ion-input></ion-item>
-    <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="desc" placeholder="Ej. Préstamo a Juan"></ion-input></ion-item>
-    <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
+    <ion-input label="Fecha alta" labelPlacement="stacked" type="date" [(ngModel)]="fecha" [disabled]="true"></ion-input>
+    <ion-input label="Fecha vencimiento" labelPlacement="stacked" type="date" [(ngModel)]="fechaVenc"></ion-input>
+    <ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="desc" placeholder="Ej. Préstamo a Juan"></ion-input>
+    <ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input>
     <!-- Antes el guardar no hacia nada si faltaba algo: ahora se ve que falta. -->
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">

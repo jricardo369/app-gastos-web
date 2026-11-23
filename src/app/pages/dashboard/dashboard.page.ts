@@ -1,6 +1,6 @@
 ﻿import { Component, Input, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonItem, IonInput, IonButtons, ModalController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonButtons, ModalController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
@@ -16,12 +16,12 @@ const APP_VERSION = pkg['version'];
 @Component({
   selector: 'app-ingreso-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonButton, IonButtons, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonButtons, FormsModule],
   template: `
   <ion-header><ion-toolbar><ion-title>Nuevo ingreso</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-input label="Concepto" labelPlacement="stacked" [(ngModel)]="concepto" placeholder="Ej. Nómina"></ion-input></ion-item>
-    <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
+    <ion-input label="Concepto" labelPlacement="stacked" [(ngModel)]="concepto" placeholder="Ej. Nómina"></ion-input>
+    <ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input>
     <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()">Agregar</ion-button>
   </ion-content>
   `,

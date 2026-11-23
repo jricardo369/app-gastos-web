@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonItem, IonButtons, IonIcon, IonText, IonSelect, IonSelectOption, ModalController, AlertController, ToastController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonButton, IonInput, IonButtons, IonIcon, IonText, IonSelect, IonSelectOption, ModalController, AlertController, ToastController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { BudgetService } from '../../core/services/budget.service';
 import { addIcons } from 'ionicons';
@@ -9,14 +9,14 @@ import { addOutline, cashOutline, eyeOutline, createOutline, chevronForwardOutli
 @Component({
   selector: 'app-mov-modal',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonItem, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonText, FormsModule],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonSelect, IonSelectOption, IonButton, IonButtons, IonText, FormsModule],
   template: `
   <ion-header><ion-toolbar><ion-title>{{ isEdit ? 'Editar movimiento' : 'Nuevo movimiento' }}</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
   <ion-content class="ion-padding">
-    <ion-item><ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input></ion-item>
-    <ion-item><ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej.Compra en línea"></ion-input></ion-item>
-    <ion-item><ion-select label="Tipo" labelPlacement="stacked" [(ngModel)]="tipo"><ion-select-option value="compras">Compras</ion-select-option><ion-select-option value="abono">Abono</ion-select-option></ion-select></ion-item>
-    <ion-item><ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input></ion-item>
+    <ion-input label="Fecha" labelPlacement="stacked" type="date" [(ngModel)]="fecha"></ion-input>
+    <ion-input label="Descripción" labelPlacement="stacked" [(ngModel)]="descripcion" placeholder="Ej.Compra en línea"></ion-input>
+    <ion-select label="Tipo" labelPlacement="stacked" [(ngModel)]="tipo"><ion-select-option value="compras">Compras</ion-select-option><ion-select-option value="abono">Abono</ion-select-option></ion-select>
+    <ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input>
     <!-- Antes el guardar no hacia nada si faltaba algo: ahora se ve que falta. -->
     @if(error){ <ion-text color="danger" class="err">{{ error }}</ion-text> }
     <div style="display:flex;gap:8px;margin-top:20px">

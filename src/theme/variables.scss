@@ -27,4 +27,9 @@
 
   --c-shadow:0 6px 20px rgba(15,58,93,.07);
   --c-shadow-lg:0 12px 30px rgba(15,58,93,.11);
+
+  --modal-input-gap:10px;
 }
+
+ion-modal ion-input,
+ion-modal ion-select{margin-bottom:var(--modal-input-gap)}

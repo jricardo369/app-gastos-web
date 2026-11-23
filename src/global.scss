@@ -112,6 +112,28 @@ ion-toolbar ion-button{
 }
 ion-toolbar ion-icon{color:#fff}
 
+ion-modal ion-header{background:#f2f7fc}
+ion-modal ion-toolbar{
+  --background:#f2f7fc;
+  --color:#0064fa;
+  --border-color:#e8eef7;
+  box-shadow:none;
+}
+ion-modal ion-toolbar::part(background){background:#f2f7fc;backdrop-filter:none;-webkit-backdrop-filter:none}
+ion-modal ion-toolbar ion-title{--color:#0064fa;color:#0064fa}
+ion-modal ion-toolbar ion-button{
+  --color:#0064fa;
+  --background-hover:rgba(0,100,250,.10);
+  --background-activated:rgba(0,100,250,.18);
+}
+ion-modal ion-toolbar ion-icon{color:#0064fa}
+
+.ion-valid.sc-ion-input-ios-h{
+  color:#32364c;
+  --highlight-color-valid:#32364c;
+  --highlight-color:#32364c;
+}
+
 ion-tab-bar{--background:#ffffff;border-top:1px solid var(--border);--color:var(--text-muted);--color-selected:var(--c-primary)}
 ion-content{--background:var(--app-bg)}
 *{font-family:'Nunito', system-ui, -apple-system, Segoe UI, Roboto, sans-serif}
