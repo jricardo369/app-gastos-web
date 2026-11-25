@@ -11,6 +11,10 @@ export const routes: Routes = [
         loadComponent: () => import('../pages/dashboard/dashboard.page').then(m => m.DashboardPage),
       },
       {
+        path: 'ingresos',
+        loadComponent: () => import('../pages/ingresos/ingresos.page').then(m => m.IngresosPage),
+      },
+      {
         path: 'gastos',
         loadComponent: () => import('../pages/gastos/gastos.page').then(m => m.GastosPage),
       },
@@ -19,13 +23,11 @@ export const routes: Routes = [
         loadComponent: () => import('../pages/perfil/perfil.page').then(m => m.PerfilPage),
       },
       {
-        path: 'deudas',
-        loadComponent: () => import('../pages/deudas/deudas.page').then(m => m.DeudasPage),
+        path: 'cuentas',
+        loadComponent: () => import('../pages/cuentas/cuentas.page').then(m => m.CuentasPage),
       },
-      {
-        path: 'deudores',
-        loadComponent: () => import('../pages/deudores/deudores.page').then(m => m.DeudoresPage),
-      },
+      { path: 'deudas', redirectTo: '/tabs/cuentas?tab=deudas', pathMatch: 'full' },
+      { path: 'deudores', redirectTo: '/tabs/cuentas?tab=deudores', pathMatch: 'full' },
       {
         path: 'movimientos',
         loadComponent: () => import('../pages/movimientos/movimientos.page').then(m => m.MovimientosPage),

@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { StorageService } from './storage.service';
-import { Categoria, Gasto, Imprevisto, Presupuesto, PresupuestoQuincena, IngresoEntry, Dinero, Quincena, FiltroQuincena, PagoTC, Deuda, Deudor, Movimiento, ConfigApp, RangoIngreso, TipoPago, TipoMembresia } from '../models/budget.model';
+import { Categoria, Gasto, Imprevisto, Presupuesto, PresupuestoQuincena, IngresoEntry, Dinero, Quincena, FiltroQuincena, PagoTC, Deuda, Deudor, Movimiento, ConfigApp, RangoIngreso, TipoPago, TipoMembresia, BackupSnapshot, PeriodosCerrados } from '../models/budget.model';
 
 const CATEGORIAS: Categoria[] = [
   { id: 'hogar', nombre: 'Hogar', color: '#a8a4ff' },
@@ -322,6 +322,7 @@ const DEFAULT_MOVIMIENTOS: Movimiento[] = [
 const KEYS_PERSISTIDAS = [
   'presupuesto', 'gastos', 'imprevistos', 'pagosTC', 'config',
   'deudas', 'deudores', 'deudoresLista', 'movimientos', 'movConfig', 'quincenaActual',
+  'periodosCerrados',
 ] as const;
 
 function migratePresupuesto(raw: any): Presupuesto {
@@ -362,8 +363,7 @@ function migrateConfig(raw: any): ConfigApp {
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
-  // MODO LOCAL: todo con StorageService, sin backend
-  useRest = false; restBaseUrl = 'http://localhost:8080/api/v1';
+  private storage = inject(StorageService);
   categorias = CATEGORIAS;
 
   private _presupuesto$ = new BehaviorSubject<Presupuesto>(DEFAULT_PRESUPUESTO);
@@ -394,7 +394,7 @@ export class BudgetService {
   getQuincenaActual(): FiltroQuincena { return this._quincenaActual$.value; }
   setQuincenaActual(q: FiltroQuincena) { this._quincenaActual$.next(q); this.storage.set('quincenaActual', q); }
 
-  constructor(private storage: StorageService) {
+  constructor() {
     this._quincenaActual$ = new BehaviorSubject<FiltroQuincena>(this.storage.get<FiltroQuincena>('quincenaActual', 'TODO'));
     this.quincenaActual$ = this._quincenaActual$.asObservable();
     const cfg = migrateConfig(this.storage.get<any>('config', DEFAULT_CONFIG));
@@ -536,6 +536,34 @@ export class BudgetService {
   getMovConfig(){ return this._movConfig$.value; }
   setMovConfig(c:{fechaCorte:number, fechaPago:number, ppngi:number}){ this._movConfig$.next(c); this.storage.set('movConfig', c); }
 
+  private clonar<T>(valor: T): T { return JSON.parse(JSON.stringify(valor)) as T; }
+
+  getPeriodosCerrados(): PeriodosCerrados { return this.storage.get<PeriodosCerrados>('periodosCerrados', {}); }
+
+  marcarPeriodoCerrado(clave: string): void {
+    const cerrados = this.getPeriodosCerrados();
+    cerrados[clave] = new Date().toISOString();
+    this.storage.set('periodosCerrados', cerrados);
+  }
+
+  snapshot(): BackupSnapshot {
+    return {
+      version: 1,
+      presupuesto: this.clonar(this.getPresupuesto()),
+      gastos: this.clonar(this.getGastos()),
+      imprevistos: this.clonar(this._imprevistos$.value),
+      pagosTC: this.clonar(this.getPagosTC()),
+      config: this.clonar(this.getConfig()),
+      deudas: this.clonar(this.getDeudas()),
+      deudores: this.clonar(this.getDeudores()),
+      deudoresLista: this.clonar(this.getDeudoresLista()),
+      movimientos: this.clonar(this.getMovimientos()),
+      movConfig: this.clonar(this.getMovConfig()),
+      quincenaActual: this.getQuincenaActual(),
+      periodosCerrados: this.clonar(this.getPeriodosCerrados())
+    };
+  }
+
   /**
    * Borra todo lo guardado y vuelve a cargar los datos de ejemplo.
    * NO HAY FORMA DE DESHACER: se pierde todo lo capturado a mano.
@@ -570,7 +598,7 @@ export class BudgetService {
     this.storage.set('config', limpio);
     this._config$.next(limpio);
     // Borra lo del usuario y siembra lo del rango elegido.
-    for (const key of ['gastos', 'imprevistos', 'deudas', 'deudores', 'deudoresLista', 'movimientos'] as const) this.storage.remove(key);
+    for (const key of ['gastos', 'imprevistos', 'deudas', 'deudores', 'deudoresLista', 'movimientos', 'periodosCerrados'] as const) this.storage.remove(key);
     this._gastos$.next(seedGastosConfig(limpio)); this.persistGastos(this._gastos$.value);
     this._imprevistos$.next([]); this.persistImprevistos([]);
     this._pagosTC$.next(DEFAULT_PAGOS_TC.map(p => ({ ...p }))); this.storage.set('pagosTC', this._pagosTC$.value);

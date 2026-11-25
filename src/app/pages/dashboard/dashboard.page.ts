@@ -1,38 +1,18 @@
-﻿import { Component, Input, ChangeDetectorRef } from '@angular/core';
+﻿import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonInput, IonButtons, ModalController } from '@ionic/angular';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, ToastController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BackupService } from '../../core/services/backup.service';
 import { FiltroQuincena } from '../../core/models/budget.model';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronUpOutline, chevronForwardOutline, personCircleOutline, trendingUpOutline, trendingDownOutline, cloudUploadOutline, checkmarkDoneOutline } from 'ionicons/icons';
 import pkg from '../../../../package.json';
 
 /** Versión desde package.json: una sola fuente, no se desincroniza. */
 const APP_VERSION = pkg['version'];
-
-@Component({
-  selector: 'app-ingreso-modal',
-  standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonButtons, FormsModule],
-  template: `
-  <ion-header><ion-toolbar><ion-title>Nuevo ingreso</ion-title><ion-buttons slot="end"><ion-button (click)="cancel()">Cerrar</ion-button></ion-buttons></ion-toolbar></ion-header>
-  <ion-content class="ion-padding">
-    <ion-input label="Concepto" labelPlacement="stacked" [(ngModel)]="concepto" placeholder="Ej. Nómina"></ion-input>
-    <ion-input label="Monto ($)" labelPlacement="stacked" type="number" [(ngModel)]="monto"></ion-input>
-    <ion-button expand="block" class="btn-add" style="margin-top:20px" (click)="save()">Agregar</ion-button>
-  </ion-content>
-  `,
-})
-export class IngresoModalComponent {
-  @Input() concepto: string = '';
-  @Input() monto: any = null;
-  constructor(private modalCtrl: ModalController) {}
-  cancel(){ this.modalCtrl.dismiss(null); }
-  save(){ if(!this.concepto||this.monto==null||this.monto==='') return; this.modalCtrl.dismiss({ concepto:this.concepto.trim(), monto:Number(this.monto)}); }
-}
 
 @Component({
   selector: 'app-dashboard',
@@ -51,11 +31,6 @@ export class IngresoModalComponent {
           <span>Dashboard</span><small>{{today}} · v{{version}}</small>
         </div>
       </ion-title>
-      <ion-buttons slot="end">
-        <ion-button fill="clear" (click)="logout()" aria-label="Cerrar sesión">
-          <ion-icon name="log-out-outline" aria-hidden="true"></ion-icon>
-        </ion-button>
-      </ion-buttons>
     </ion-toolbar>
   </ion-header>
 
@@ -174,8 +149,8 @@ export class IngresoModalComponent {
 
             <!-- El dinero del bolsillo va al final: es el dato que se corrige
                  de vez en cuando, no el que se consulta a diario.
-                 Se edita en el lugar, igual que los ingresos: sin boton, se
-                 guarda solo al cambiar el valor o al salir del campo. -->
+                 Se edita en el lugar: sin boton, se guarda solo al cambiar
+                 el valor o al salir del campo. -->
             <hr class="sep" />
             <div class="money-edit">
               <div class="row">
@@ -208,7 +183,7 @@ export class IngresoModalComponent {
             fuera del ciclo, asi que no compite con el aviso de cada quincena. -->
       <span class="section-title">Cuentas pendientes</span>
       <div class="grid2">
-        <button type="button" class="card sum sum-deuda" (click)="go('/tabs/deudas')">
+        <button type="button" class="card sum sum-deuda" (click)="go('/tabs/cuentas?tab=deudas')">
           <div class="panel-title">
             <span class="lbl">Cuentas por pagar</span>
             <span class="count">{{ pagosPendientesCount }} pagos de tarjeta</span>
@@ -216,7 +191,7 @@ export class IngresoModalComponent {
           <b class="money">{{ (pagosPendientesMonto + deudaMarinaMensual) | currency:'MXN':'symbol':'1.0-0' }}</b>
           <ion-icon class="sum-chev" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
         </button>
-        <button type="button" class="card sum sum-deudor" (click)="go('/tabs/deudores')">
+        <button type="button" class="card sum sum-deudor" (click)="go('/tabs/cuentas?tab=deudores')">
           <div class="panel-title">
             <span class="lbl">Me deben</span>
             <span class="count">{{ deudoresLista.length }} personas</span>
@@ -284,56 +259,6 @@ export class IngresoModalComponent {
         }
       </div>
 
-      <!-- 8. Ingresos: oculta por defecto en una sola tarjeta unificada -->
-      <div class="card q-card ing-card-wrap" [class.collapsed]="ingresosHidden">
-        <button class="q-head" (click)="toggleIngresos()" [attr.aria-expanded]="!ingresosHidden" [attr.aria-controls]="'ingresosPanel'">
-          <span class="head-left">
-            <ion-icon [name]="ingresosHidden ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
-            <span class="lbl">Ingresos</span>
-          </span>
-          @if (ingresosHidden) { <span class="count">tocar para cargar o editar</span> }
-          @else { <span class="head-right money">{{ ingresoTotalGlobal | currency:'MXN':'symbol':'1.0-0' }}</span> }
-        </button>
-        @if(!ingresosHidden){
-          <div class="q-body">
-          <div class="sep"></div>
-          <div class="grid2" id="ingresosPanel">
-            @for (q of filteredQs; track q) {
-            <div class="card ing-card" [class.collapsed]="isIngCollapsed(q)">
-              <button class="ing-head" (click)="toggleIngCollapse(q)" [attr.aria-expanded]="!isIngCollapsed(q)">
-                <span class="head-left">
-                  <ion-icon [name]="isIngCollapsed(q) ? 'chevron-down-outline' : 'chevron-up-outline'" aria-hidden="true"></ion-icon>
-                  <span class="lbl">{{ etiquetaQuincena(q) }}</span>
-                </span>
-                <b class="money">{{ getIngresoTotal(q) | currency:'MXN':'symbol':'1.0-0' }}</b>
-              </button>
-              @if(!isIngCollapsed(q)){
-              <div class="ing-body">
-                @for (ing of getIngresos(q); track ing.id) {
-                  <div class="ing-list">
-                    <input class="cell-inp" [(ngModel)]="ing.concepto" (blur)="saveIngresoConcepto(q, ing)" placeholder="Concepto" aria-label="Concepto del ingreso">
-                    <input class="cell-inp num" type="number" [(ngModel)]="ing.monto" (change)="saveIngresoMonto(q, ing)" (blur)="saveIngresoMonto(q, ing)" aria-label="Monto del ingreso">
-                    <button type="button" class="icon-btn" (click)="removeIngreso(q, ing.id)" [attr.aria-label]="'Eliminar el ingreso ' + ing.concepto">
-                      <ion-icon name="trash-outline" aria-hidden="true"></ion-icon>
-                    </button>
-                  </div>
-                }
-                @if (getIngresos(q).length === 0) {
-                  <div class="empty sm">Sin ingresos cargados</div>
-                }
-                <div class="add-ing">
-                  <ion-button size="small" class="btn-add" (click)="openAddIngresoModal(q)">
-                    <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar ingreso
-                  </ion-button>
-                </div>
-              </div>
-              }
-            </div>
-            }
-          </div>
-          </div>
-        }
-      </div>
     </div>
   </ion-content>
   `,
@@ -367,151 +292,151 @@ export class IngresoModalComponent {
    .seg-btn:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
 
    /* Resumen hero: tarjeta azul claro tipo "Total Balance" */
-   .resumen{padding:22px;background:var(--c-primary-bg);border:1px solid #cfe8ff;position:relative;overflow:hidden}
-   .res-hero{display:flex;flex-direction:column;gap:4px;position:relative}
-   .res-estado{display:inline-flex;align-items:center;gap:6px;color:var(--c-primary-dark);font-size:12px;font-weight:800;background:#fff;padding:6px 12px;border-radius:999px;width:fit-content;box-shadow:0 3px 10px rgba(0,100,250,.08)}
-   .res-estado ion-icon{font-size:15px}
-   .res-monto{display:block;margin-top:8px;font-size:42px;line-height:1;
-     letter-spacing:-.03em;color:var(--c-primary);font-weight:900;font-family:var(--font-display)}
-   .res-cerca .res-monto{color:#b45309}
-   .res-cerca .res-estado{color:#92400e;background:#fef3c7}
-   .res-neg .res-monto{color:#dc2626}
-   .res-neg .res-estado{color:#b91c1c;background:#fee2e2}
-   .resumen .count{color:#3f6ea8}
+    .resumen{padding:14px 16px;background:var(--c-primary-bg);border:1px solid #cfe8ff;position:relative;overflow:hidden;
+      display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+      grid-template-areas:"hero stats" "med stats";column-gap:16px;row-gap:8px;align-content:start}
+    .res-hero{grid-area:hero;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;position:relative;min-width:0}
+    .res-estado{display:inline-flex;align-items:center;gap:4px;color:var(--c-primary-dark);font-size:10px;font-weight:800;background:#fff;padding:3px 8px;border-radius:999px;box-shadow:0 2px 6px rgba(0,100,250,.08);white-space:nowrap}
+    .res-estado ion-icon{font-size:12px}
+    .res-monto{font-size:30px;line-height:1.05;letter-spacing:-.03em;color:var(--c-primary);font-weight:900;font-family:var(--font-display);font-variant-numeric:tabular-nums}
+    .res-cerca .res-monto{color:#b45309}
+    .res-cerca .res-estado{color:#92400e;background:#fef3c7}
+    .res-neg .res-monto{color:#dc2626}
+    .res-neg .res-estado{color:#b91c1c;background:#fee2e2}
+    .resumen .count{color:#3f6ea8;font-size:10px}
 
-   /* Medidor */
-   .med{position:relative;margin-top:20px}
-   .med-track{height:10px;background:#fff;border-radius:999px;overflow:hidden}
-   .med-fill{height:100%;background:var(--c-green);border-radius:999px;transition:width .35s ease}
-   .med.pasado .med-fill{background:#f59e0b}
-   .med.excedido .med-fill{background:#ef4444}
-   .med-mark{position:absolute;top:-3px;left:0;width:3px;height:16px;border-radius:2px;background:var(--c-primary);transform:translateX(-1.5px);box-shadow:0 0 0 2px #fff}
-   .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12px}
-   .med-pie .count{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#35507a}
-   .med-tick{width:3px;height:12px;background:var(--c-primary);border-radius:2px;display:inline-block;flex:none}
+    /* Medidor */
+    .med{grid-area:med;position:relative;min-width:0}
+    .med-track{height:8px;background:#fff;border-radius:999px;overflow:hidden}
+    .med-fill{height:100%;background:var(--c-green);border-radius:999px;transition:width .35s ease}
+    .med.pasado .med-fill{background:#f59e0b}
+    .med.excedido .med-fill{background:#ef4444}
+    .med-mark{position:absolute;top:-2px;left:0;width:3px;height:12px;border-radius:2px;background:var(--c-primary);transform:translateX(-1.5px);box-shadow:0 0 0 2px #fff}
+    .med-pie{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .med-pie .count{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#35507a}
+    .med-tick{width:3px;height:10px;background:var(--c-primary);border-radius:2px;display:inline-block;flex:none}
 
-   /* Stats resumen: chips blancos sobre el azul claro */
-   .res-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:20px;padding-top:20px;border-top:1px solid #cfe8ff}
-   .res-stats .stat{display:flex;flex-direction:column;gap:4px;min-width:0;padding:12px;border-radius:16px;border:1px solid #e3f0ff;background:#fff;box-shadow:0 3px 10px rgba(15,58,93,.04)}
-   .res-stats .stat:nth-child(1) .money,.res-stats .stat:nth-child(2) .money{color:var(--c-primary-dark)}
-   .res-stats .stat:nth-child(3) .money,.res-stats .stat:nth-child(4) .money{color:var(--c-green-dark)}
-   .res-stats .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#5f7392;font-weight:800}
-   .res-stats .money{font-size:16px;font-weight:900;color:var(--c-text)}
-   @media(max-width:600px){.res-stats{grid-template-columns:repeat(2,1fr)}}
+    /* Stats resumen: filas compactas sobre el azul claro */
+    .res-stats{grid-area:stats;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 10px;min-width:0}
+    .res-stats .stat{display:flex;flex-direction:column;gap:1px;min-width:0;padding:3px 0;border-bottom:1px solid #dceeff}
+    .res-stats .stat:nth-child(n+3){border-bottom:none}
+    .res-stats .stat:nth-child(1) .money,.res-stats .stat:nth-child(2) .money{color:var(--c-primary-dark)}
+    .res-stats .stat:nth-child(3) .money,.res-stats .stat:nth-child(4) .money{color:var(--c-green-dark)}
+    .res-stats .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#5f7392;font-weight:800}
+    .res-stats .money{font-size:14px;font-weight:900;color:var(--c-text);white-space:nowrap}
+    @media(max-width:600px){.resumen{grid-template-columns:minmax(0,1fr);grid-template-areas:"hero" "med" "stats";padding:12px 14px}
+      .res-stats{margin-top:4px;padding-top:8px;border-top:1px solid #cfe8ff}}
 
-   .usage-rest{color:var(--c-muted);font-size:12px;font-weight:600}
+   .usage-rest{color:var(--c-muted);font-size:10px;font-weight:600}
    .section-title{font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;
      letter-spacing:.08em;color:#0064fa;text-transform:uppercase;padding:0 4px;margin-top:4px}
 
    /* Resumen cuentas / deudores: blancas con acento de color */
-   .sum{
-     position:relative;display:flex;flex-direction:column;gap:8px;
-     padding:20px 52px 20px 22px;
-     cursor:pointer;background:#fff;border:1px solid var(--c-border);
-     border-left:4px solid var(--c-primary);
-     border-radius:20px;box-shadow:var(--c-shadow);text-align:left;font-family:inherit;transition:all .2s ease;
-   }
-   .sum b{font-size:24px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-weight:900;color:var(--c-text)}
-   .sum:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(15,58,93,.11)}
-   .sum:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
-   .sum-chev{position:absolute;top:50%;right:20px;transform:translateY(-50%);font-size:18px;color:#6b93c7}
-   .sum-deuda{border-left-color:var(--c-primary)}
-   .sum-deuda .lbl{color:var(--c-primary)}
-   .sum-deuda b{color:var(--c-primary-dark)}
-   .sum-deudor{border-left-color:var(--c-green)}
-   .sum-deudor .lbl{color:var(--c-green-dark)}
-   .sum-deudor b{color:var(--c-green-dark)}
-   .sum .lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted)}
+    .sum{
+      position:relative;display:flex;align-items:center;gap:10px;
+      min-height:56px;padding:10px 40px 10px 14px;
+      cursor:pointer;background:#fff;border:1px solid var(--c-border);
+      border-left:4px solid var(--c-primary);
+      border-radius:14px;box-shadow:var(--c-shadow);text-align:left;font-family:inherit;transition:all .2s ease;
+    }
+    .sum .panel-title{flex:1;min-width:0;gap:1px}
+    .sum b{font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;font-weight:900;color:var(--c-text);white-space:nowrap}
+    .sum:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,58,93,.11)}
+    .sum:focus-visible{outline:2px solid var(--c-primary);outline-offset:2px}
+    .sum-chev{position:absolute;top:50%;right:14px;transform:translateY(-50%);font-size:16px;color:#6b93c7}
+    .sum-deuda{border-left-color:var(--c-primary)}
+    .sum-deuda .lbl{color:var(--c-primary)}
+    .sum-deuda b{color:var(--c-primary-dark)}
+    .sum-deudor{border-left-color:var(--c-green)}
+    .sum-deudor .lbl{color:var(--c-green-dark)}
+    .sum-deudor b{color:var(--c-green-dark)}
+    .sum .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--c-muted)}
+    .sum .count{font-size:9px}
 
    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
    @media(max-width:700px){.grid2{grid-template-columns:1fr}}
 
    /* Quincenas */
-   .q-head{
-     width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;
-     min-height:60px;padding:16px 20px;cursor:pointer;border:none;
-     border-bottom:1px solid #eef3f9;background:#fff;
-     font-family:inherit;text-align:left;transition:background .15s ease;
-   }
-   .q-head:hover{background:#f7fbff}
-   .card.collapsed .q-head{border-bottom:none}
-   .q-head:focus-visible{outline:2px solid var(--c-primary);outline-offset:-2px}
-   .head-left{display:flex;gap:8px;align-items:center;color:var(--c-primary);font-size:12px;font-weight:800}
-   .head-left ion-icon{color:var(--c-primary)}
-   .head-right{font-size:18px;font-weight:900;color:var(--c-text)}
-   .q-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:12px;background:#fff}
-   .sep{border:none;border-top:1px solid #eef3f9;margin:16px 0}
+   .q-card{border-radius:16px}
+    .q-head{
+      width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;
+      min-height:44px;padding:9px 14px;cursor:pointer;border:none;
+      border-bottom:1px solid #eef3f9;background:#fff;
+      font-family:inherit;text-align:left;transition:background .15s ease;
+    }
+    .q-head:hover{background:#f7fbff}
+    .card.collapsed .q-head{border-bottom:none}
+    .q-head:focus-visible{outline:2px solid var(--c-primary);outline-offset:-2px}
+    .head-left{display:flex;gap:6px;align-items:center;color:var(--c-primary);font-size:11px;font-weight:800}
+    .head-left ion-icon{color:var(--c-primary);font-size:16px}
+    .head-right{font-size:16px;font-weight:900;color:var(--c-text)}
+    .q-body{padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;background:#fff}
+    .q-body .row{padding:2px 0;font-size:13px;line-height:1.4}
+    .q-body .progress{height:6px}
+    .sep{border:none;border-top:1px solid #eef3f9;margin:8px 0}
 
-   .money-edit{display:flex;flex-direction:column;gap:4px}
-   .money-edit .cell-inp{
-     width:130px;text-align:right;font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--c-text);
-     background:#f4faff;border:1px solid #cfe0ff;border-radius:12px;padding:8px 10px;font-family:inherit;transition:border-color .15s ease;
-   }
-   .money-edit .cell-inp:focus-visible{outline:none;border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 3px rgba(0,100,250,.12)}
-   .money-edit .cell-inp::-webkit-outer-spin-button,.money-edit .cell-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-   .money-edit .cell-inp{appearance:textfield;-moz-appearance:textfield}
-   .money-total{margin-top:8px;padding-top:12px;border-top:1px dashed #91beff}
-   .money-total b{font-size:18px;font-variant-numeric:tabular-nums;font-weight:900;color:var(--c-primary)}
+    .money-edit{display:flex;flex-direction:column;gap:2px}
+    .money-edit .cell-inp{
+      width:120px;min-height:34px;text-align:right;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--c-text);
+      background:#f4faff;border:1px solid #cfe0ff;border-radius:10px;padding:5px 8px;font-family:inherit;transition:border-color .15s ease;
+    }
+    .money-edit .cell-inp:focus-visible{outline:none;border-color:var(--c-primary);background:#fff;box-shadow:0 0 0 3px rgba(0,100,250,.12)}
+    .money-edit .cell-inp::-webkit-outer-spin-button,.money-edit .cell-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+    .money-edit .cell-inp{appearance:textfield;-moz-appearance:textfield}
+    .money-total{margin-top:4px;padding-top:8px;border-top:1px dashed #91beff}
+    .money-total b{font-size:16px;font-variant-numeric:tabular-nums;font-weight:900;color:var(--c-primary)}
 
-   /* Flags */
-   .flag{display:flex;flex-direction:column;gap:4px;margin-top:16px;padding:12px 16px;
-     border-radius:16px;font-size:13px;font-weight:700;border:1px solid #dbeafe;background:#f8fbff}
-   .flag-linea{display:flex;justify-content:space-between;align-items:center;gap:8px}
-   .flag-linea span{font-weight:800;font-size:14px}
-   .flag b{font-variant-numeric:tabular-nums;font-weight:800}
-   .flag-detalle{font-size:11px;font-weight:600;line-height:1.4;color:#486581}
-   .flag-sobra{background:#fff8e6;color:#92400e;border-color:#fde68a}
-   .flag-falta{background:#fff1f2;color:#be123c;border-color:#fecdd3}
-   .flag-ok{background:#edf8ee;color:var(--c-green-dark);border-color:#b7ddb7}
+    /* Flags */
+    .flag{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding:8px 10px;
+      border-radius:12px;font-size:12px;font-weight:700;border:1px solid #dbeafe;background:#f8fbff}
+    .flag-linea{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .flag-linea span{font-weight:800;font-size:13px}
+    .flag b{font-variant-numeric:tabular-nums;font-weight:800}
+    .flag-detalle{font-size:10px;font-weight:600;line-height:1.45;color:#486581}
+    .flag-sobra{background:#fff8e6;color:#92400e;border-color:#fde68a}
+    .flag-falta{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+    .flag-ok{background:#edf8ee;color:var(--c-green-dark);border-color:#b7ddb7}
 
-   /* Gastos por categoría: tema azul para separarlo de Ingresos (verde) */
-   .gastos-card .head-left .lbl{color:#DE5B2D}
-   .gastos-card .tbl.head{background:var(--c-primary-bg);color:var(--c-primary-dark);border-color:#cfe8ff}
-   .gastos-card .tbl.total{background:#d9ecff;color:#003f9e;border-color:#b7d9fb}
-   /* Ingresos: tema verde */
-   .ing-card-wrap{border-color:#e3efe3;box-shadow:0 6px 20px rgba(90,165,90,.07)}
-   .ing-card-wrap .head-left .lbl{color:#07797A}
-   .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:8px;padding:12px 10px;
-     border-bottom:1px solid #f1f5fa;font-size:13px;align-items:center;border-radius:12px}
-   .tbl:hover:not(.head):not(.total){background:#f8fbff}
-   .tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#17365d}
-   .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
-   .tbl.head{font-size:11px;font-weight:800;color:var(--c-green-dark);background:var(--c-green-bg);
-     border-radius:12px;padding:11px 10px;border:1px solid #d8ecd8;letter-spacing:.02em;text-transform:uppercase}
-   .tbl.total{font-weight:900;background:var(--c-primary-bg);border-radius:12px;
-     border:1px solid #cfe8ff;margin-top:12px;padding:12px 10px;color:var(--c-primary-dark)}
-    .cat{display:flex;align-items:center;gap:8px;min-width:0;font-weight:700;color:#243b53}
-    .cat i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 1px 3px rgba(15,58,93,.1)}
-   .bold{font-weight:900;color:var(--c-primary-dark)}
+     /* Gastos por categoría: tema azul para separarlo del resumen */
+    .gastos-card .head-left .lbl{color:#DE5B2D}
+    .gastos-card .tbl.head{background:var(--c-primary-bg);color:var(--c-primary-dark);border-color:#cfe8ff}
+    .gastos-card .tbl.total{background:#d9ecff;color:#003f9e;border-color:#b7d9fb}
 
-   /* Ingresos panel */
-   .ing-card{box-shadow:none;border:1px solid #e8eef7;border-radius:18px}
-   .ing-head{display:flex;justify-content:space-between;align-items:center;gap:12px;
-     width:100%;min-height:54px;text-align:left;background:#fff;border:none;
-     padding:12px 16px;cursor:pointer;font-family:inherit;font-size:14px;color:var(--c-green-dark);border-bottom:1px solid #eef3f9;font-weight:800}
-   .ing-head:focus-visible{outline:2px solid var(--c-green);outline-offset:-2px}
-   .ing-body{padding:16px;display:flex;flex-direction:column;gap:12px;background:#fff}
-   .ing-list{display:grid;grid-template-columns:1fr 100px 36px;gap:8px;align-items:center;min-height:46px;padding:2px 0}
+    .tbl{display:grid;grid-template-columns:1.3fr .7fr .7fr .8fr;gap:8px;padding:7px 8px;
+      border-bottom:1px solid #f1f5fa;font-size:12px;align-items:center;border-radius:10px}
+    .tbl:hover:not(.head):not(.total){background:#f8fbff}
+    .tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#17365d}
+    .tbl.th-3{grid-template-columns:1.3fr .85fr .85fr}
+    .tbl.head{font-size:10px;font-weight:800;color:var(--c-green-dark);background:var(--c-green-bg);
+      border-radius:10px;padding:7px 8px;border:1px solid #d8ecd8;letter-spacing:.02em;text-transform:uppercase}
+    .tbl.total{font-weight:900;background:var(--c-primary-bg);border-radius:10px;
+      border:1px solid #cfe8ff;margin-top:8px;padding:8px;color:var(--c-primary-dark)}
+     .cat{display:flex;align-items:center;gap:6px;min-width:0;font-weight:700;color:#243b53}
+     .cat i{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none;box-shadow:0 1px 3px rgba(15,58,93,.1)}
+    .bold{font-weight:900;color:var(--c-primary-dark)}
+
+
    .cell-inp{width:100%;border:1px solid #cfe0ff;border-radius:12px;padding:9px 10px;font-size:13px;background:#fbfdff;font-family:inherit;color:var(--c-text);font-weight:600}
    .cell-inp.num{text-align:right;font-variant-numeric:tabular-nums}
    .cell-inp:focus-visible{outline:none;border-color:var(--c-primary);box-shadow:0 0 0 3px rgba(0,100,250,.12)}
-   .icon-btn{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:none;background:#f4f7fb;color:#7a93b5;cursor:pointer;border-radius:12px;transition:all .15s ease}
-   .icon-btn ion-icon{font-size:16px}
-   .icon-btn:hover{background:#fee2e2;color:#dc2626}
-   .icon-btn:focus-visible{outline:2px solid #dc2626;outline-offset:1px}
-   .add-ing{display:flex;justify-content:flex-end;margin-top:4px}
 
-   .empty{padding:16px;text-align:center;color:#6b84a3;font-size:13px;background:#f4f9ff;border-radius:14px;font-weight:600;border:1px dashed #bfd7f5}
-   .empty.sm{padding:12px;background:transparent;border:none}
    .lbl{font-size:12px;font-weight:800;color:#486581}
    .money{font-variant-numeric:tabular-nums}
 
    @media (prefers-reduced-motion: reduce){
-     .seg-btn,.sum,.icon-btn,.med-fill,.card{transition:none}
+      .seg-btn,.sum,.med-fill,.card{transition:none}
    }
    `]
 })
 export class DashboardPage {
+  private budget = inject(BudgetService);
+  private auth = inject(AuthService);
+  private backup = inject(BackupService);
+  private router = inject(Router);
+  private toastCtrl = inject(ToastController);
+  private cdr = inject(ChangeDetectorRef);
+
+
   today = new Date().toLocaleDateString('es-MX', { weekday: 'short', day: '2-digit', month: 'short' });
   readonly version = APP_VERSION;
   userName = 'Peter';
@@ -531,10 +456,6 @@ export class DashboardPage {
   totalQ1 = 0; totalQ2 = 0;
   quincenaActual: FiltroQuincena = 'TODO';
   collapsed: Record<string, boolean> = { Q1: false, Q2: false, MEN: false };
-  collapsedIng: Record<string, boolean> = { Q1: false, Q2: false, MEN: false };
-  /** La seccion de ingresos arranca oculta: solo se entra a cargar o corregir. */
-  ingresosHidden = true;
-  toggleIngresos() { this.ingresosHidden = !this.ingresosHidden; }
   gastosCollapsed = true;
   /** En modo mensual no hay quincenas: los periodos son el mes completo. */
   get esMensual(): boolean { return this.budget.getConfig().tipoPago === 'mensual'; }
@@ -544,13 +465,10 @@ export class DashboardPage {
   }
   /** Copia de los montos del bolsillo, para los inputs editables. */
   editVals: Record<string, any> = {};
-  newIngConcepto: Record<string, string> = { Q1: '', Q2: '' };
-  newIngMonto: Record<string, any> = { Q1: null, Q2: null };
   private manualToggle = new Set<string>();
-  private manualIngToggle = new Set<string>();
 
-  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController, private cdr: ChangeDetectorRef) {
-    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, logOutOutline, personCircleOutline, trashOutline, addOutline, trendingUpOutline, trendingDownOutline });
+  constructor() {
+    addIcons({ chevronDownOutline, chevronUpOutline, chevronForwardOutline, personCircleOutline, trendingUpOutline, trendingDownOutline, cloudUploadOutline, checkmarkDoneOutline });
     const u = this.auth.currentUser(); if (u) this.userName = u.nombre;
     this.quincenaActual = this.budget.getQuincenaActual();
     this.periodoValido();
@@ -610,7 +528,6 @@ export class DashboardPage {
       .filter((d: any) => !(d.pagados > 0 && d.pagados >= d.pagos))
       .reduce((s: any, d: any) => s + (Number(d.saldo) || 0), 0);
   }
-  getIngresos(q: string) { return this.budget.getIngresos(q as any); }
   getIngresoTotal(q: string) { return this.budget.getIngresoTotal(q as any); }
   ingreso(q: string) { return this.budget.getDineroTotal(q as any); }
   efectivo(q: string) { return this.budget.getDinero(q as any).efectivo; }
@@ -621,7 +538,6 @@ export class DashboardPage {
   pendiente(q: any) { return this.budget.resumenQuincena(q).pendiente; }
   pct(q: any) { const r = this.budget.resumenQuincena(q); return r.previstos ? Math.round((r.reales / r.previstos) * 100) : 0; }
   isCollapsed(q: string) { return !!this.collapsed[q]; }
-  isIngCollapsed(q: string) { return !!this.collapsedIng[q]; }
   go(url: string) { this.router.navigateByUrl(url); }
 
   /** "Q1" -> "Quincena 1", "Q2" -> "Quincena 2", "MEN" -> "Todo el mes". */
@@ -727,8 +643,7 @@ export class DashboardPage {
   /** Posicion de la marca, siempre visible dentro de la barra. */
   get posMarca(): number { return Math.min(99, Math.max(1, this.pctPlaneado)); }
   toggleCollapse(q: string) { this.collapsed[q] = !this.collapsed[q]; if (this.collapsed[q]) this.manualToggle.add(q); else this.manualToggle.delete(q); }
-  toggleIngCollapse(q: string) { this.collapsedIng[q] = !this.collapsedIng[q]; if (this.collapsedIng[q]) this.manualIngToggle.add(q); else this.manualIngToggle.delete(q); }
-  setActual(q: FiltroQuincena) { this.budget.setQuincenaActual(q); this.manualToggle.clear(); this.manualIngToggle.clear(); this.applyAutoCollapse(); }
+  setActual(q: FiltroQuincena) { this.budget.setQuincenaActual(q); this.manualToggle.clear(); this.applyAutoCollapse(); }
   /**
    * Colapso automatico: con "Todo el mes" se ven todos los periodos; al elegir
    * uno, el otro se cierra para que no compita. En modo mensual solo hay uno,
@@ -736,19 +651,15 @@ export class DashboardPage {
    */
   private applyAutoCollapse() {
     const periodos = this.budget.periodos();
-    const abiertos: Record<string, boolean> = {}; const abiertosIng: Record<string, boolean> = {};
-    for (const q of periodos) {
-      const otro = this.quincenaActual === 'TODO' ? false : this.quincenaActual !== q;
-      abiertos[q] = otro; abiertosIng[q] = otro;
-    }
+    const abiertos: Record<string, boolean> = {};
+    for (const q of periodos) abiertos[q] = this.quincenaActual === 'TODO' ? false : this.quincenaActual !== q;
     // Lo que el usuario abrio o cerro a mano se respeta.
-    for (const q of periodos) {
-      if (this.quincenaActual !== 'TODO') {
+    if (this.quincenaActual !== 'TODO') {
+      for (const q of periodos) {
         if (this.manualToggle.has(q)) abiertos[q] = !!this.collapsed[q];
-        if (this.manualIngToggle.has(q)) abiertosIng[q] = !!this.collapsedIng[q];
       }
     }
-    this.collapsed = abiertos; this.collapsedIng = abiertosIng;
+    this.collapsed = abiertos;
   }
   /**
    * Guarda los montos del bolsillo. Se llama solo al cambiar un campo o al
@@ -759,15 +670,23 @@ export class DashboardPage {
     this.budget.patchPresupuesto(q, { efectivo: Number(v.efectivo) || 0, vales: Number(v.vales) || 0, nomina: Number(v.nomina) || 0 });
     this.refresh();
   }
-  async openAddIngresoModal(q: any) {
-    const modal = await this.modalCtrl.create({ component: IngresoModalComponent, cssClass: 'dialog-modal' });
-    await modal.present();
-    const { data } = await modal.onWillDismiss();
-    if (data && data.concepto) { this.budget.addIngreso(q, data.concepto, Number(data.monto)); this.refresh(); }
+  async sincronizar(): Promise<void> {
+    try {
+      await this.backup.sincronizar();
+      await this.aviso('Respaldo enviado');
+    } catch (error) {
+      await this.aviso(error instanceof Error ? error.message : 'No se pudo sincronizar el respaldo.', 'danger');
+    }
   }
-  addIngreso(q: any) { this.openAddIngresoModal(q); }
-  saveIngresoMonto(q: any, ing: any) { this.budget.updateIngreso(q, ing.id, { monto: Number(ing.monto) || 0 }); this.refresh(); }
-  saveIngresoConcepto(q: any, ing: any) { this.budget.updateIngreso(q, ing.id, { concepto: ing.concepto }); this.refresh(); }
-  removeIngreso(q: any, id: string) { this.budget.removeIngreso(q, id); this.refresh(); }
-  logout() { this.auth.logout(); this.router.navigateByUrl('/login'); }
+
+  async cerrarPeriodo(): Promise<void> {
+    const periodo = this.quincenaActual === 'TODO' ? (this.esMensual ? 'MEN' : 'TOTAL') : this.quincenaActual;
+    this.budget.marcarPeriodoCerrado(`${new Date().toISOString().slice(0, 7)}-${periodo}`);
+    await this.sincronizar();
+  }
+
+  private async aviso(mensaje: string, color: 'success' | 'danger' = 'success'): Promise<void> {
+    const toast = await this.toastCtrl.create({ message: mensaje, duration: 2500, color, position: 'bottom' });
+    await toast.present();
+  }
 }

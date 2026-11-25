@@ -102,7 +102,7 @@ import { ConfigApp, RangoIngreso, TipoPago, TipoMembresia } from '../../core/mod
           <span class="aviso-ico" aria-hidden="true"><ion-icon name="alert-circle-outline"></ion-icon></span>
           <div class="aviso-txt">
             <b>Esto borra tus datos actuales</b>
-            <span>Gastos, presupuesto, deudas y movimientos vuelven a ser los de ejemplo. No se puede deshacer.</span>
+            <span>Gastos, presupuesto, cuentas y movimientos vuelven a ser los de ejemplo. No se puede deshacer.</span>
           </div>
         </div>
       }

@@ -344,21 +344,22 @@ export class ImprevistoModalComponent {
      Cuanto va. Tarjeta azul claro con la cifra grande en azul, igual
      que el resumen del dashboard.
      ------------------------------------------------------------------ */
-  .usage{background:var(--c-primary-bg);border-radius:var(--radius-lg);padding:var(--sp-4);
+  .usage{background:var(--c-primary-bg);border-radius:var(--radius-lg);padding:10px 14px;
     box-shadow:var(--shadow);border:1px solid #cfe8ff}
-  .usage-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-3)}
-  .usage-main{min-width:0}
-  .usage .lbl{color:#3f6ea8}
-  .usage-pct{display:block;margin-top:2px;font-size:34px;line-height:1.05;font-weight:900;
+  .usage-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .usage-main{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;min-width:0}
+  .usage .lbl{color:#3f6ea8;font-size:10px}
+  .usage-pct{font-size:24px;line-height:1.1;font-weight:900;
     color:var(--c-primary);font-variant-numeric:tabular-nums;font-family:var(--font-display)}
-  .usage-side{text-align:right;flex:none}
-  .usage-side .money{display:block;margin-top:2px;font-size:15px}
+  .usage-side{display:flex;align-items:baseline;gap:6px;text-align:right;flex:none}
+  .usage-side .money{font-size:13px;white-space:nowrap}
   .faltante{color:var(--warn)}
-  .usage .progress{margin-top:var(--sp-4);background:#fff}
-  .usage-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-top:var(--sp-4)}
-  .usage-stats > div{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:#fff;border:1px solid #e3f0ff;border-radius:var(--radius);box-shadow:0 3px 10px rgba(15,58,93,.04)}
-  .usage-stats b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  .usage .progress{margin-top:8px;height:6px;background:#fff}
+  .usage-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+  .usage-stats > div{display:flex;flex-direction:column;gap:0;padding:0 8px;
+    border-left:1px solid #cfe8ff}
+  .usage-stats > div:first-child{padding-left:0;border-left:none}
+  .usage-stats b{font-size:13px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
   /* Verde = ya pagado, ambar = todavia falta. Solo informacion, nunca adorno. */
   .money.ok{color:var(--ok)}
   .money.warn{color:var(--warn)}

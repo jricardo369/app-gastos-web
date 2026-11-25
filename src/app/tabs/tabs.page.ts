@@ -1,7 +1,7 @@
 import { Component, EnvironmentInjector, inject } from '@angular/core';
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { gridOutline, walletOutline, cardOutline, peopleOutline, swapHorizontalOutline, logOutOutline } from 'ionicons/icons';
+import { gridOutline, trendingUpOutline, walletOutline, cardOutline, swapHorizontalOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-tabs',
@@ -13,6 +13,6 @@ export class TabsPage {
   public environmentInjector = inject(EnvironmentInjector);
 
   constructor() {
-    addIcons({ gridOutline, walletOutline, cardOutline, peopleOutline, swapHorizontalOutline, logOutOutline });
+    addIcons({ gridOutline, trendingUpOutline, walletOutline, cardOutline, swapHorizontalOutline });
   }
 }

@@ -128,10 +128,17 @@ export class MovModalComponent {
   .count{font-family:'Nunito', sans-serif;font-size:11px;font-weight:700;color:var(--text-faint)}
   .head ion-button{margin:0;min-height:34px}
 
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);padding:var(--sp-3) var(--sp-4)}
-  .stat{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
-  .stat b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  .head-card{padding:12px 14px!important;gap:2px}
+  .head-card > .lbl{color:#3f6ea8;font-size:11px;font-weight:800;letter-spacing:.01em}
+  .head-card .money.big{margin-top:1px;font-size:30px;line-height:1.15;letter-spacing:-.03em;color:var(--c-primary);
+    font-family:var(--font-display);font-weight:900;font-variant-numeric:tabular-nums}
+  .head-card .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px;
+    padding-top:8px;border-top:1px solid #cfe8ff}
+  .head-card .stat{display:flex;flex-direction:column;gap:1px;min-width:0;padding:3px 0;
+    background:transparent;border:0;border-bottom:1px solid #dceeff;border-radius:0;box-shadow:none}
+  .head-card .stat .lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#5f7392;white-space:nowrap}
+  .head-card .stat b.money{font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--c-primary-dark);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
 
   .list{display:flex;flex-direction:column}
 

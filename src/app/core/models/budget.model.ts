@@ -43,3 +43,21 @@ export const MEMBRESIAS: { id: TipoMembresia; etiqueta: string; detalle: string;
   { id: 'mensual', etiqueta: 'Mensual', detalle: 'Se renueva cada mes', precio: 99 },
   { id: 'anual', etiqueta: 'Anual', detalle: 'Se renueva cada año, más económica', precio: 990 },
 ];
+
+export type PeriodosCerrados = Record<string, string>;
+
+export interface BackupSnapshot {
+  version: number;
+  presupuesto: Presupuesto;
+  gastos: Gasto[];
+  imprevistos: Imprevisto[];
+  pagosTC: PagoTC[];
+  config: ConfigApp;
+  deudas: Deuda[];
+  deudores: Deudor[];
+  deudoresLista: Deuda[];
+  movimientos: Movimiento[];
+  movConfig: { fechaCorte: number; fechaPago: number; ppngi: number };
+  quincenaActual: FiltroQuincena;
+  periodosCerrados: PeriodosCerrados;
+}

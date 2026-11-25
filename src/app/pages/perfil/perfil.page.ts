@@ -1,18 +1,19 @@
-import { Component } from '@angular/core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, ModalController } from '@ionic/angular';
+import { Component, inject } from '@angular/core';
+import { IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonText, ModalController, AlertController } from '@ionic/angular';
 import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { BudgetService } from '../../core/services/budget.service';
 import { AuthService } from '../../core/services/auth.service';
+import { BackupEstado, BackupService } from '../../core/services/backup.service';
 import { addIcons } from 'ionicons';
-import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline } from 'ionicons/icons';
+import { chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline, logOutOutline } from 'ionicons/icons';
 import { ResetWizardComponent } from './reset-wizard.component';
 import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/budget.model';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, CurrencyPipe],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonIcon, IonButton, IonButtons, IonText, CurrencyPipe],
   template: `
   <ion-header class="hdr">
     <ion-toolbar>
@@ -34,31 +35,21 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
         <div class="perfil-info">
           <b class="nombre">{{ nombre }}</b>
           <span class="mail">{{ email }}</span>
-          <span class="lbl">Miembro desde {{ miembroDesde }}</span>
         </div>
       </div>
 
-      <!-- 2. Suscripcion: ficticia, mensual y vigente.
-             El estado va con color semantico (verde = al dia) porque informa,
-             no decora. El resto de la tarjeta es neutro. -->
       <div class="section-title">Suscripción</div>
       <div class="card sub">
         <div class="sub-head">
           <div class="sub-plan">
             <span class="lbl">Plan actual</span>
-            <b class="plan">Premium</b>
+            <b class="plan">{{ etiquetaPlanReal }}</b>
           </div>
-          <span class="badge"><ion-icon name="checkmark-circle-outline"></ion-icon> {{ suscripcion.estado }}</span>
-        </div>
-        <div class="sub-precio">
-          <b class="money">{{ suscripcion.precio | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <span class="lbl">/ {{ suscripcion.periodo }} · se renueva automáticamente</span>
+          <span class="badge"><ion-icon name="checkmark-circle-outline"></ion-icon> {{ estadoMembresia }}</span>
         </div>
         <hr class="sep" />
-        <div class="row"><span>Próximo cobro</span><b>{{ proximoCobro }}</b></div>
-        <div class="row"><span>Método de pago</span><b>{{ suscripcion.metodo }}</b></div>
-        <div class="row"><span>Ciclos pagados</span><b>{{ suscripcion.ciclosPagados }} de {{ suscripcion.ciclosPagados }}</b></div>
-        <div class="row"><span>Suscripción desde</span><b>{{ suscripcion.desde }}</b></div>
+        <div class="row"><span>Vigencia</span><b>{{ vigenciaMembresia }}</b></div>
+        <div class="row"><span>Usuario</span><b>{{ usuario }}</b></div>
       </div>
 
       <!-- 3. Resumen del mes: los mismos numeros que ve el dashboard, pero
@@ -113,8 +104,20 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
         </div>
         <div class="row"><span>Rango de ingreso</span><b>{{ etiquetaRango }}</b></div>
         <div class="row"><span>Tipo de pago</span><b>{{ etiquetaPago }}</b></div>
-        <div class="row"><span>Membresía</span><b>{{ etiquetaMembresia }}</b></div>
-        <p class="config-hint">Para cambiarla, restablecé los datos: te va a preguntar de nuevo.</p>
+        <div class="row"><span>Plan de ejemplo</span><b>{{ etiquetaMembresia }}</b></div>
+        <p class="config-hint">Para cambiarlo, restablecé los datos: te va a preguntar de nuevo.</p>
+      </div>
+
+      <div class="card sync">
+        <div class="config-head">
+          <span class="lbl">Respaldo en la nube</span>
+          <span class="lbl">{{ ultimoSync }}</span>
+        </div>
+        <p class="config-hint">Sube una copia de tus datos. No descarga ni comparte información con otras personas.</p>
+        @if (estadoSync.error) { <ion-text color="danger" class="err">{{ estadoSync.error }}</ion-text> }
+        <ion-button expand="block" fill="outline" [disabled]="estadoSync.sincronizando" (click)="sincronizar()">
+          {{ estadoSync.sincronizando ? 'Sincronizando…' : 'Sincronizar ahora' }}
+        </ion-button>
       </div>
 
       <div class="card danger">
@@ -124,6 +127,10 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
           <ion-icon slot="start" name="refresh-outline"></ion-icon> Restablecer datos
         </ion-button>
       </div>
+
+      <ion-button expand="block" fill="outline" color="danger" (click)="logout()">
+        <ion-icon slot="start" name="log-out-outline"></ion-icon> Cerrar sesión
+      </ion-button>
     </div>
   </ion-content>
   `,
@@ -167,6 +174,7 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
   .config .row{padding:9px 0}
   .config-hint{margin:var(--sp-3) 0 0;font-size:12px;color:var(--text-muted);
     line-height:1.4}
+  .err{display:block;margin:var(--sp-2) 0;font-size:12px}
 
   .resumen-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap}
   .gastado{font-size:26px;letter-spacing:-.02em}
@@ -192,25 +200,16 @@ import { RANGOS, TIPOS_PAGO, MEMBRESIAS, ConfigApp } from '../../core/models/bud
   `]
 })
 export class PerfilPage {
-  /**
-   * La suscripcion que se muestra sale de la membresia elegida en el wizard:
-   * asi el perfil siempre dice la verdad sobre lo que se selecciono.
-   */
-  suscripcionBase = {
-    estado: 'Vigente',
-    metodo: 'Visa •••• 4242',
-    desde: '12 sep 2025',
-    ciclosPagados: 13,
-  };
-  get suscripcion() {
-    return this.config.membresia === 'anual'
-      ? { ...this.suscripcionBase, plan: 'Premium', precio: 990, periodo: 'año' }
-      : { ...this.suscripcionBase, plan: 'Premium', precio: 99, periodo: 'mes' };
-  }
-  miembroDesde = 'sep 2025';
+  private budget = inject(BudgetService);
+  private auth = inject(AuthService);
+  private backup = inject(BackupService);
+  private router = inject(Router);
+  private modalCtrl = inject(ModalController);
+  private alertCtrl = inject(AlertController);
+
   topCategorias: { id: string; nombre: string; color: string; total: number; pct: number }[] = [];
-  /** Rango, tipo de pago y membresia elegidos al restablecer. */
   config: ConfigApp = this.budget.getConfig();
+  estadoSync: BackupEstado = { sincronizando: false, ultimo: null, error: null };
 
   gastadoMes = 0;
   previstoMes = 0;
@@ -218,8 +217,9 @@ export class PerfilPage {
   sobranteMes = 0;
   pctMes = 0;
 
-  constructor(private budget: BudgetService, private auth: AuthService, private router: Router, private modalCtrl: ModalController) {
-    addIcons({ chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline });
+  constructor() {
+    addIcons({ chevronBackOutline, checkmarkCircleOutline, refreshOutline, calendarOutline, cardOutline, logOutOutline });
+    this.backup.estado$.subscribe(estado => this.estadoSync = estado);
     this.budget.gastos$.subscribe(() => this.refresh());
     this.budget.imprevistos$.subscribe(() => this.refresh());
     this.budget.presupuesto$.subscribe(() => this.refresh());
@@ -230,17 +230,35 @@ export class PerfilPage {
 
   get nombre(): string { return this.auth.currentUser()?.nombre || 'Usuario'; }
   get email(): string { return this.auth.currentUser()?.email || 'sin correo'; }
-  /** Primera letra del nombre, para el avatar. */
   get inicial(): string { return this.nombre.trim().charAt(0).toUpperCase() || '?'; }
   get mesActual(): string {
     return new Date().toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
   }
-  /** Primer dia del mes siguiente: cuando toca el proximo cargo. */
-  get proximoCobro(): string {
-    const d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() + 1);
-    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  get usuario(): string { return this.auth.currentUser()?.nombre || 'Sin usuario'; }
+  get etiquetaPlanReal(): string {
+    const tipo = this.auth.membresiaActual()?.tipo;
+    return tipo === 'YEAR' ? 'Anual' : tipo === 'MONTH' ? 'Mensual' : 'Sin plan';
+  }
+  get estadoMembresia(): string {
+    return this.auth.membresiaActual()?.estado || 'Sin membresía';
+  }
+  get vigenciaMembresia(): string {
+    const membresia = this.auth.membresiaActual();
+    if (!membresia?.fechaInicio || !membresia.fechaFin) return 'Sin vigencia';
+    return `${this.fecha(membresia.fechaInicio)} – ${this.fecha(membresia.fechaFin)}`;
+  }
+  get ultimoSync(): string {
+    if (!this.estadoSync.ultimo) return 'Sin respaldos';
+    return this.fecha(this.estadoSync.ultimo);
+  }
+
+  private fecha(valor: string): string {
+    const fecha = new Date(valor);
+    return isNaN(fecha.getTime()) ? valor : fecha.toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  async sincronizar(): Promise<void> {
+    try { await this.backup.sincronizar(); } catch { return; }
   }
 
   private refresh() {
@@ -263,6 +281,25 @@ export class PerfilPage {
   }
 
   back() { this.router.navigateByUrl('/tabs/dashboard'); }
+
+  async logout(): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Cerrar sesión',
+      message: '¿Realmente deseas cerrar sesión?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          role: 'destructive',
+          handler: async () => {
+            this.auth.logout();
+            await this.router.navigateByUrl('/login', { replaceUrl: true });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
 
   get etiquetaRango(): string { return RANGOS.find(r => r.id === this.config.rango)?.etiqueta ?? ''; }
   get etiquetaPago(): string { return TIPOS_PAGO.find(t => t.id === this.config.tipoPago)?.etiqueta ?? ''; }

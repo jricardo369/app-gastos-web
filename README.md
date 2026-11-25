@@ -2,7 +2,7 @@
 
 App móvil híbrida con **Ionic + Angular (standalone)** para gestionar el presupuesto del hogar por **quincenas (Q1 / Q2)**: ingresos, gastos fijos/manuales, imprevistos, pagos de tarjeta, deudas, deudores y movimientos.
 
-> Estado actual: **MODO LOCAL** (sin backend). Todo se guarda en `localStorage` con prefijo `gastos_`. El código para backend REST (`http://localhost:8080/api/v1`) existe pero está desactivado.
+> Estado actual: datos locales en `localStorage` (prefijo `gastos_`) + autenticación/respaldo en la API. La app no descarga ni comparte datos: solo sube un snapshot cuando se sincroniza.
 
 ## Stack
 
@@ -107,7 +107,7 @@ MAYÚSCULAS.
 **Las cifras siempre en Nunito con `tabular-nums`.** Comfortaa queda solo para
 títulos. Las columnas de dinero alinean y se comparan de un vistazo.
 
-**Filas en vez de tablas.** Las tablas de Deudas y Movimientos usaban
+**Filas en vez de tablas.** Las tablas de Cuentas y Movimientos usaban
 `grid-template-columns` con anchos fijos en píxeles: en un teléfono de 360px
 sumaban más del ancho disponible y se desbordaban con scroll horizontal.
 Ahora cada registro es una fila flexible con el monto a la derecha, que se
@@ -117,7 +117,7 @@ acomoda a cualquier ancho sin cortar contenido.
 
 En el dashboard el orden es: selector de periodo, **veredicto**, **saldo
 previsto**, **detalle por quincena**, **cuentas pendientes** (cuentas por pagar
-y me deben), gastos por categoría e ingresos (cerrada).
+y me deben) y gastos por categoría.
 
 Cada cifra aparece una sola vez. Hubo una tarjeta "Uso del presupuesto" con el
 porcentaje de gasto contra lo previsto, pero el detalle de cada quincena ya
@@ -134,15 +134,14 @@ dinero de la quincena en curso, mientras que cuentas por pagar y me deben son
 obligaciones que viven fuera del ciclo quincenal. Si estuvieran arriba
 compitían con el veredicto, que es lo que responde "¿cómo voy?".
 
-Pestañas: `Inicio`, `Gastos`, `Deudas`, `Me deben`, `Movs`. Las etiquetas
-cortas entran en pantallas angostas; "Cuentas por Pagar" no entraba.
+Pestañas: `Inicio`, `Ingresos`, `Gastos`, `Cuentas`, `Movs`. Dentro de Cuentas,
+el selector del header alterna entre `Deudas` y `Me deben`; las etiquetas
+cortas entran en pantallas angostas.
 
-**Secciones que se abren con un clic.** Ingresos arranca oculta. Es la única
-sección que es solo de edición: no aporta nada a la lectura del estado
-financiero y se usa de vez en cuando, así que no tiene por qué competir por
-espacio con las cifras. El encabezado dice "tocar para cargar o editar" para
-que se entienda que hay algo adentro. Cuando está abierta, cada quincena
-conserva su propio colapso.
+**Ingresos en su propia pestaña.** El tab `Ingresos` muestra el total del
+periodo y permite cargar, editar y borrar los ingresos de cada quincena. El
+dashboard sigue leyendo esos mismos datos para sus cálculos; solo dejó de
+mostrar la sección de edición.
 
 Ojo con `[hidden]` en Angular: el `display:none` que el navegador aplica al
 atributo es de menor prioridad que cualquier `display` de autor, así que un
@@ -189,28 +188,32 @@ src/
 ├── global.scss / theme/variables.scss
 ├── assets/                  # icon/favicon.png, shapes.svg
 ├── environments/
-│   ├── environment.ts       # production: false
-│   └── environment.prod.ts  # production: true (fileReplacements en angular.json)
+│   ├── environment.ts       # apiUrl: http://localhost:8080/seg-gastos/api/v1
+│   └── environment.prod.ts  # apiUrl de producción (fileReplacements en angular.json)
 └── app/
     ├── app.component.ts/html/scss  # <ion-app><ion-router-outlet>
-    ├── app.routes.ts        # /login (pública) + '' -> tabs (con authGuard) + ** redirect
+    ├── app.routes.ts        # /login, /registro, /sin-membresia + '' -> tabs (con authGuard)
     ├── tabs/
-    │   ├── tabs.page.*      # IonTabs + TabBar (5 tabs + logout)
-    │   └── tabs.routes.ts   # hijos: dashboard, gastos, deudas, deudores, movimientos
+    │   ├── tabs.page.*      # IonTabs + TabBar (5 tabs)
+    │   └── tabs.routes.ts   # hijos: dashboard, ingresos, gastos, cuentas, movimientos
     ├── pages/
-    │   ├── login/           # LoginPage (email demo@hogar.com, validación local mín. 4 chars)
-    │   ├── dashboard/       # Resumen quincenal + ingresos (modal IngresoModalComponent)
+    │   ├── login/           # LoginPage (usuario/password contra la API)
+    │   ├── registro/        # Registro con plan MONTH/YEAR
+    │   ├── sin-membresia/   # Acceso bloqueado sin membresía activa
+    │   ├── dashboard/       # Resumen quincenal + sync/cierre de periodo
+    │   ├── ingresos/        # Ingresos por quincena (alta, edición y borrado)
     │   ├── gastos/          # Gastos por categoría/Q + imprevistos (modales Gasto/Imprevisto, alta y edición)
-    │   ├── deudas/          # Pagos TC a meses (modal TcModalComponent)
-    │   ├── deudores/        # Quién me debe / a quién debo (modal DeudorSimpleModal)
-    │   └── movimientos/     # Compras vs abonos + config corte/pago (modal MovModalComponent)
+    │   ├── cuentas/         # Deudas y Me deben en una pantalla (selector en el header)
+    │   ├── movimientos/     # Compras vs abonos + config corte/pago (modal MovModalComponent)
+    │   └── perfil/          # Usuario, membresía real y sincronización manual
     ├── core/
-    │   ├── guards/auth.guard.ts      # hoy: return true (acceso directo)
+    │   ├── guards/auth.guard.ts      # exige sesión + membresía activa
     │   ├── models/budget.model.ts    # Quincena, Gasto, Imprevisto, Presupuesto, Deuda, PagoTC, Deudor, Movimiento...
     │   └── services/
     │       ├── storage.service.ts    # wrapper localStorage prefijo gastos_ (+ fallback memoria)
-    │       ├── auth.service.ts       # login local o REST, token local-xxx, user$ observable
-    │       └── budget.service.ts     # estado + CRUD + seeds + migraciones + resumenQuincena()
+    │       ├── auth.service.ts       # login/registro/me, JWT, membresía, authFetch()
+    │       ├── backup.service.ts     # POST /respaldos con snapshot local
+    │       └── budget.service.ts     # estado + CRUD + seeds + migraciones + snapshot()
     ├── tab1|tab2|tab3/      # páginas de plantilla Ionic (no usadas en tabs.routes)
     └── explore-container/   # componente de plantilla Ionic
 ```
@@ -219,39 +222,50 @@ Config raíz: `angular.json` (output `www/`, budgets 2MB warn/5MB err, lint, tes
 
 ## Funcionalidad por página
 
-- **Login** (`pages/login`): formulario email/password. En modo local acepta cualquier email con password ≥ 4. Guarda `gastos_auth_user` + `gastos_auth_token`.
-- **Dashboard** (`pages/dashboard`): selector Q1/Q2/TODO, totales de dinero (efectivo/vales/nómina), lista de ingresos por quincena, resumen (previstos, reales, sobrante, pendiente), alta/edición de ingresos por modal.
+- **Login** (`pages/login`): usuario/password reales contra `POST /auth/login`; guarda JWT, usuario y membresía. Si la membresía no está activa, va a `/sin-membresia`.
+- **Registro** (`pages/registro`): alta con usuario, nombre, correo, contraseña (6+) y plan mensual/anual.
+- **Dashboard** (`pages/dashboard`): selector Q1/Q2/TODO, totales, resumen, saldo previsto, detalle por quincena, cuentas pendientes, gastos por categoría y bolsillo editable; botones de sincronizar y cerrar periodo (ambos suben snapshot).
+- **Ingresos** (`pages/ingresos`): selector Q1/Q2/TODO, total del periodo y CRUD de ingresos por quincena. Comparte el estado `presupuesto` con el dashboard, que sigue usándolo para sus cálculos.
 - **Gastos** (`pages/gastos`): gastos fijos y manuales agrupados por 10 categorías (hogar, escuelas, carro, ejercicio, crédito, la marina, adic., impv., ahorro, ropa), toggle pagado, CRUD + imprevistos con fecha.
-- **Deudas** (`pages/deudas`): pagos de tarjeta a meses (fecha compra, monto, mensualidad total/pagadas, montoTotal), marcar pagado, CRUD.
-- **Deudores** (`pages/deudores`): dos listas — `deudores` simple (nombre/monto/faltaPago) y `deudoresLista` detallada (fechas, desc, pagos/pagados, estatus).
+- **Cuentas** (`pages/cuentas`): selector en el header entre **Deudas** (deudas generales y pagos de tarjeta a meses) y **Me deben** (`deudoresLista` con fechas, desc, pagos/pagados y vencimientos). CRUD e historial en ambas vistas.
 - **Movimientos** (`pages/movimientos`): libro compras/abonos con fecha, config `movConfig` (fechaCorte 13, fechaPago 6, ppngi 1280).
+- **Perfil** (`pages/perfil`): usuario, membresía real, último respaldo y sincronización manual.
+- **Sin membresía** (`pages/sin-membresia`): bloquea la app pero conserva los datos locales.
 
 ## Core: modelos y servicios
 
-**Modelos** (`core/models/budget.model.ts`): `Quincena='Q1'|'Q2'`, `FiltroQuincena`, `Categoria`, `Gasto`, `Imprevisto`, `IngresoEntry`, `Dinero`, `Presupuesto {q1,q2}`, `Deuda`, `PagoTC`, `Deudor`, `Movimiento`.
+**Modelos** (`core/models/budget.model.ts`): `Quincena`, `FiltroQuincena`, `Categoria`, `Gasto`, `Imprevisto`, `IngresoEntry`, `Dinero`, `Presupuesto`, `Deuda`, `PagoTC`, `Deudor`, `Movimiento`, `BackupSnapshot`, `PeriodosCerrados`.
 
 **StorageService**: `get/set/remove` con prefijo `gastos_`, JSON + fallback en memoria fuera del navegador.
 
-**BudgetService** (`useRest=false`):
-- Observables: `presupuesto$, gastos$, imprevistos$, pagosTC$, deudas$, deudores$, deudoresLista$, movimientos$, movConfig$, quincenaActual$`.
+**BudgetService**:
+- Observables: `presupuesto$`, `gastos$`, `imprevistos$`, `pagosTC$`, `deudas$`, `deudores$`, `deudoresLista$`, `movimientos$`, `movConfig$`, `quincenaActual$`.
 - Seeds al primer arranque: presupuesto Q1/Q2 ($13,500 nómina + $1,345 vales), ~34 gastos fijos por quincena, 10 pagos TC ejemplo, movimientos ejemplo, 1 deudor ejemplo.
 - Migraciones automáticas de formato viejo de `presupuesto` y `pagosTC`.
-- Métodos: CRUD completo de ingresos, gastos, imprevistos, pagosTC, deudas, deudores, movimientos + `resumenQuincena(q)` y `breakdownCategoria(q)`.
+- CRUD completo + `resumenQuincena(q)`, `breakdownCategoria(q)`, `snapshot()` y `marcarPeriodoCerrado(clave)`.
 
-**AuthService** (`useRest=false`, `restBaseUrl=http://localhost:8080/api/v1`):
-- Local: `login()` valida y genera token `local-xxx`. REST (si se activa): `POST /auth/login` → `{ data: { token, usuario } }`.
-- Helpers: `isAuthenticated()`, `currentUser()`, `getToken()`, `getUserId()`, `logout()`, `authHeaders()`, `authFetch()`.
+**AuthService**:
+- `login()` → `POST /auth/login`; `register()` → `POST /auth/register`; `refreshSession()` → `GET /auth/me`.
+- Guarda JWT y membresía; `getToken()`, `currentUser()`, `membresiaActual()`, `tieneMembresia()`, `logout()`, `authFetch()`.
+- 401 cierra la sesión; 403 marca membresía inactiva.
 
-**authGuard**: hoy retorna `true` siempre. Para reactivar backend, descomentar la validación con `AuthService` + redirect a `/login` (ver comentarios en el archivo).
+**BackupService**: `sincronizar()` arma `{ schemaVersion: 1, payload: JSON.stringify(snapshot()) }` y hace `POST /respaldos`. No descarga datos.
+
+**authGuard**: exige `tieneMembresia()`; redirige a `/login` o `/sin-membresia`. `main.ts` valida la sesión antes de arrancar con `APP_INITIALIZER`.
 
 ## Rutas
 
 ```
 /login                        -> LoginPage (pública)
-/tabs/dashboard               -> DashboardPage (default)
+/registro                     -> RegistroPage (pública)
+/sin-membresia                -> SinMembresiaPage (pública, requiere sesión)
+/tabs/dashboard               -> DashboardPage (default, con guard)
+/tabs/ingresos                -> IngresosPage
 /tabs/gastos                  -> GastosPage
-/tabs/deudas                  -> DeudasPage
-/tabs/deudores                -> DeudoresPage
+/tabs/perfil                  -> PerfilPage
+/tabs/cuentas                 -> CuentasPage (selector: ?tab=deudas|deudores)
+/tabs/deudas                  -> redirect a /tabs/cuentas?tab=deudas
+/tabs/deudores                -> redirect a /tabs/cuentas?tab=deudores
 /tabs/movimientos             -> MovimientosPage
 **                            -> redirect ''
 ```
@@ -260,7 +274,7 @@ Config raíz: `angular.json` (output `www/`, budgets 2MB warn/5MB err, lint, tes
 
 ## Datos locales (keys `gastos_*`)
 
-`auth_user, auth_token, presupuesto, gastos, imprevistos, pagosTC, deudas, deudores, deudoresLista, movimientos, movConfig, quincenaActual`. Borrar `localStorage` restaura los seeds.
+`auth_user, auth_token, auth_membresia, auth_membresia_activa, presupuesto, gastos, imprevistos, pagosTC, config, deudas, deudores, deudoresLista, movimientos, movConfig, quincenaActual, periodosCerrados, ultimo_respaldo`. Borrar `localStorage` restaura los seeds y cierra la sesión.
 
 ## Deploy web (EC2, puerto 80 `/app-gastos/`)
 
@@ -340,7 +354,7 @@ npx cap open android   # / ios
 
 ## Notas para quien inicia
 
-1. Todo funciona sin backend: entra a `/login` con cualquier email y clave de 4+ caracteres (o directo a `/tabs/dashboard` porque el guard está abierto).
+1. La API debe estar corriendo en `environment.apiUrl` para entrar. Si la membresía no está activa, la app bloquea el acceso pero conserva `localStorage`.
 2. Los montos seed ($13,500, vales, gastos ejemplo) son datos de prueba en `budget.service.ts` (`DEFAULT_PRESUPUESTO`, `seedGastos()`, `DEFAULT_PAGOS_TC`, `DEFAULT_MOVIMIENTOS`).
-3. Para conectar backend real: pon `useRest=true` en `AuthService` y `BudgetService` + ajusta `restBaseUrl`, y reactiva `auth.guard.ts`.
+3. Para producción, cambia `apiUrl` en `environment.prod.ts` por la URL real del API (incluye `/seg-gastos/api/v1`).
 4. `tab1/tab2/tab3` y `explore-container` son plantilla del starter Ionic — se pueden borrar si no se usan.
