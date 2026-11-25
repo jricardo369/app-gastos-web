@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.tudominio.com/seg-gastos/api/v1'
+  apiUrl: 'http://ec2-54-215-12-132.us-west-1.compute.amazonaws.com/seg-gastos/api/v1'
 };
