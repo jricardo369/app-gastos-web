@@ -7,6 +7,8 @@ import { Gasto, Imprevisto, Quincena } from '../../core/models/budget.model';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline, addOutline, chevronForwardOutline, trashOutline, walletOutline, alertCircleOutline, calendarOutline } from 'ionicons/icons';
 
+const ORDEN_CATEGORIAS = ['hogar', 'escuelas', 'ejercicio', 'credito', 'lamarina', 'adic', 'impv'];
+
 @Component({
   selector: 'app-gasto-modal',
   standalone: true,
@@ -477,7 +479,15 @@ export class GastosPage {
     // Refresca la lista cuando cambia un gasto (incluido el gastado parcial).
     this.budget.gastos$.subscribe(() => this.cdr.markForCheck());
   }
-  gastos(q: Quincena) { return this.budget.getGastos(q); }
+  private ordenCategoria(id: string) {
+    const i = ORDEN_CATEGORIAS.indexOf(id);
+    return i < 0 ? ORDEN_CATEGORIAS.length : i;
+  }
+  gastos(q: Quincena) {
+    return this.budget.getGastos(q)
+      .slice()
+      .sort((a, b) => this.ordenCategoria(a.categoriaId) - this.ordenCategoria(b.categoriaId));
+  }
   imprevistos(q: Quincena) { return this.budget.getImprevistos(q); }
   previstos(q: Quincena) { return this.budget.resumenQuincena(q).previstos; }
   reales(q: Quincena) { return this.budget.resumenQuincena(q).reales; }

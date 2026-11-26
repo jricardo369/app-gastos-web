@@ -82,6 +82,11 @@ export class MovModalComponent {
             <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
           </ion-button>
         </header>
+        <div class="totals">
+          <div class="tot"><span class="lbl">Compras</span><b class="money out">{{ totalCompras | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="tot"><span class="lbl">Abonos</span><b class="money in">{{ totalAbonos | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          <div class="tot"><span class="lbl">Saldo</span><b class="money">{{ saldoFinal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+        </div>
         <div class="list">
           @for (r of rows; track r.id){
             <div class="li row-click" role="button" tabindex="0"
@@ -105,11 +110,6 @@ export class MovModalComponent {
               <ion-button size="small" class="btn-add" (click)="openAdd()">Agregar movimiento</ion-button>
             </div>
           }
-        </div>
-        <div class="totals">
-          <div class="tot"><span class="lbl">Compras</span><b class="money out">{{ totalCompras | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div class="tot"><span class="lbl">Abonos</span><b class="money in">{{ totalAbonos | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          <div class="tot"><span class="lbl">Saldo</span><b class="money">{{ saldoFinal | currency:'MXN':'symbol':'1.0-0' }}</b></div>
         </div>
       </div>
     </div>
@@ -164,12 +164,13 @@ export class MovModalComponent {
   .row-click:hover{background:var(--surface-sunken)}
   .row-click:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 
-  /* Totales al final, igual que en la pestaña de deudas */
-  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);
-    padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--border-subtle)}
-  .tot{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
-  .tot b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  /* Totales antes del listado: quedan visibles aunque haya muchos registros */
+  .totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+    padding:8px 14px;border-bottom:1px solid var(--border-subtle)}
+  .tot{display:flex;flex-direction:column;gap:1px;min-width:0;padding:2px 0}
+  .tot .lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--c-muted)}
+  .tot b{font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text-strong);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
   .tot b.in{color:var(--ok)}
   .tot b.out{color:var(--bad)}
 
