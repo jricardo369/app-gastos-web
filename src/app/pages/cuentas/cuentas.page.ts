@@ -113,11 +113,6 @@ export class DeudorSimpleModalComponent {
         <div class="card head-card">
           <span class="lbl">Deudas generales</span>
           <b class="money big">{{ totalLa | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <div class="stats">
-            <div class="stat"><span class="lbl">Activas</span><b class="money">{{ deudasActivas.length }}</b></div>
-            <div class="stat"><span class="lbl">Mensual</span><b class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-            <div class="stat"><span class="lbl">Liquidadas</span><b class="money ok">{{ historialMarina.length }}</b></div>
-          </div>
         </div>
 
         <div class="card">
@@ -130,6 +125,11 @@ export class DeudorSimpleModalComponent {
               <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
             </ion-button>
           </header>
+          <div class="totals">
+            <div class="tot"><span class="lbl">Activas</span><b class="money">{{ deudasActivas.length }}</b></div>
+            <div class="tot"><span class="lbl">Mensual</span><b class="money">{{ deudaMarinaMensual | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+            <div class="tot"><span class="lbl">Liquidadas</span><b class="money ok">{{ historialMarina.length }}</b></div>
+          </div>
           <div class="list">
             @for (d of deudasActivas; track d.id){
               <div class="li row-click" role="button" tabindex="0"
@@ -198,6 +198,11 @@ export class DeudorSimpleModalComponent {
               <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
             </ion-button>
           </header>
+          <div class="totals">
+            <div class="tot"><span class="lbl">Mensual</span><b class="money out">{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+            <div class="tot"><span class="lbl">Total</span><b class="money">{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+            <div class="tot"><span class="lbl">Pagado</span><b class="money in">{{pagadoTC | currency:'MXN':'symbol':'1.0-0'}}</b></div>
+          </div>
           <div class="list">
             @for (p of pagosActivos; track p.id){
               <div class="li row-click" role="button" tabindex="0"
@@ -232,11 +237,6 @@ export class DeudorSimpleModalComponent {
               </div>
             }
           </div>
-          <div class="totals">
-            <div class="tot"><span class="lbl">Mensual</span><b class="money">{{deudaMensual | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="tot"><span class="lbl">Total</span><b class="money">{{deudaGeneral | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-            <div class="tot"><span class="lbl">Pagado</span><b class="money ok">{{pagadoTC | currency:'MXN':'symbol':'1.0-0'}}</b></div>
-          </div>
           <div class="card-foot">
             <ion-button size="small" fill="clear" (click)="historialVisible=!historialVisible">
               <ion-icon slot="start" [name]="historialVisible ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
@@ -263,11 +263,6 @@ export class DeudorSimpleModalComponent {
         <div class="card head-card">
           <span class="lbl">Total por cobrar</span>
           <b class="money big">{{ total | currency:'MXN':'symbol':'1.0-0' }}</b>
-          <div class="stats">
-            <div class="stat"><span class="lbl">Personas</span><b class="money">{{ activos.length }}</b></div>
-            <div class="stat"><span class="lbl">Vencidos</span><b class="money" [class.warn]="vencidos.length > 0">{{ vencidos.length }}</b></div>
-            <div class="stat"><span class="lbl">Cobrado</span><b class="money ok">{{ cobrado | currency:'MXN':'symbol':'1.0-0' }}</b></div>
-          </div>
         </div>
 
         <div class="card">
@@ -280,6 +275,11 @@ export class DeudorSimpleModalComponent {
               <ion-icon slot="start" name="add-outline" aria-hidden="true"></ion-icon>Agregar
             </ion-button>
           </header>
+          <div class="totals">
+            <div class="tot"><span class="lbl">Personas</span><b class="money">{{ activos.length }}</b></div>
+            <div class="tot"><span class="lbl">Vencidos</span><b class="money" [class.warn]="vencidos.length > 0">{{ vencidos.length }}</b></div>
+            <div class="tot"><span class="lbl">Cobrado</span><b class="money ok">{{ cobrado | currency:'MXN':'symbol':'1.0-0' }}</b></div>
+          </div>
           <div class="list">
             @for (d of activos; track d.id){
               <div class="li row-click" role="button" tabindex="0"
@@ -394,11 +394,17 @@ export class DeudorSimpleModalComponent {
   .icon-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
   .ok{color:var(--positive);font-size:16px;flex:none}
 
-  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);
-    padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--border-subtle)}
-  .tot{display:flex;flex-direction:column;gap:2px;padding:var(--sp-2) var(--sp-3);
-    background:var(--surface-sunken);border-radius:var(--radius)}
-  .tot b{font-size:14px;font-weight:800;color:var(--text-strong);font-variant-numeric:tabular-nums}
+  /* Totales antes del listado, igual que en movimientos */
+  .totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+    padding:8px 14px;border-bottom:1px solid var(--border-subtle)}
+  .tot{display:flex;flex-direction:column;gap:1px;min-width:0;padding:2px 0}
+  .tot .lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--c-muted)}
+  .tot b{font-family:var(--font-display);font-size:14px;font-weight:900;color:var(--text-strong);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tot b.in{color:var(--ok)}
+  .tot b.out{color:var(--bad)}
+  .tot b.ok{color:var(--ok)}
+  .tot b.warn{color:var(--warn)}
 
   .card-foot{display:flex;justify-content:center;padding:0 var(--sp-2) var(--sp-1)}
   .card-foot ion-button{margin:0;min-height:36px}
