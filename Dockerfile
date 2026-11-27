@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # App Ionic/Angular (app-gastos) -> build de produccion + nginx en Docker
 # Puerto interno: 80 (solo red interna de docker compose; el puerto 80 del host
 # lo publica el reverse proxy de sitios-deploy-vjtech en la ruta /app-gastos/)
@@ -12,7 +13,7 @@ WORKDIR /app
 
 # Instalar dependencias (capa cacheada)
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 
 # Codigo fuente
 COPY . .
